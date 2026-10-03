@@ -101,12 +101,21 @@ void main() {
     expect(game.health, 100);
   });
 
-  test('pressing E five times skips straight to space', () {
+  test('pressing E five times skips the flight, but not the launch pad', () {
     final game = SpaceGameModel();
-    for (var i = 0; i < 4; i++) {
+    for (var i = 0; i < 5; i++) {
       game.pressSecretKey();
     }
     expect(game.phase, Phase.setup);
+
+    doAllJobs(game);
+    game.launch();
+    run(game, 8);
+    expect(game.phase, Phase.flight);
+    for (var i = 0; i < 4; i++) {
+      game.pressSecretKey();
+    }
+    expect(game.phase, Phase.flight);
     game.pressSecretKey();
     expect(game.phase, Phase.space);
   });

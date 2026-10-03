@@ -492,21 +492,15 @@ class SpaceGameModel {
   int _secretPresses = 0;
   double _lastSecretPress = -10;
 
-  /// Press E five times quickly to zoom straight to space!
+  /// Press E five times quickly during the flight to zoom straight to space!
+  /// (You still have to get the rocket ready and launch it first.)
   void pressSecretKey() {
-    if (phase != Phase.setup &&
-        phase != Phase.countdown &&
-        phase != Phase.flight) {
-      return;
-    }
+    if (phase != Phase.flight) return;
     if (time - _lastSecretPress > 1.5) _secretPresses = 0;
     _lastSecretPress = time;
     _secretPresses++;
     if (_secretPresses >= 5) {
       _secretPresses = 0;
-      checklistDone.addAll(List.generate(jobs.length, (i) => i));
-      activeJob = null;
-      personInside = true;
       _arriveInSpace(
           '🤫 SECRET CODE! Zoooom - straight to space! Use the arrow keys to fly.');
     }
