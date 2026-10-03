@@ -274,6 +274,7 @@ class SpaceGameModel {
     surfacePlanet = null;
     timeOnPlanet = 0;
     collected.clear();
+    _secretPresses = 0;
   }
 
   void _makeAsteroids() {
@@ -472,14 +473,42 @@ class SpaceGameModel {
     if (c.left) dir -= 1;
     if (c.right) dir += 1;
     flightRocketX = (flightRocketX + dir * dt * 1.5).clamp(-1.0, 1.0);
-    if (flightTime >= flightSeconds) {
-      phase = Phase.space;
-      rocketPos = const Offset(1570, 50);
-      rocketVel = const Offset(60, 0);
-      rocketAngle = 0;
-      _say(
-          'You made it to space! 🚀 Use the arrow keys to fly. The Moon is just up ahead!',
-          6);
+    if (flightTime >= flightSeconds) _arriveInSpace();
+  }
+
+  void _arriveInSpace([String? text]) {
+    phase = Phase.space;
+    rocketPos = const Offset(1570, 50);
+    rocketVel = const Offset(60, 0);
+    rocketAngle = 0;
+    _say(
+        text ??
+            'You made it to space! 🚀 Use the arrow keys to fly. The Moon is just up ahead!',
+        6);
+  }
+
+  // ------------------------------------------------------- secret code
+
+  int _secretPresses = 0;
+  double _lastSecretPress = -10;
+
+  /// Press E five times quickly to zoom straight to space!
+  void pressSecretKey() {
+    if (phase != Phase.setup &&
+        phase != Phase.countdown &&
+        phase != Phase.flight) {
+      return;
+    }
+    if (time - _lastSecretPress > 1.5) _secretPresses = 0;
+    _lastSecretPress = time;
+    _secretPresses++;
+    if (_secretPresses >= 5) {
+      _secretPresses = 0;
+      checklistDone.addAll(List.generate(jobs.length, (i) => i));
+      activeJob = null;
+      personInside = true;
+      _arriveInSpace(
+          '🤫 SECRET CODE! Zoooom - straight to space! Use the arrow keys to fly.');
     }
   }
 

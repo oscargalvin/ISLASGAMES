@@ -74,6 +74,10 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
       if (event is KeyDownEvent) setState(game.pressEnter);
       return true;
     }
+    if (key == LogicalKeyboardKey.keyE) {
+      if (event is KeyDownEvent) setState(game.pressSecretKey);
+      return false;
+    }
     return _gameKeys.contains(key);
   }
 

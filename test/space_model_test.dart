@@ -100,4 +100,14 @@ void main() {
     expect(game.phase, Phase.setup);
     expect(game.health, 100);
   });
+
+  test('pressing E five times skips straight to space', () {
+    final game = SpaceGameModel();
+    for (var i = 0; i < 4; i++) {
+      game.pressSecretKey();
+    }
+    expect(game.phase, Phase.setup);
+    game.pressSecretKey();
+    expect(game.phase, Phase.space);
+  });
 }
