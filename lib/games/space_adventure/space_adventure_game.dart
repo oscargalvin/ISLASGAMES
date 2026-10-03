@@ -6,7 +6,9 @@ import 'package:flutter/services.dart';
 
 import 'planets.dart';
 import 'space_model.dart';
-import 'space_painters.dart';
+import 'launch_painters.dart';
+import 'space_painter.dart';
+import 'surface_painter.dart';
 
 /// Space Adventure: get your rocket ready, blast off, and explore the
 /// solar system - but don't get too hot, too cold, too sick or too hurt!
@@ -112,7 +114,9 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
       case Phase.setup:
       case Phase.countdown:
         painter = LaunchPadPainter(game,
-            rocketX: wide ? 0.32 : 0.5, groundY: wide ? 0.85 : 0.42);
+            rocketX: wide ? 0.34 : 0.5,
+            groundY: wide ? 0.85 : 0.42,
+            roomWidth: wide ? 0.62 : 1.0);
       case Phase.flight:
         painter = FlightPainter(game);
       case Phase.surface:
@@ -222,23 +226,29 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
           _touchPad(),
         ];
       case Phase.surface:
+        final info = game.surface;
+        final String bubble;
+        final bool dim;
+        if (game.messageTime > 0) {
+          bubble = game.message;
+          dim = false;
+        } else if (game.nearLandmark && info != null) {
+          bubble = '💡 ${info.fact}';
+          dim = false;
+        } else {
+          bubble = 'Press ENTER to get back in your rocket 🚀';
+          dim = true;
+        }
         return [
           _hudPositioned(),
           Positioned(
             left: 16,
             right: 16,
             bottom: 150,
-            child: Center(
-              child: game.messageTime > 0
-                  ? _bubble(game.message)
-                  : _bubble('Press ENTER to get back in your rocket 🚀',
-                      dim: true),
-            ),
+            child: Center(child: _bubble(bubble, dim: dim)),
           ),
           _touchPad(enterLabel: 'Blast off'),
         ];
-      case Phase.ouch:
-        return [_ouchScreen(), _hudPositioned()];
       case Phase.gameOver:
         return [
           _endScreen(
@@ -290,7 +300,7 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
 
   Widget _setupPanel() {
     final done = game.checklistDone.length;
-    final total = SpaceGameModel.checklist.length;
+    final total = SpaceGameModel.jobs.length;
     return Card(
       elevation: 8,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -306,18 +316,9 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
                     .headlineSmall
                     ?.copyWith(fontWeight: FontWeight.w800)),
             const SizedBox(height: 4),
-            const Text('Tap each job to get ready for blast off.'),
+            const Text('Tap a job and watch your astronaut do it.'),
             const SizedBox(height: 8),
-            for (var i = 0; i < total; i++)
-              CheckboxListTile(
-                value: game.checklistDone.contains(i),
-                onChanged: (_) => setState(() => game.tickChecklist(i)),
-                title: Text(SpaceGameModel.checklist[i],
-                    style: const TextStyle(fontSize: 17)),
-                controlAffinity: ListTileControlAffinity.leading,
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-              ),
+            for (var i = 0; i < total; i++) _jobTile(i),
             const SizedBox(height: 12),
             FilledButton(
               style: FilledButton.styleFrom(
@@ -340,6 +341,49 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
           ],
         ),
       ),
+    );
+  }
+
+  Widget _jobTile(int i) {
+    final done = game.checklistDone.contains(i);
+    final working = game.activeJob == i;
+    final busy = game.activeJob != null && !working;
+    final locked = i == SpaceGameModel.jobs.length - 1 &&
+        game.checklistDone.length < SpaceGameModel.jobs.length - 1;
+    final Widget leading;
+    if (done) {
+      leading = const Icon(Icons.check_circle, color: Colors.green, size: 28);
+    } else if (working) {
+      leading = SizedBox(
+        width: 26,
+        height: 26,
+        child: CircularProgressIndicator(
+            value: game.jobProgress(i), strokeWidth: 4),
+      );
+    } else if (locked) {
+      leading = const Icon(Icons.lock_outline, size: 28, color: Colors.grey);
+    } else {
+      leading = const Icon(Icons.play_circle_outline, size: 28);
+    }
+    return ListTile(
+      leading: leading,
+      title: Text(
+        SpaceGameModel.jobs[i].label,
+        style: TextStyle(
+          fontSize: 17,
+          fontWeight: working ? FontWeight.w800 : FontWeight.w500,
+          color: done || busy || locked ? Colors.black45 : Colors.black87,
+          decoration: done ? TextDecoration.lineThrough : null,
+        ),
+      ),
+      subtitle: working
+          ? const Text('Your astronaut is on it...')
+          : locked
+              ? const Text('Do this one last')
+              : null,
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      onTap: done ? null : () => setState(() => game.tickChecklist(i)),
     );
   }
 
@@ -385,8 +429,7 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
             : Colors.redAccent;
     const white = TextStyle(color: Colors.white, fontWeight: FontWeight.w700);
     final info = game.surface;
-    final onSurface =
-        game.phase == Phase.surface || game.scenePhase == Phase.surface;
+    final onSurface = game.scenePhase == Phase.surface;
     return Container(
       width: 270,
       padding: const EdgeInsets.all(12),
@@ -435,69 +478,6 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
                 '⭐ ${info.itemName}s found: ${game.collected.length}/${SpaceGameModel.itemXs.length}',
                 style: const TextStyle(color: Colors.white70)),
         ],
-      ),
-    );
-  }
-
-  Widget _ouchScreen() {
-    final p = game.ouchPlanet;
-    if (p == null) return const SizedBox.shrink();
-    final hot = p.landing == LandingType.tooHot;
-    final colors = hot
-        ? const [Color(0xFFBF360C), Color(0xFFFF9800)]
-        : [Color.lerp(p.color, Colors.black, 0.4)!, p.color];
-    final wobble = math.sin(game.time * 40) * 8 * math.max(0.0, 1 - game.ouchTime);
-    final secondsLeft = math.max(1, (SpaceGameModel.ouchSeconds - game.ouchTime).ceil());
-    return Positioned.fill(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-            colors: colors,
-          ),
-        ),
-        child: Center(
-          child: Transform.translate(
-            offset: Offset(wobble, 0),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(p.name.toUpperCase(),
-                      style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 22,
-                          letterSpacing: 4,
-                          fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 12),
-                  Text(
-                    p.landingMessage,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 34,
-                      fontWeight: FontWeight.w900,
-                      shadows: [Shadow(blurRadius: 10, color: Colors.black54)],
-                    ),
-                  ),
-                  if (p.landingDamage > 0) ...[
-                    const SizedBox(height: 14),
-                    Text('-${p.landingDamage.round()} health',
-                        style: const TextStyle(
-                            color: Colors.yellowAccent,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800)),
-                  ],
-                  const SizedBox(height: 22),
-                  Text('🚀 Blasting off in $secondsLeft...',
-                      style: const TextStyle(color: Colors.white, fontSize: 20)),
-                ],
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

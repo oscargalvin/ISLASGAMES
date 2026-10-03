@@ -13,11 +13,22 @@ void main() {
     }
   }
 
+  void doAllJobs(SpaceGameModel game) {
+    for (var i = 0; i < SpaceGameModel.jobs.length; i++) {
+      game.tickChecklist(i);
+      expect(game.activeJob, i);
+      var guard = 0;
+      while (game.activeJob != null && guard++ < 1000) {
+        run(game, 0.05);
+      }
+      expect(game.checklistDone, contains(i));
+    }
+  }
+
   SpaceGameModel inSpace() {
     final game = SpaceGameModel();
-    for (var i = 0; i < SpaceGameModel.checklist.length; i++) {
-      game.tickChecklist(i);
-    }
+    doAllJobs(game);
+    expect(game.personInside, isTrue);
     game.launch();
     run(game, 8);
     expect(game.phase, Phase.flight);
@@ -32,6 +43,12 @@ void main() {
     expect(game.phase, Phase.setup);
   });
 
+  test('the hatch job has to be done last', () {
+    final game = SpaceGameModel();
+    game.tickChecklist(SpaceGameModel.jobs.length - 1);
+    expect(game.activeJob, isNull);
+  });
+
   test('flight clock starts at 5:00 and reaches space', () {
     final game = SpaceGameModel();
     expect(game.flightClock, '5:00');
@@ -39,23 +56,39 @@ void main() {
     expect(space.health, greaterThan(90));
   });
 
-  test('landing on Venus hurts and sends you back to space', () {
+  test('space slowly wears your health down', () {
     final game = inSpace();
     final before = game.health;
-    game.land(planetNamed('Venus'));
-    expect(game.phase, Phase.ouch);
+    run(game, 10);
     expect(game.health, lessThan(before));
-    run(game, 4);
+    expect(game.health, greaterThan(before - 5));
+  });
+
+  test('Venus can be explored but hurts more the longer you stay', () {
+    final game = inSpace();
+    game.land(planetNamed('Venus'));
+    expect(game.phase, Phase.surface);
+    final start = game.health;
+    run(game, 3);
+    final firstLoss = start - game.health;
+    final mid = game.health;
+    run(game, 3);
+    final secondLoss = mid - game.health;
+    expect(secondLoss, greaterThan(firstLoss));
+    expect(game.status, contains('hot'));
+    game.pressEnter();
     expect(game.phase, Phase.space);
     expect(game.visited, contains('Venus'));
   });
 
-  test('you can walk on the Moon and fly off again', () {
-    final game = inSpace();
-    game.land(planetNamed('Moon'));
-    expect(game.phase, Phase.surface);
-    game.pressEnter();
-    expect(game.phase, Phase.space);
+  test('every planet can be landed on', () {
+    for (final p in planets) {
+      if (p.landing == LandingType.home) continue;
+      final game = inSpace();
+      game.land(p);
+      expect(game.phase, Phase.surface, reason: p.name);
+      run(game, 1);
+    }
   });
 
   test('flying into the Sun ends the game and ENTER restarts', () {
