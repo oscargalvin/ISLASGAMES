@@ -101,7 +101,7 @@ void main() {
     expect(game.health, 100);
   });
 
-  test('pressing E five times skips the flight, but not the launch pad', () {
+  test('pressing A five times skips the flight, but not the launch pad', () {
     final game = SpaceGameModel();
     for (var i = 0; i < 5; i++) {
       game.pressSecretKey();
@@ -118,5 +118,18 @@ void main() {
     expect(game.phase, Phase.flight);
     game.pressSecretKey();
     expect(game.phase, Phase.space);
+  });
+
+  test('winning unlocks the cheat code hint for the next game', () {
+    final game = inSpace();
+    game.visited.addAll(planets
+        .where((p) => p.landing != LandingType.home)
+        .map((p) => p.name));
+    run(game, 0.1);
+    expect(game.phase, Phase.win);
+    game.pressEnter();
+    expect(game.phase, Phase.setup);
+    expect(game.hasWon, isTrue);
+    expect(game.message, contains('press A'));
   });
 }

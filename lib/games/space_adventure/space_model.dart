@@ -107,6 +107,9 @@ class SpaceGameModel {
 
   Phase phase = Phase.setup;
 
+  /// Stays true after you beat the game, even when you play again.
+  bool hasWon = false;
+
   /// The last "world" we were in, so the right background shows behind pop-ups.
   Phase scenePhase = Phase.space;
   double time = 0;
@@ -275,6 +278,11 @@ class SpaceGameModel {
     timeOnPlanet = 0;
     collected.clear();
     _secretPresses = 0;
+    if (hasWon) {
+      _say(
+          "🤫 HINT: There's a secret cheat code to skip the rocket ride! Once you've launched, press A really quickly five times.",
+          9);
+    }
   }
 
   void _makeAsteroids() {
@@ -492,7 +500,7 @@ class SpaceGameModel {
   int _secretPresses = 0;
   double _lastSecretPress = -10;
 
-  /// Press E five times quickly during the flight to zoom straight to space!
+  /// Press A five times quickly during the flight to zoom straight to space!
   /// (You still have to get the rocket ready and launch it first.)
   void pressSecretKey() {
     if (phase != Phase.flight) return;
@@ -611,7 +619,10 @@ class SpaceGameModel {
       }
     }
 
-    if (visited.length >= placesToVisit && health > 0) phase = Phase.win;
+    if (visited.length >= placesToVisit && health > 0) {
+      phase = Phase.win;
+      hasWon = true;
+    }
   }
 
   void _updateSurface(double dt, Controls c) {

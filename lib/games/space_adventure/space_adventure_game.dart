@@ -74,7 +74,7 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
       if (event is KeyDownEvent) setState(game.pressEnter);
       return true;
     }
-    if (key == LogicalKeyboardKey.keyE) {
+    if (key == LogicalKeyboardKey.keyA) {
       if (event is KeyDownEvent) setState(game.pressSecretKey);
       return false;
     }
@@ -204,6 +204,15 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
                     Text(game.flightFact,
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: Colors.white, fontSize: 17)),
+                    if (game.hasWon)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 6),
+                        child: Text('🤫 Psst... press A five times really fast!',
+                            style: TextStyle(
+                                color: Colors.amberAccent,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700)),
+                      ),
                   ],
                 ),
               ),
