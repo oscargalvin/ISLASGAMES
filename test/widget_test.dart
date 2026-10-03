@@ -15,4 +15,12 @@ void main() {
     await tester.pump();
     expect(find.text('1'), findsOneWidget);
   });
+
+  testWidgets('Space Adventure opens on the launch pad', (tester) async {
+    await tester.pumpWidget(const IslasGamesApp());
+    await tester.tap(find.text('Space Adventure'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Get your rocket ready! 🚀'), findsOneWidget);
+  });
 }

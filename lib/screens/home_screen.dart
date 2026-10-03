@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../games/space_adventure/space_adventure_game.dart';
+
 /// A game that shows up on the home screen.
 class GameEntry {
   const GameEntry({
@@ -15,6 +17,11 @@ class GameEntry {
 
 /// Add new games to this list.
 final List<GameEntry> games = [
+  GameEntry(
+    title: 'Space Adventure',
+    icon: Icons.rocket_launch,
+    builder: (_) => const SpaceAdventureGame(),
+  ),
   GameEntry(
     title: 'Tap Counter',
     icon: Icons.touch_app,
