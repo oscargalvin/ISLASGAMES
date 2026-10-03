@@ -27,6 +27,8 @@ flutter run
    - Land on Earth to get fixed up. If your health runs out, the whole game starts again from the launch pad.
 5. Visit every planet out to Pluto to win! 🏆
 
+A calm, original space theme plays in the background. Tap the 🎵 button to turn it off.
+
 ## Adding a game
 
 1. Build your game as a widget (see `TapCounterGame` in `lib/screens/home_screen.dart`).

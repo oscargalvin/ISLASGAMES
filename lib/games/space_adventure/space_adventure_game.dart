@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -27,6 +28,10 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
   late final Ticker _ticker;
   Duration _last = Duration.zero;
 
+  AudioPlayer? _music;
+  bool _musicStarted = false;
+  bool _muted = false;
+
   static final _gameKeys = <LogicalKeyboardKey>[
     LogicalKeyboardKey.arrowLeft,
     LogicalKeyboardKey.arrowRight,
@@ -39,11 +44,39 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
     super.initState();
     _ticker = createTicker(_tick)..start();
     HardwareKeyboard.instance.addHandler(_onKey);
+    _startMusic();
+  }
+
+  /// Starts the soothing space music. Web browsers only allow sound after the
+  /// first tap or key press, so this gets tried again then.
+  Future<void> _startMusic() async {
+    if (_musicStarted || _muted) return;
+    _musicStarted = true;
+    try {
+      final player = _music ??= AudioPlayer();
+      await player.setReleaseMode(ReleaseMode.loop);
+      await player.play(AssetSource('audio/space_theme.mp3'), volume: 0.55);
+    } catch (_) {
+      _musicStarted = false;
+    }
+  }
+
+  void _toggleMusic() {
+    setState(() => _muted = !_muted);
+    final player = _music;
+    if (_muted) {
+      if (player != null) player.pause().catchError((_) {});
+    } else if (_musicStarted && player != null) {
+      player.resume().catchError((_) {});
+    } else {
+      _startMusic();
+    }
   }
 
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_onKey);
+    _music?.dispose().catchError((_) {});
     _ticker.dispose();
     super.dispose();
   }
@@ -66,6 +99,7 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
   }
 
   bool _onKey(KeyEvent event) {
+    if (event is KeyDownEvent) _startMusic();
     final key = event.logicalKey;
     final isEnter = key == LogicalKeyboardKey.enter ||
         key == LogicalKeyboardKey.numpadEnter ||
@@ -85,7 +119,9 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: LayoutBuilder(
+      body: Listener(
+        onPointerDown: (_) => _startMusic(),
+        child: LayoutBuilder(
         builder: (context, box) {
           final wide = box.maxWidth > 760;
           return Stack(
@@ -96,16 +132,28 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
                 top: 8,
                 right: 8,
                 child: SafeArea(
-                  child: IconButton.filledTonal(
-                    tooltip: 'Back to games',
-                    onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(Icons.close),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton.filledTonal(
+                        tooltip: _muted ? 'Music on' : 'Music off',
+                        onPressed: _toggleMusic,
+                        icon: Icon(_muted ? Icons.music_off : Icons.music_note),
+                      ),
+                      const SizedBox(width: 6),
+                      IconButton.filledTonal(
+                        tooltip: 'Back to games',
+                        onPressed: () => Navigator.of(context).maybePop(),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ],
           );
         },
+      ),
       ),
     );
   }
