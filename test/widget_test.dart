@@ -25,15 +25,19 @@ void main() {
 
     await tester.longPress(find.text('Islas Games'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'wrong');
-    await tester.tap(find.text('Unlock'));
+    for (final d in ['1', '2', '3', '✓']) {
+      await tester.tap(find.text(d));
+      await tester.pump();
+    }
     await tester.pumpAndSettle();
     expect(find.text('Walk to Australia'), findsNothing);
 
     await tester.longPress(find.text('Islas Games'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'islas2026');
-    await tester.tap(find.text('Unlock'));
+    for (final d in ['2', '0', '2', '6', '✓']) {
+      await tester.tap(find.text(d));
+      await tester.pump();
+    }
     await tester.pumpAndSettle();
     expect(find.text('Walk to Australia'), findsOneWidget);
     expect(find.text('Tap Counter'), findsOneWidget);

@@ -73,7 +73,7 @@ final List<GameEntry> archivedGames = [
 ];
 
 /// The creator code, stored as a fingerprint so it isn't written out here.
-const _creatorCodeHash = 0x86b34321;
+const _creatorCodeHash = 0x40293d93;
 const _creatorKey = 'creator_unlocked';
 
 int creatorCodeHash(String code) {
@@ -112,33 +112,15 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {}
   }
 
-  /// Secret: press and hold the "Islas Games" title to type the creator code.
+  /// Secret: press and hold the "Islas Games" title to tap in the creator code.
   Future<void> _askForCode() async {
-    final controller = TextEditingController();
-    final ok = await showDialog<bool>(
+    // Number buttons instead of a text box, so password managers like
+    // LastPass don't pop up over it.
+    final code = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Creator code'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          obscureText: true,
-          decoration: const InputDecoration(hintText: 'Type your secret code'),
-          onSubmitted: (v) =>
-              Navigator.pop(context, creatorCodeHash(v) == _creatorCodeHash),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.pop(
-                context, creatorCodeHash(controller.text) == _creatorCodeHash),
-            child: const Text('Unlock'),
-          ),
-        ],
-      ),
+      builder: (context) => const _CodePad(),
     );
+    final ok = code == null ? null : creatorCodeHash(code) == _creatorCodeHash;
     if (!mounted || ok == null) return;
     if (ok) {
       await _setCreator(true);
@@ -301,6 +283,70 @@ class _TapCounterGameState extends State<TapCounterGame> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A number pad for the creator code.
+class _CodePad extends StatefulWidget {
+  const _CodePad();
+
+  @override
+  State<_CodePad> createState() => _CodePadState();
+}
+
+class _CodePadState extends State<_CodePad> {
+  String _code = '';
+
+  @override
+  Widget build(BuildContext context) {
+    Widget key(String label, VoidCallback onTap) => Padding(
+          padding: const EdgeInsets.all(4),
+          child: SizedBox(
+            width: 64,
+            height: 56,
+            child: FilledButton.tonal(
+              onPressed: onTap,
+              child: Text(label, style: const TextStyle(fontSize: 22)),
+            ),
+          ),
+        );
+    Widget digit(String d) => key(
+        d,
+        () =>
+            setState(() => _code = (_code + d).length > 8 ? _code : _code + d));
+    return AlertDialog(
+      title: const Text('Creator code'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(_code.isEmpty ? 'Tap your code' : '●' * _code.length,
+              style: const TextStyle(fontSize: 24, letterSpacing: 6)),
+          const SizedBox(height: 12),
+          for (final row in [
+            ['1', '2', '3'],
+            ['4', '5', '6'],
+            ['7', '8', '9'],
+          ])
+            Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [for (final d in row) digit(d)]),
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            key(
+                '⌫',
+                () => setState(() => _code = _code.isEmpty
+                    ? _code
+                    : _code.substring(0, _code.length - 1))),
+            digit('0'),
+            key('✓', () => Navigator.pop(context, _code)),
+          ]),
+        ],
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel')),
+      ],
     );
   }
 }
