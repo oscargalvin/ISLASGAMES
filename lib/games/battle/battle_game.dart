@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'battle_model.dart';
 import 'battle_painter.dart';
+import 'first_person_painter.dart';
 
 const _nameKey = 'battle_username';
 
@@ -157,8 +160,8 @@ class _BattleGameScreenState extends State<BattleGameScreen> {
                     const SizedBox(height: 12),
                     const Text(
                       'Computer: WASD to move, mouse to aim, click to shoot, 1-5 change gun, R reload, '
-                      'E swap gun, hold Space for jetpack.\n'
-                      'Phone: left thumb moves, right thumb aims and shoots.',
+                      'E swap gun, hold Space for jetpack. In first person, the mouse or arrow keys turn.\n'
+                      'Phone: left thumb moves, right thumb aims and shoots. Tap the eye button for first person.',
                       style: TextStyle(fontSize: 12, color: Colors.black54),
                     ),
                   ],
@@ -294,8 +297,26 @@ class _BattleMatchState extends State<BattleMatch>
         fire = d.distance > 30;
       }
     }
-    if (_mouse != null && !_touch)
+    if (_fp) {
+      // Through your eyes: forward is where you're looking.
+      if (_keys.contains(LogicalKeyboardKey.arrowLeft)) _fpAim -= dt * 2.6;
+      if (_keys.contains(LogicalKeyboardKey.arrowRight)) _fpAim += dt * 2.6;
+      if (_keys.contains(LogicalKeyboardKey.arrowLeft) ||
+          _keys.contains(LogicalKeyboardKey.arrowRight)) {
+        m = Offset(
+            m.dx -
+                (_keys.contains(LogicalKeyboardKey.arrowRight) ? 1 : 0) +
+                (_keys.contains(LogicalKeyboardKey.arrowLeft) ? 1 : 0),
+            m.dy);
+      }
+      final fwd = Offset(math.cos(_fpAim), math.sin(_fpAim));
+      final right = Offset(-fwd.dy, fwd.dx);
+      m = fwd * -m.dy + right * m.dx;
+      controls.aim = _fpAim;
+      fire = _mouseDown || _fireHeld;
+    } else if (_mouse != null && !_touch) {
       controls.aim = (_mouse! - _toScreen(game.player.pos)).direction;
+    }
     controls.move = m;
     controls.fire = fire;
     controls.jet = jet || _jetHeld;
@@ -311,6 +332,20 @@ class _BattleMatchState extends State<BattleMatch>
   }
 
   bool _jetHeld = false;
+  bool _fireHeld = false;
+  bool _fp = false;
+  double _fpAim = 0;
+
+  void _toggleView() => setState(() {
+        _fp = !_fp;
+        _fpAim = game.player.aim;
+        _sticks.clear();
+      });
+
+  /// Turning by moving the mouse or dragging on the right of the screen.
+  void _turn(double dx) {
+    if (_fp) _fpAim += dx * 0.008;
+  }
 
   void _playEvents() {
     for (final e in game.events) {
@@ -365,7 +400,10 @@ class _BattleMatchState extends State<BattleMatch>
             Positioned.fill(
               child: MouseRegion(
                 cursor: SystemMouseCursors.precise,
-                onHover: (e) => _mouse = e.localPosition,
+                onHover: (e) {
+                  _turn(e.delta.dx);
+                  _mouse = e.localPosition;
+                },
                 child: Listener(
                   onPointerDown: (e) {
                     if (e.kind == PointerDeviceKind.touch) {
@@ -383,8 +421,16 @@ class _BattleMatchState extends State<BattleMatch>
                   onPointerMove: (e) {
                     final s = _sticks[e.pointer];
                     if (s != null) {
-                      _sticks[e.pointer] = (s.$1, s.$2, e.localPosition);
+                      if (_fp && !s.$1) {
+                        // Right thumb turns you in first person.
+                        _turn(e.delta.dx * 1.4);
+                        _sticks[e.pointer] =
+                            (s.$1, e.localPosition, e.localPosition);
+                      } else {
+                        _sticks[e.pointer] = (s.$1, s.$2, e.localPosition);
+                      }
                     } else {
+                      _turn(e.delta.dx);
                       _mouse = e.localPosition;
                     }
                   },
@@ -398,12 +444,14 @@ class _BattleMatchState extends State<BattleMatch>
                   },
                   child: CustomPaint(
                     size: Size.infinite,
-                    painter: BattlePainter(
-                        game: game,
-                        ground: _ground,
-                        camera: _camera,
-                        zoom: _zoom,
-                        time: game.time),
+                    painter: _fp
+                        ? FirstPersonPainter(game, game.time)
+                        : BattlePainter(
+                            game: game,
+                            ground: _ground,
+                            camera: _camera,
+                            zoom: _zoom,
+                            time: game.time),
                   ),
                 ),
               ),
@@ -429,6 +477,7 @@ class _BattleMatchState extends State<BattleMatch>
             _topBar(),
             _bottomBar(),
             if (_touch && me.hasJetpack && me.alive) _jetButton(),
+            if (_fp && _touch && me.alive) _fireButton(),
             if (game.nearPickup != null && me.alive) _swapPrompt(),
             if (_toast != null && _toastTime > 0)
               Positioned(
@@ -509,6 +558,12 @@ class _BattleMatchState extends State<BattleMatch>
               tooltip: 'Leave game',
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.close),
+            ),
+            const SizedBox(width: 6),
+            IconButton.filled(
+              tooltip: _fp ? 'Top-down view' : 'First-person view',
+              onPressed: _toggleView,
+              icon: Icon(_fp ? Icons.map : Icons.visibility),
             ),
             const SizedBox(width: 6),
             Expanded(
@@ -646,6 +701,25 @@ class _BattleMatchState extends State<BattleMatch>
       ),
     );
   }
+
+  Widget _fireButton() => Positioned(
+        right: 24,
+        bottom: 230,
+        child: Listener(
+          onPointerDown: (_) => _fireHeld = true,
+          onPointerUp: (_) => _fireHeld = false,
+          onPointerCancel: (_) => _fireHeld = false,
+          child: Container(
+            width: 76,
+            height: 76,
+            decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.75),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white70, width: 3)),
+            child: const Icon(Icons.gps_fixed, color: Colors.white, size: 36),
+          ),
+        ),
+      );
 
   Widget _jetButton() => Positioned(
         right: 20,

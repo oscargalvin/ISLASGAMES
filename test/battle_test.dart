@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'dart:ui';
+
 import 'package:islas_games/games/battle/battle_model.dart';
+import 'package:islas_games/games/battle/first_person_painter.dart';
 
 void main() {
   test('a battle royale has 8 fighters on land with pistols', () {
@@ -34,5 +37,15 @@ void main() {
     final c = Controls()..fire = true;
     g.update(1 / 60, c);
     expect(g.player.gun!.mag, 11);
+  });
+
+  test('the first-person view draws', () {
+    final g = BattleGame(playerName: 'Oscar', seed: 5);
+    for (var i = 0; i < 30; i++) {
+      g.update(1 / 30, Controls()..fire = true);
+    }
+    final rec = PictureRecorder();
+    FirstPersonPainter(g, g.time).paint(Canvas(rec), const Size(390, 844));
+    rec.endRecording();
   });
 }

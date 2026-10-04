@@ -780,18 +780,18 @@ class BattleGame {
     double? best;
     final d = b - a;
     for (final blk in blocks) {
-      final t = _segRect(a, d, blk.rect);
+      final t = segRect(a, d, blk.rect);
       if (t != null && (best == null || t < best)) best = t;
     }
     for (final blob in blobs) {
       if (blob.solid <= 0) continue;
-      final t = _segCircle(a, d, blob.center, blob.solid);
+      final t = segCircle(a, d, blob.center, blob.solid);
       if (t != null && (best == null || t < best)) best = t;
     }
     return best;
   }
 
-  static double? _segRect(Offset a, Offset d, Rect r) {
+  static double? segRect(Offset a, Offset d, Rect r) {
     var t0 = 0.0, t1 = 1.0;
     for (final (p, q) in [
       (-d.dx, a.dx - r.left),
@@ -815,7 +815,7 @@ class BattleGame {
     return t0;
   }
 
-  static double? _segCircle(Offset a, Offset d, Offset c, double r) {
+  static double? segCircle(Offset a, Offset d, Offset c, double r) {
     final f = a - c;
     final aa = d.dx * d.dx + d.dy * d.dy;
     if (aa == 0) return null;
@@ -1037,7 +1037,7 @@ class BattleGame {
       for (final f in fighters) {
         if (!f.alive || f == b.owner) continue;
         if (f.team == b.owner.team && f != b.owner) continue;
-        final t = _segCircle(b.pos, step, f.pos, Fighter.radius + 2);
+        final t = segCircle(b.pos, step, f.pos, Fighter.radius + 2);
         if (t != null && t < hitT) {
           hitT = t;
           victim = f;
@@ -1088,7 +1088,7 @@ class BattleGame {
       var t = _segmentHit(r.pos, next);
       for (final f in fighters) {
         if (!f.alive || f == r.owner || f.team == r.owner.team) continue;
-        final ft = _segCircle(r.pos, step, f.pos, Fighter.radius + 4);
+        final ft = segCircle(r.pos, step, f.pos, Fighter.radius + 4);
         if (ft != null && (t == null || ft < t)) t = ft;
       }
       if (rnd.nextDouble() < 0.9) {
