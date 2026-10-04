@@ -1,0 +1,11 @@
+{
+  "name": "isla-gpt",
+  "private": true,
+  "description": "Isla GPT - the Vercel function that answers questions",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0"
+  }
+}
