@@ -4,7 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:islas_games/games/perfect_puzzles/puzzle_model.dart';
 
 void main() {
-  test('levels go 4, 10, 20, 50, 100, 300 and only the first is a tutorial', () {
+  test('levels go 4, 10, 20, 50, 100, 300 and only the first is a tutorial',
+      () {
     expect(puzzleLevels.map((l) => l.pieceCount), [4, 10, 20, 50, 100, 300]);
     expect(puzzleLevels.where((l) => l.tutorial), [puzzleLevels.first]);
   });

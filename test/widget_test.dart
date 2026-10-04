@@ -25,19 +25,21 @@ void main() {
 
     await tester.longPress(find.text('Islas Games'));
     await tester.pumpAndSettle();
-    for (final d in ['1', '2', '3', '✓']) {
+    for (final d in ['1', '2', '3']) {
       await tester.tap(find.text(d));
       await tester.pump();
     }
+    await tester.tap(find.byIcon(Icons.check));
     await tester.pumpAndSettle();
     expect(find.text('Walk to Australia'), findsNothing);
 
     await tester.longPress(find.text('Islas Games'));
     await tester.pumpAndSettle();
-    for (final d in ['2', '0', '2', '6', '✓']) {
+    for (final d in ['2', '0', '2', '6']) {
       await tester.tap(find.text(d));
       await tester.pump();
     }
+    await tester.tap(find.byIcon(Icons.check));
     await tester.pumpAndSettle();
     expect(find.text('Walk to Australia'), findsOneWidget);
     expect(find.text('Tap Counter'), findsOneWidget);

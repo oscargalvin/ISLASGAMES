@@ -72,19 +72,9 @@ final List<GameEntry> archivedGames = [
   ),
 ];
 
-/// The creator code, stored as a fingerprint so it isn't written out here.
-const _creatorCodeHash = 0x40293d93;
+/// The creator code for the Archived Games tab.
+const _creatorCode = '2026';
 const _creatorKey = 'creator_unlocked';
-
-int creatorCodeHash(String code) {
-  // FNV-1a, 32 bit.
-  var h = 0x811c9dc5;
-  for (final c in code.trim().toLowerCase().codeUnits) {
-    h ^= c;
-    h = (h * 0x01000193) & 0xffffffff;
-  }
-  return h;
-}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -120,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) => const _CodePad(),
     );
-    final ok = code == null ? null : creatorCodeHash(code) == _creatorCodeHash;
+    final ok = code == null ? null : code == _creatorCode;
     if (!mounted || ok == null) return;
     if (ok) {
       await _setCreator(true);
@@ -300,19 +290,19 @@ class _CodePadState extends State<_CodePad> {
 
   @override
   Widget build(BuildContext context) {
-    Widget key(String label, VoidCallback onTap) => Padding(
+    Widget key(Widget label, VoidCallback onTap) => Padding(
           padding: const EdgeInsets.all(4),
           child: SizedBox(
             width: 64,
             height: 56,
             child: FilledButton.tonal(
               onPressed: onTap,
-              child: Text(label, style: const TextStyle(fontSize: 22)),
+              child: label,
             ),
           ),
         );
     Widget digit(String d) => key(
-        d,
+        Text(d, style: const TextStyle(fontSize: 22)),
         () =>
             setState(() => _code = (_code + d).length > 8 ? _code : _code + d));
     return AlertDialog(
@@ -333,12 +323,12 @@ class _CodePadState extends State<_CodePad> {
                 children: [for (final d in row) digit(d)]),
           Row(mainAxisSize: MainAxisSize.min, children: [
             key(
-                '⌫',
+                const Icon(Icons.backspace_outlined),
                 () => setState(() => _code = _code.isEmpty
                     ? _code
                     : _code.substring(0, _code.length - 1))),
             digit('0'),
-            key('✓', () => Navigator.pop(context, _code)),
+            key(const Icon(Icons.check), () => Navigator.pop(context, _code)),
           ]),
         ],
       ),
