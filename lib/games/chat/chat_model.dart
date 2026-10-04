@@ -1,292 +1,193 @@
-import 'dart:math' as math;
+import 'dart:convert';
 
-/// Someone you can chat with. They're pretend friends who text back.
-class Contact {
-  const Contact({
-    required this.id,
-    required this.name,
-    required this.avatar,
-    required this.status,
-    required this.color,
-    this.sayings = const [],
-    this.emojis = const ['😄', '👍'],
-  });
+import 'package:http/http.dart' as http;
+
+/// Someone in a chat.
+class Person {
+  const Person(
+      {required this.id,
+      required this.name,
+      required this.avatar,
+      this.me = false});
 
   final String id;
   final String name;
   final String avatar;
-  final String status;
+  final bool me;
 
-  /// Their name colour in group chats.
-  final int color;
-
-  /// Things they like to say.
-  final List<String> sayings;
-  final List<String> emojis;
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'avatar': avatar,
-        'status': status,
-        'color': color
-      };
-
-  /// Friends you add yourself.
-  static Contact custom(String id, String name, String avatar) => Contact(
-        id: id,
-        name: name,
-        avatar: avatar,
-        status: 'Hey there! I am using Islas Chat.',
-        color: 0xFF00897B,
-        sayings: const [
-          'Haha nice one!',
-          'What are you up to?',
-          "That's so cool!",
-          'Same here 😂',
-          'Tell me more!',
-          'No way!!',
-        ],
+  static Person fromJson(Map<String, dynamic> j) => Person(
+        id: j['id'] as String,
+        name: j['name'] as String? ?? 'Someone',
+        avatar: j['avatar'] as String? ?? '🙂',
+        me: j['me'] as bool? ?? false,
       );
-
-  static Contact fromJson(Map<String, dynamic> j) =>
-      characters.firstWhere((c) => c.id == j['id'],
-          orElse: () => custom(
-              j['id'] as String, j['name'] as String, j['avatar'] as String));
 }
 
-const characters = <Contact>[
-  Contact(
-    id: 'whiskers',
-    name: 'Whiskers',
-    avatar: '🐱',
-    status: 'Too cool for school 😎',
-    color: 0xFFE65100,
-    sayings: [
-      'Meow! 😺',
-      'I just knocked a cup off the table. Worth it.',
-      'Have you got any fish? 🐟',
-      'Purrrfect!',
-      'I was napping. For 6 hours. Totally normal.',
-      'Wearing my sunglasses indoors again 😎',
-    ],
-    emojis: ['😺', '🐟', '😎', '🐾'],
-  ),
-  Contact(
-    id: 'nova',
-    name: 'Captain Nova',
-    avatar: '🚀',
-    status: 'Somewhere near Jupiter 🪐',
-    color: 0xFF3949AB,
-    sayings: [
-      'Greetings from space! 🌌',
-      'Just waved at an alien. It waved back 👽',
-      'Houston, we have a snack problem. 🍫',
-      'The view of Earth is AMAZING today 🌍',
-      'Blasting off in 3... 2... 1... 🚀',
-    ],
-    emojis: ['🚀', '🪐', '👽', '⭐'],
-  ),
-  Contact(
-    id: 'pepperoni',
-    name: 'Chef Pepperoni',
-    avatar: '🍕',
-    status: 'Cooking up something tasty',
-    color: 0xFFC62828,
-    sayings: [
-      'Mamma mia! 🍕',
-      'I put pineapple on a pizza. Was that a mistake? 🍍',
-      'Dinner is ready! Come quick!',
-      'Extra cheese makes everything better 🧀',
-      'Want my secret recipe? It\'s... more cheese.',
-    ],
-    emojis: ['🍕', '🧀', '👨‍🍳', '😋'],
-  ),
-  Contact(
-    id: 'flo',
-    name: 'Flamingo Flo',
-    avatar: '🦩',
-    status: 'Floating in the pool 🏖️',
-    color: 0xFFD81B60,
-    sayings: [
-      'Standing on one leg again 🦩',
-      'Pool party at mine! 🏊',
-      'Pink is my favourite colour, obviously 💖',
-      'Just got a new floaty! It looks like a cat 🐱',
-      'Sun cream on? ☀️',
-    ],
-    emojis: ['🦩', '💖', '☀️', '🏖️'],
-  ),
-  Contact(
-    id: 'robo',
-    name: 'Robo',
-    avatar: '🤖',
-    status: 'Beep boop. Battery 87%',
-    color: 0xFF546E7A,
-    sayings: [
-      'BEEP BOOP. Message received. 🤖',
-      'Calculating... the answer is 42.',
-      'I am learning to dance. 🕺 Error: legs too wobbly.',
-      'Charging my battery 🔋',
-      'Does not compute! 😵',
-    ],
-    emojis: ['🤖', '🔋', '⚙️', '💡'],
-  ),
-  Contact(
-    id: 'dave',
-    name: 'Dino Dave',
-    avatar: '🦖',
-    status: 'RAWR means hello',
-    color: 0xFF2E7D32,
-    sayings: [
-      'RAWRRR! 🦖',
-      'My arms are too short to text properly lol',
-      'Just stomped through a volcano 🌋',
-      'Do you think I could ride a skateboard? 🛹',
-      'Who ate my leaf salad?? 🥗',
-    ],
-    emojis: ['🦖', '🌋', '🦕', '💚'],
-  ),
-  Contact(
-    id: 'sparkle',
-    name: 'Sparkle',
-    avatar: '🦄',
-    status: 'Magic everywhere ✨',
-    color: 0xFF8E24AA,
-    sayings: [
-      'Sprinkling some magic on your day ✨',
-      'Rainbows are my favourite slide 🌈',
-      'I made a wish for you! 💫',
-      'Glitter is NOT a food group (but it should be)',
-      'Yay!! 🎉',
-    ],
-    emojis: ['🦄', '🌈', '✨', '💜'],
-  ),
-];
-
 class ChatMessage {
-  ChatMessage(
-      {required this.from,
-      required this.text,
-      required this.time,
-      this.read = false});
+  ChatMessage({
+    required this.seq,
+    required this.from,
+    required this.text,
+    required this.time,
+    this.sending = false,
+  });
 
-  /// 'me' or a contact's id.
+  /// Message number in its chat, counting up from 1.
+  final int seq;
+
+  /// A person's id, 'me' or 'ai' (Islas AI chat), or 'system'.
   final String from;
   final String text;
   final DateTime time;
 
-  /// For my messages: has someone replied (blue ticks)?
-  bool read;
+  /// Still on its way to the server.
+  bool sending;
 
-  Map<String, dynamic> toJson() =>
-      {'f': from, 't': text, 'm': time.millisecondsSinceEpoch, 'r': read};
   static ChatMessage fromJson(Map<String, dynamic> j) => ChatMessage(
-        from: j['f'] as String,
-        text: j['t'] as String,
-        time: DateTime.fromMillisecondsSinceEpoch(j['m'] as int),
-        read: j['r'] as bool? ?? false,
+        seq: (j['seq'] as num?)?.toInt() ?? 0,
+        from: j['from'] as String,
+        text: j['text'] as String,
+        time: DateTime.fromMillisecondsSinceEpoch((j['t'] as num).toInt()),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'seq': seq,
+        'from': from,
+        'text': text,
+        't': time.millisecondsSinceEpoch
+      };
+}
+
+/// A chat or group with real friends, kept on the server.
+class Chat {
+  Chat({
+    required this.id,
+    required this.group,
+    required this.invite,
+    required this.members,
+    this.name,
+    this.avatar,
+    this.seq = 0,
+    this.last,
+  });
+
+  final String id;
+  final bool group;
+  final String? name;
+  final String? avatar;
+  final String invite;
+  List<Person> members;
+
+  /// The newest message number on the server.
+  int seq;
+  ChatMessage? last;
+  final List<ChatMessage> messages = [];
+
+  List<Person> get others => members.where((m) => !m.me).toList();
+
+  String get title {
+    if (group) return name ?? 'Group';
+    final o = others;
+    return o.isEmpty ? 'New chat' : o.first.name;
+  }
+
+  String get picture {
+    if (group) return avatar ?? '👥';
+    final o = others;
+    return o.isEmpty ? '💬' : o.first.avatar;
+  }
+
+  Person? person(String id) {
+    for (final m in members) {
+      if (m.id == id) return m;
+    }
+    return null;
+  }
+
+  /// The newest message number this device has.
+  int get newestHere {
+    for (final m in messages.reversed) {
+      if (!m.sending) return m.seq;
+    }
+    return 0;
+  }
+
+  void update(Chat from) {
+    members = from.members;
+    seq = from.seq;
+    last = from.last;
+  }
+
+  static Chat fromJson(Map<String, dynamic> j) => Chat(
+        id: j['id'] as String,
+        group: j['group'] as bool? ?? false,
+        name: j['name'] as String?,
+        avatar: j['avatar'] as String?,
+        invite: j['invite'] as String,
+        members: [
+          for (final m in j['members'] as List)
+            Person.fromJson(Map<String, dynamic>.from(m as Map))
+        ],
+        seq: (j['seq'] as num?)?.toInt() ?? 0,
+        last: j['last'] == null
+            ? null
+            : ChatMessage.fromJson(Map<String, dynamic>.from(j['last'] as Map)),
       );
 }
 
-class Chat {
-  Chat(
-      {required this.id,
-      required this.members,
-      this.groupName,
-      this.groupAvatar = '👥'});
+class ChatError implements Exception {
+  ChatError(this.code);
 
-  final String id;
-  final List<String> members;
-  final String? groupName;
-  final String groupAvatar;
-  final List<ChatMessage> messages = [];
-  int unread = 0;
+  final String code;
 
-  bool get isGroup => groupName != null;
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'members': members,
-        'group': groupName,
-        'ga': groupAvatar,
-        'unread': unread,
-        'messages': [for (final m in messages) m.toJson()],
+  /// What to tell the person.
+  String get friendly => switch (code) {
+        'not_set_up' =>
+          "Islas Chat isn't switched on yet. The chat server needs its database.",
+        'ai_not_set_up' =>
+          "Islas AI isn't switched on yet. It needs its AI key.",
+        'ai_tired' => 'Islas AI is tired for today 😴 Try again tomorrow!',
+        'no_such_invite' =>
+          "That invite code doesn't work. Check it and try again.",
+        'not_in_chat' => "You're not in that chat any more.",
+        'need_name' => 'Type your name first.',
+        'offline' => "Can't reach Islas Chat. Check your internet.",
+        _ => 'Something went wrong. Try again.',
       };
 
-  static Chat fromJson(Map<String, dynamic> j) {
-    final c = Chat(
-      id: j['id'] as String,
-      members: [for (final m in j['members'] as List) m as String],
-      groupName: j['group'] as String?,
-      groupAvatar: j['ga'] as String? ?? '👥',
-    )..unread = j['unread'] as int? ?? 0;
-    c.messages.addAll([
-      for (final m in j['messages'] as List)
-        ChatMessage.fromJson(Map<String, dynamic>.from(m as Map))
-    ]);
-    return c;
-  }
+  @override
+  String toString() => 'ChatError($code)';
 }
 
-/// Works out what a pretend friend says back.
-String replyFor(Contact who, String message, math.Random rnd,
-    {bool group = false}) {
-  final m = message.toLowerCase();
-  String pick(List<String> options) => options[rnd.nextInt(options.length)];
-  final emoji = pick(who.emojis);
-  final onlyEmoji =
-      message.trim().isNotEmpty && !RegExp(r'[a-zA-Z0-9]').hasMatch(message);
+/// Talks to the Islas Chat server at /api/chat.
+class ChatApi {
+  ChatApi({http.Client? client, Uri? endpoint})
+      : _client = client ?? http.Client(),
+        endpoint = endpoint ?? Uri.base.resolve('/api/chat');
 
-  if (onlyEmoji) {
-    return pick(
-        ['$emoji$emoji$emoji', message.trim(), '😂😂', '❤️', '$emoji!']);
+  final http.Client _client;
+  final Uri endpoint;
+
+  Future<Map<String, dynamic>> call(String action,
+      [Map<String, dynamic> body = const {}]) async {
+    final http.Response r;
+    try {
+      r = await _client.post(endpoint,
+          headers: {'content-type': 'application/json'},
+          body: jsonEncode({'action': action, ...body}));
+    } catch (_) {
+      throw ChatError('offline');
+    }
+    final Map<String, dynamic> j;
+    try {
+      j = Map<String, dynamic>.from(jsonDecode(r.body) as Map);
+    } catch (_) {
+      // No chat server here yet.
+      throw ChatError(r.statusCode == 404 ? 'not_set_up' : 'server_error');
+    }
+    if (r.statusCode != 200) {
+      throw ChatError(j['error'] as String? ?? 'server_error');
+    }
+    return j;
   }
-  if (m.contains('joke')) {
-    return pick([
-      'Why did the cat sit on the computer? To keep an eye on the mouse! 🐭',
-      'What do you call a sleeping dinosaur? A dino-snore! 🦖💤',
-      'Why did the cookie go to the doctor? It felt crummy! 🍪',
-      "What's orange and sounds like a parrot? A carrot! 🥕",
-    ]);
-  }
-  if (RegExp(r'\b(hi|hello|hey|hiya|yo|sup)\b').hasMatch(m)) {
-    return pick([
-      'Hi! $emoji',
-      'Hello there! 👋',
-      'Heyyy $emoji',
-      'Oh hi! How are you?'
-    ]);
-  }
-  if (m.contains('how are you') ||
-      m.contains('how r u') ||
-      m.contains('you ok')) {
-    return pick([
-      "I'm great thanks! What about you? $emoji",
-      'Super good! 😄',
-      'A bit sleepy but good!'
-    ]);
-  }
-  if (m.contains('love') || m.contains('❤')) {
-    return pick(['Aww ❤️', 'Love you too! 💖', '🥰🥰']);
-  }
-  if (m.contains('bye') || m.contains('night') || m.contains('see you')) {
-    return pick(['Bye! 👋', 'See you later! $emoji', 'Night night 🌙']);
-  }
-  if (m.contains('lol') || m.contains('haha') || m.contains('😂')) {
-    return pick(['😂😂😂', 'LOL', 'Hahaha stop it 🤣']);
-  }
-  if (m.contains('?')) {
-    return pick([
-      'Hmm, good question 🤔',
-      'Yes! 100%',
-      'Nope 😆',
-      'Maybe... $emoji',
-      'Ask me again tomorrow!'
-    ]);
-  }
-  if (group && rnd.nextDouble() < 0.3) {
-    return pick(['Agreed!', 'Same 😂', '👀', 'Wait what?']);
-  }
-  return pick([...who.sayings, 'Cool! $emoji', 'Haha 😄']);
 }

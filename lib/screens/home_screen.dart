@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../games/chat/chat_game.dart';
@@ -95,6 +96,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // Opened from an Islas Chat invite link: go straight to the chat.
+    final join = Uri.base.queryParameters['join'];
+    if (join != null && join.isNotEmpty) {
+      SystemNavigator.routeInformationUpdated(
+          uri: Uri.parse('/'), replace: true);
+      WidgetsBinding.instance.addPostFrameCallback((_) => Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => ChatGame(joinCode: join))));
+    }
     SharedPreferences.getInstance().then((p) {
       if (mounted) setState(() => _creator = p.getBool(_creatorKey) ?? false);
     }).catchError((_) {});
