@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../games/battle/battle_game.dart';
 import '../games/chat/chat_game.dart';
 import '../games/memory_match/memory_match_game.dart';
 import '../games/perfect_puzzles/perfect_puzzles_game.dart';
@@ -56,11 +55,6 @@ final List<GameEntry> games = [
     picture: 'assets/icons/memory.png',
     builder: (_) => const MemoryMatchGame(),
   ),
-  GameEntry(
-    title: 'Islas Battle',
-    picture: 'assets/icons/battle.png',
-    builder: (_) => const BattleGameScreen(),
-  ),
 ];
 
 /// Archived games: hidden from everyone except the creator, who can still
@@ -76,11 +70,6 @@ final List<GameEntry> archivedGames = [
     title: 'Walk to Australia',
     picture: 'assets/icons/walk.png',
     builder: (_) => const WorldWalkGame(),
-  ),
-  GameEntry(
-    title: 'Tap Counter',
-    icon: Icons.touch_app,
-    builder: (_) => const TapCounterGame(),
   ),
 ];
 
@@ -247,44 +236,6 @@ class GameGrid extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-/// A tiny starter game so there's something to play straight away.
-class TapCounterGame extends StatefulWidget {
-  const TapCounterGame({super.key});
-
-  @override
-  State<TapCounterGame> createState() => _TapCounterGameState();
-}
-
-class _TapCounterGameState extends State<TapCounterGame> {
-  int _score = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Tap Counter')),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Score', style: Theme.of(context).textTheme.titleLarge),
-            Text('$_score', style: Theme.of(context).textTheme.displayLarge),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () => setState(() => _score++),
-              icon: const Icon(Icons.touch_app),
-              label: const Text('Tap!'),
-            ),
-            TextButton(
-              onPressed: () => setState(() => _score = 0),
-              child: const Text('Reset'),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

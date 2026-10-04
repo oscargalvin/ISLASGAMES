@@ -42,6 +42,6 @@ void main() {
     await tester.tap(find.byIcon(Icons.check));
     await tester.pumpAndSettle();
     expect(find.text('Walk to Australia'), findsOneWidget);
-    expect(find.text('Tap Counter'), findsOneWidget);
+    expect(find.text('Islas Chat'), findsOneWidget);
   });
 }
