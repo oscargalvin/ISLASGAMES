@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'screens/age_gate.dart';
 import 'screens/chat_screen.dart';
 
 void main() {
@@ -7,10 +8,13 @@ void main() {
 }
 
 class IslaGptApp extends StatelessWidget {
-  const IslaGptApp({super.key, this.chatScreen});
+  const IslaGptApp({super.key, this.chatScreen, this.askAge = true});
 
   /// Lets tests swap in a chat screen with a fake backend.
   final Widget? chatScreen;
+
+  /// Shows the 11+ check before the chat.
+  final bool askAge;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +32,9 @@ class IslaGptApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: chatScreen ?? const ChatScreen(),
+      home: askAge
+          ? AgeGate(child: chatScreen ?? const ChatScreen())
+          : chatScreen ?? const ChatScreen(),
     );
   }
 }

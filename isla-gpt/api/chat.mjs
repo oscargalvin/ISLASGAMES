@@ -6,7 +6,40 @@ const MAX_MESSAGES = 40;
 const MAX_CHARS = 2000;
 const MAX_TOOL_ROUNDS = 4;
 
-const SYSTEM_PROMPT = `You are Isla GPT, a friendly, helpful assistant inside the Isla GPT app. Children and families use you, so you are kind, patient and safe.
+// Tried in order. If one is busy or not available on this API key, the next
+// one answers instead, so Isla GPT keeps working.
+const MODELS = [
+  { model: "claude-opus-5-5", output_config: { effort: "low" } },
+  { model: "claude-sonnet-5-5", output_config: { effort: "low" } },
+  { model: "claude-haiku-4-5" },
+];
+
+// Errors worth trying the next model for: busy, overloaded, or no access.
+function shouldTryNextModel(e) {
+  return (
+    e instanceof Anthropic.RateLimitError ||
+    e instanceof Anthropic.NotFoundError ||
+    e instanceof Anthropic.PermissionDeniedError ||
+    e instanceof Anthropic.APIConnectionError ||
+    (e instanceof Anthropic.APIError && e.status >= 500)
+  );
+}
+
+export async function createWithFallback(client, params, models = MODELS) {
+  let lastError;
+  for (const choice of models) {
+    try {
+      return await client.messages.create({ ...params, ...choice });
+    } catch (e) {
+      lastError = e;
+      if (!shouldTryNextModel(e)) throw e;
+      console.warn(`Isla GPT: ${choice.model} failed (${e.status ?? e.name}), trying the next model`);
+    }
+  }
+  throw lastError;
+}
+
+const SYSTEM_PROMPT = `You are Isla GPT, a friendly, helpful assistant inside the Isla GPT app. It is for ages 11 and up, so you are kind, patient and safe.
 
 How to answer:
 - Answer exactly what was asked. Stay on topic and make sure every answer clearly connects to the question.
@@ -190,7 +223,8 @@ export default async function handler(req, res) {
   const area = cleanArea(body.area);
   const country = req.headers?.["x-vercel-ip-country"];
 
-  client ??= new Anthropic();
+  // Keep the whole request inside Vercel's 60 second limit.
+  client ??= new Anthropic({ maxRetries: 0, timeout: 20_000 });
   const today = new Date().toDateString();
   const system = `${SYSTEM_PROMPT}\n\nToday is ${today}. ${
     area ? "The person has shared their rough area." : "The person has not shared their area."
@@ -198,10 +232,8 @@ export default async function handler(req, res) {
 
   try {
     for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
-      const response = await client.messages.create({
-        model: "claude-opus-5-5",
+      const response = await createWithFallback(client, {
         max_tokens: 4000,
-        output_config: { effort: "low" },
         system,
         tools: [WEATHER_TOOL],
         messages,
@@ -268,12 +300,15 @@ export function explainError(e) {
     return { status: 500, error: "This AI key can't use the Claude model Isla GPT asks for. (404)" };
   }
   if (e instanceof Anthropic.RateLimitError || (e instanceof Anthropic.APIError && e.status >= 500)) {
-    return { status: 503, error: "Isla GPT is very busy right now. Please try again in a minute." };
+    return { status: 503, error: `Isla GPT is very busy right now. Please try again in a minute. (${e.status})` };
   }
   if (e instanceof Anthropic.APIConnectionError) {
-    return { status: 503, error: "Isla GPT couldn't reach its AI. Please try again in a minute." };
+    return { status: 503, error: "Isla GPT couldn't reach its AI. Please try again in a minute. (no connection)" };
   }
-  const code = e instanceof Anthropic.APIError && e.status ? ` (${e.status}: ${detail.slice(0, 120)})` : "";
+  const code =
+    e instanceof Anthropic.APIError && e.status
+      ? ` (${e.status}: ${detail.slice(0, 120)})`
+      : ` (${String(e?.message ?? e).slice(0, 120)})`;
   return { status: 500, error: `Something went wrong. Please try again.${code}` };
 }
 
