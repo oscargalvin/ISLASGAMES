@@ -142,8 +142,8 @@ class _ChatScreenState extends State<ChatScreen> {
           else
             IconButton(
               tooltip: _area == null ? 'Share my area' : 'Stop sharing my area',
-              icon: Icon(
-                  _area == null ? Icons.location_off : Icons.location_on),
+              icon:
+                  Icon(_area == null ? Icons.location_off : Icons.location_on),
               onPressed: _area == null ? _shareArea : _stopSharing,
             ),
           IconButton(
@@ -158,7 +158,9 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             Expanded(
               child: _messages.isEmpty
-                  ? _Welcome(onPick: _send, onShareArea: _area == null ? _shareArea : null)
+                  ? _Welcome(
+                      onPick: _send,
+                      onShareArea: _area == null ? _shareArea : null)
                   : ListView.builder(
                       controller: _scroll,
                       padding: const EdgeInsets.all(12),
@@ -276,9 +278,7 @@ class _Bubble extends StatelessWidget {
         child: SelectableText(
           text,
           style: TextStyle(
-              color: fromUser
-                  ? scheme.onPrimary
-                  : scheme.onSecondaryContainer),
+              color: fromUser ? scheme.onPrimary : scheme.onSecondaryContainer),
         ),
       ),
     );

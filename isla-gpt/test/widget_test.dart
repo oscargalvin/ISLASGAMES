@@ -18,6 +18,24 @@ class FakeIslaClient implements IslaClient {
 }
 
 void main() {
+  testWidgets('asks if you are 11+ before chatting', (tester) async {
+    await tester.pumpWidget(
+        IslaGptApp(chatScreen: ChatScreen(client: FakeIslaClient())));
+    expect(find.text('Are you 11 or older?'), findsOneWidget);
+    await tester.tap(find.text("No, I'm younger"));
+    await tester.pump();
+    expect(find.textContaining('for ages 11 and up'), findsOneWidget);
+    expect(find.text("Hi, I'm Isla GPT!"), findsNothing);
+  });
+
+  testWidgets('11+ goes straight into the chat', (tester) async {
+    await tester.pumpWidget(
+        IslaGptApp(chatScreen: ChatScreen(client: FakeIslaClient())));
+    await tester.tap(find.text("Yes, I'm 11+"));
+    await tester.pump();
+    expect(find.text("Hi, I'm Isla GPT!"), findsOneWidget);
+  });
+
   test('areas are rounded so the exact spot is never sent', () {
     final area = ApproxArea(51.50735, -0.12776);
     expect(area.latitude, 51.5);
@@ -27,6 +45,7 @@ void main() {
   testWidgets('asking a question shows Isla GPT\'s answer', (tester) async {
     final fake = FakeIslaClient();
     await tester.pumpWidget(IslaGptApp(
+      askAge: false,
       chatScreen: ChatScreen(
         client: fake,
         findArea: () async => ApproxArea(51.50735, -0.12776),
@@ -61,6 +80,7 @@ void main() {
     final fake = FakeIslaClient();
     var asked = 0;
     await tester.pumpWidget(IslaGptApp(
+      askAge: false,
       chatScreen: ChatScreen(
         client: fake,
         findArea: () async {
@@ -84,7 +104,8 @@ void main() {
 
   testWidgets('suggestions can be tapped to ask', (tester) async {
     final fake = FakeIslaClient();
-    await tester.pumpWidget(IslaGptApp(chatScreen: ChatScreen(client: fake)));
+    await tester.pumpWidget(
+        IslaGptApp(askAge: false, chatScreen: ChatScreen(client: fake)));
     await tester.tap(find.text(suggestions[1]));
     await tester.pumpAndSettle();
     expect(fake.lastConversation!.single.text, suggestions[1]);

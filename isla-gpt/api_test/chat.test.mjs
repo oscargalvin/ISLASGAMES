@@ -4,7 +4,7 @@ import { test } from "node:test";
 
 import Anthropic from "@anthropic-ai/sdk";
 
-import handler, { cleanArea, cleanMessages, explainError, usesFahrenheit } from "../api/chat.mjs";
+import handler, { cleanArea, cleanMessages, createWithFallback, explainError, usesFahrenheit } from "../api/chat.mjs";
 
 test("areas are rounded to about 10 km", () => {
   assert.deepEqual(cleanArea({ lat: 51.50735, lon: -0.12776 }), { lat: 51.5, lon: -0.1 });
@@ -68,4 +68,32 @@ test("API failures say what to fix", () => {
   );
   assert.equal(explainError(apiError(529, "Overloaded")).status, 503);
   assert.match(explainError(apiError(400, "bad thing")).error, /\(400: bad thing\)/);
+});
+
+test("a busy or unavailable model falls back to the next one", async () => {
+  const tried = [];
+  const fake = {
+    messages: {
+      create: async (p) => {
+        tried.push(p.model);
+        if (p.model === "a") throw apiError(429, "rate limited");
+        if (p.model === "b") throw apiError(404, "model not found");
+        return { model: p.model, effort: p.output_config?.effort };
+      },
+    },
+  };
+  const out = await createWithFallback(fake, { max_tokens: 10 }, [
+    { model: "a", output_config: { effort: "low" } },
+    { model: "b" },
+    { model: "c" },
+  ]);
+  assert.deepEqual(tried, ["a", "b", "c"]);
+  assert.deepEqual(out, { model: "c", effort: undefined });
+});
+
+test("a bad key does not try other models", async () => {
+  const tried = [];
+  const fake = { messages: { create: async (p) => { tried.push(p.model); throw apiError(401, "bad key"); } } };
+  await assert.rejects(createWithFallback(fake, {}, [{ model: "a" }, { model: "b" }]));
+  assert.deepEqual(tried, ["a"]);
 });

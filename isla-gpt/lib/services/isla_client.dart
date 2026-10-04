@@ -60,7 +60,8 @@ class HttpIslaClient implements IslaClient {
     final body = _decode(response.body);
     if (response.statusCode != 200) {
       throw IslaException(body['error'] as String? ??
-          'Isla GPT is having a little rest. Please try again soon.');
+          'Isla GPT is having a little rest. Please try again soon. '
+              '(error ${response.statusCode})');
     }
     return body['reply'] as String;
   }
