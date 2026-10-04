@@ -2,7 +2,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import handler, { cleanArea, cleanMessages } from "../api/chat.mjs";
+import Anthropic from "@anthropic-ai/sdk";
+
+import handler, { cleanArea, cleanMessages, explainError, usesFahrenheit } from "../api/chat.mjs";
 
 test("areas are rounded to about 10 km", () => {
   assert.deepEqual(cleanArea({ lat: 51.50735, lon: -0.12776 }), { lat: 51.5, lon: -0.1 });
@@ -45,4 +47,25 @@ test("only POST is allowed", async () => {
   const res = fakeRes();
   await handler({ method: "GET" }, res);
   assert.equal(res.code, 405);
+});
+
+test("Fahrenheit for the US, Celsius elsewhere", () => {
+  assert.equal(usesFahrenheit("US"), true);
+  assert.equal(usesFahrenheit("us"), true);
+  assert.equal(usesFahrenheit("GB"), false);
+  assert.equal(usesFahrenheit(undefined), false);
+});
+
+function apiError(status, message) {
+  return Anthropic.APIError.generate(status, { type: "error", error: { type: "x", message } }, message, new Headers());
+}
+
+test("API failures say what to fix", () => {
+  assert.match(explainError(apiError(401, "invalid x-api-key")).error, /AI key isn't working/);
+  assert.match(
+    explainError(apiError(400, "Your credit balance is too low to access the Anthropic API.")).error,
+    /run out of credit/,
+  );
+  assert.equal(explainError(apiError(529, "Overloaded")).status, 503);
+  assert.match(explainError(apiError(400, "bad thing")).error, /\(400: bad thing\)/);
 });

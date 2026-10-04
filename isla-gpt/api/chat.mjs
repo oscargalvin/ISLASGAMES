@@ -13,10 +13,12 @@ How to answer:
 - Be accurate. If you are not sure, say so honestly instead of guessing, and never make up facts.
 - Use clear, simple words and keep answers short unless the person asks for more detail. Short paragraphs or a few bullet points work best.
 - Be warm and encouraging. Light use of emoji is fine.
+- Be genuinely helpful. Answer everyday questions (homework, science, animals, sport, jokes, stories, how things work and so on) fully and confidently. Only decline something that is truly unsafe for a child.
 
 Weather:
 - For any question about the weather, call the get_weather tool. Never invent weather.
 - With no place named, get_weather uses the person's shared area. If they have not shared it, kindly tell them to tap the location button at the top of the app, or to tell you their town.
+- Answer like a weather reporter, with the real numbers and the units the tool gives you. For example: "Right now in Leeds it's 14°C and cloudy, with a high of 16°C today and a small chance of rain." Mention what to wear or bring when it helps.
 
 Staying safe:
 - Keep everything age-appropriate. Do not produce violent, scary, sexual, hateful or otherwise grown-up content, and do not help with anything dangerous or harmful.
@@ -95,18 +97,29 @@ async function getJson(url) {
   return res.json();
 }
 
-async function areaName({ lat, lon }) {
+// Countries that use Fahrenheit and miles per hour.
+const IMPERIAL_COUNTRIES = new Set(["US", "LR", "MM", "BS", "BZ", "KY", "PW", "FM", "MH"]);
+
+export function usesFahrenheit(countryCode) {
+  return IMPERIAL_COUNTRIES.has(String(countryCode ?? "").toUpperCase());
+}
+
+async function areaInfo({ lat, lon }) {
   try {
     const data = await getJson(
       `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`,
     );
-    return [data.city || data.locality, data.countryName].filter(Boolean).join(", ") || null;
+    return {
+      name: [data.city || data.locality, data.countryName].filter(Boolean).join(", ") || null,
+      country: data.countryCode || null,
+    };
   } catch {
-    return null;
+    return { name: null, country: null };
   }
 }
 
-export async function getWeather(input, area) {
+// `fallbackCountry` comes from Vercel's request headers and only picks units.
+export async function getWeather(input, area, fallbackCountry) {
   let spot;
   if (input?.place) {
     const found = await getJson(
@@ -114,36 +127,46 @@ export async function getWeather(input, area) {
     );
     const r = found.results?.[0];
     if (!r) return `I couldn't find a place called "${input.place}".`;
-    spot = { lat: r.latitude, lon: r.longitude, name: [r.name, r.country].filter(Boolean).join(", ") };
+    spot = {
+      lat: r.latitude,
+      lon: r.longitude,
+      name: [r.name, r.admin1, r.country].filter(Boolean).join(", "),
+      country: r.country_code,
+    };
   } else if (area) {
-    spot = { ...area, name: (await areaName(area)) ?? "the person's area" };
+    const info = await areaInfo(area);
+    spot = { ...area, name: info.name ?? "the person's area", country: info.country };
   } else {
     return "The person hasn't shared their area. Ask them to tap the location button at the top of the app, or to tell you their town.";
   }
 
+  const fahrenheit = usesFahrenheit(spot.country ?? fallbackCountry);
+  const t = fahrenheit ? "°F" : "°C";
+  const windUnit = fahrenheit ? "mph" : "km/h";
   const w = await getJson(
     `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}` +
       "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,precipitation" +
       "&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code" +
-      "&forecast_days=1&timezone=auto",
+      "&forecast_days=1&timezone=auto" +
+      (fahrenheit ? "&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch" : ""),
   );
   const c = w.current;
   const d = w.daily;
+  const deg = (v) => (v == null ? null : `${Math.round(v)}${t}`);
   return JSON.stringify({
     place: spot.name,
     local_time: c.time,
     now: {
       conditions: WEATHER_CODES[c.weather_code] ?? "unknown",
-      temperature_c: c.temperature_2m,
-      feels_like_c: c.apparent_temperature,
-      wind_kmh: c.wind_speed_10m,
-      precipitation_mm: c.precipitation,
+      temperature: deg(c.temperature_2m),
+      feels_like: deg(c.apparent_temperature),
+      wind: `${Math.round(c.wind_speed_10m)} ${windUnit}`,
     },
     today: {
       conditions: WEATHER_CODES[d.weather_code?.[0]] ?? "unknown",
-      high_c: d.temperature_2m_max?.[0],
-      low_c: d.temperature_2m_min?.[0],
-      chance_of_rain_percent: d.precipitation_probability_max?.[0],
+      high: deg(d.temperature_2m_max?.[0]),
+      low: deg(d.temperature_2m_min?.[0]),
+      chance_of_rain: `${d.precipitation_probability_max?.[0] ?? 0}%`,
     },
   });
 }
@@ -165,6 +188,7 @@ export default async function handler(req, res) {
   const messages = cleanMessages(body.messages);
   if (typeof messages === "string") return res.status(400).json({ error: messages });
   const area = cleanArea(body.area);
+  const country = req.headers?.["x-vercel-ip-country"];
 
   client ??= new Anthropic();
   const today = new Date().toDateString();
@@ -174,12 +198,10 @@ export default async function handler(req, res) {
 
   try {
     for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
-      const response = await client.beta.messages.create({
+      const response = await client.messages.create({
         model: "claude-opus-5-5",
         max_tokens: 4000,
         output_config: { effort: "low" },
-        betas: ["server-side-fallback-2026-07-01"],
-        fallbacks: "default",
         system,
         tools: [WEATHER_TOOL],
         messages,
@@ -207,7 +229,8 @@ export default async function handler(req, res) {
         let content;
         let isError = false;
         try {
-          content = tool.name === "get_weather" ? await getWeather(tool.input, area) : "Unknown tool.";
+          content =
+            tool.name === "get_weather" ? await getWeather(tool.input, area, country) : "Unknown tool.";
         } catch (e) {
           content = `The weather service didn't answer (${e.message}). Tell the person to try again soon.`;
           isError = true;
@@ -218,13 +241,40 @@ export default async function handler(req, res) {
     }
   } catch (e) {
     console.error("Isla GPT error", e);
-    const busy = e instanceof Anthropic.RateLimitError || (e instanceof Anthropic.APIError && e.status >= 500);
-    return res.status(busy ? 503 : 500).json({
-      error: busy
-        ? "Isla GPT is very busy right now. Please try again in a minute."
-        : "Something went wrong. Please try again.",
-    });
+    const { status, error } = explainError(e);
+    return res.status(status).json({ error });
   }
+}
+
+// Turns an Anthropic API failure into a message that says what to fix.
+export function explainError(e) {
+  const detail = String(e?.error?.error?.message ?? e?.message ?? "");
+  if (e instanceof Anthropic.AuthenticationError) {
+    return {
+      status: 500,
+      error: "Isla GPT's AI key isn't working. In Vercel, check ANTHROPIC_API_KEY is copied exactly, then redeploy. (401)",
+    };
+  }
+  if (e instanceof Anthropic.PermissionDeniedError) {
+    return { status: 500, error: "This AI key isn't allowed to use Claude. Check the key in the Anthropic console. (403)" };
+  }
+  if (/credit balance/i.test(detail)) {
+    return {
+      status: 500,
+      error: "Isla GPT's Anthropic account has run out of credit. Add some under Billing at console.anthropic.com. (400)",
+    };
+  }
+  if (e instanceof Anthropic.NotFoundError) {
+    return { status: 500, error: "This AI key can't use the Claude model Isla GPT asks for. (404)" };
+  }
+  if (e instanceof Anthropic.RateLimitError || (e instanceof Anthropic.APIError && e.status >= 500)) {
+    return { status: 503, error: "Isla GPT is very busy right now. Please try again in a minute." };
+  }
+  if (e instanceof Anthropic.APIConnectionError) {
+    return { status: 503, error: "Isla GPT couldn't reach its AI. Please try again in a minute." };
+  }
+  const code = e instanceof Anthropic.APIError && e.status ? ` (${e.status}: ${detail.slice(0, 120)})` : "";
+  return { status: 500, error: `Something went wrong. Please try again.${code}` };
 }
 
 function safeParse(text) {
