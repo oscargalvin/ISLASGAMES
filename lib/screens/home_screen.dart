@@ -10,12 +10,14 @@ import '../games/tic_tac_toe/tic_tac_toe_game.dart';
 class GameEntry {
   const GameEntry({
     required this.title,
-    required this.icon,
+    required this.picture,
     required this.builder,
   });
 
   final String title;
-  final IconData icon;
+
+  /// The colourful picture on the game's card, in assets/icons/.
+  final String picture;
   final WidgetBuilder builder;
 }
 
@@ -24,27 +26,27 @@ class GameEntry {
 final List<GameEntry> games = [
   GameEntry(
     title: 'Perfect Puzzles',
-    icon: Icons.extension,
+    picture: 'assets/icons/puzzles.png',
     builder: (_) => const PerfectPuzzlesGame(),
   ),
   GameEntry(
     title: 'Space Adventure',
-    icon: Icons.rocket_launch,
+    picture: 'assets/icons/rocket.png',
     builder: (_) => const SpaceAdventureGame(),
   ),
   GameEntry(
     title: 'Sand Drawing',
-    icon: Icons.gesture,
+    picture: 'assets/icons/sand.png',
     builder: (_) => const SandDrawingGame(),
   ),
   GameEntry(
     title: 'Tic-Tac-Toe',
-    icon: Icons.grid_3x3,
+    picture: 'assets/icons/tictactoe.png',
     builder: (_) => const TicTacToeGame(),
   ),
   GameEntry(
     title: 'Memory Match',
-    icon: Icons.style,
+    picture: 'assets/icons/memory.png',
     builder: (_) => const MemoryMatchGame(),
   ),
 ];
@@ -58,6 +60,7 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Islas Games')),
       body: GridView.extent(
         maxCrossAxisExtent: 220,
+        childAspectRatio: 0.82,
         padding: const EdgeInsets.all(16),
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
@@ -68,14 +71,22 @@ class HomeScreen extends StatelessWidget {
               child: InkWell(
                 onTap: () => Navigator.of(context)
                     .push(MaterialPageRoute(builder: game.builder)),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(game.icon, size: 48),
-                    const SizedBox(height: 8),
-                    Text(game.title,
-                        style: Theme.of(context).textTheme.titleMedium),
-                  ],
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: Image.asset(game.picture, fit: BoxFit.contain),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(game.title,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700)),
+                    ],
+                  ),
                 ),
               ),
             ),

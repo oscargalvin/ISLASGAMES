@@ -4,9 +4,9 @@ import 'dart:math' as math;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 
-const _faces = ['🐱', '🦩', '🍕', '🕶️', '🛹', '🎧', '🏖️', '🍦', '🐟', '🧶'];
+const _faces = ['🍓', '🍌', '🍉', '🍇', '🍍', '🥝', '🍒', '🍑', '🍋', '🍎'];
 
-/// Memory Match: flip two cards at a time and find all the pairs.
+/// Memory Match: flip two cards at a time and find all the fruit pairs.
 class MemoryMatchGame extends StatefulWidget {
   const MemoryMatchGame({super.key});
 
