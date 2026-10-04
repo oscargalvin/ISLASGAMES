@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../games/chat/chat_game.dart';
@@ -56,17 +55,17 @@ final List<GameEntry> games = [
     picture: 'assets/icons/memory.png',
     builder: (_) => const MemoryMatchGame(),
   ),
-  GameEntry(
-    title: 'Islas Chat',
-    picture: 'assets/icons/chat.png',
-    builder: (_) => const ChatGame(),
-  ),
 ];
 
 /// Archived games: hidden from everyone except the creator, who can still
 /// open them from the Archived Games tab. Move a game between these two
 /// lists to archive it or put it back out.
 final List<GameEntry> archivedGames = [
+  GameEntry(
+    title: 'Islas Chat',
+    picture: 'assets/icons/chat.png',
+    builder: (_) => const ChatGame(),
+  ),
   GameEntry(
     title: 'Walk to Australia',
     picture: 'assets/icons/walk.png',
@@ -96,14 +95,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Opened from an Islas Chat invite link: go straight to the chat.
-    final join = Uri.base.queryParameters['join'];
-    if (join != null && join.isNotEmpty) {
-      SystemNavigator.routeInformationUpdated(
-          uri: Uri.parse('/'), replace: true);
-      WidgetsBinding.instance.addPostFrameCallback((_) => Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => ChatGame(joinCode: join))));
-    }
     SharedPreferences.getInstance().then((p) {
       if (mounted) setState(() => _creator = p.getBool(_creatorKey) ?? false);
     }).catchError((_) {});
