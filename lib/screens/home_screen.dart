@@ -5,6 +5,7 @@ import '../games/perfect_puzzles/perfect_puzzles_game.dart';
 import '../games/sand_drawing/sand_drawing_game.dart';
 import '../games/space_adventure/space_adventure_game.dart';
 import '../games/tic_tac_toe/tic_tac_toe_game.dart';
+import '../games/world_walk/world_walk_game.dart';
 
 /// A game that shows up on the home screen.
 class GameEntry {
@@ -48,6 +49,11 @@ final List<GameEntry> games = [
     title: 'Memory Match',
     picture: 'assets/icons/memory.png',
     builder: (_) => const MemoryMatchGame(),
+  ),
+  GameEntry(
+    title: 'Walk to Australia',
+    picture: 'assets/icons/walk.png',
+    builder: (_) => const WorldWalkGame(),
   ),
 ];
 
