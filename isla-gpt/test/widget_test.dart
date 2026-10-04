@@ -50,6 +50,38 @@ void main() {
     expect(fake.lastArea!.latitude, 51.5);
   });
 
+  test('spots weather questions about where you are', () {
+    expect(isLocalWeatherQuestion("What's the weather today?"), isTrue);
+    expect(isLocalWeatherQuestion('Is it going to rain?'), isTrue);
+    expect(isLocalWeatherQuestion("What's the weather in Paris?"), isFalse);
+    expect(isLocalWeatherQuestion('How do volcanoes work?'), isFalse);
+  });
+
+  testWidgets('a weather question asks for the area first', (tester) async {
+    final fake = FakeIslaClient();
+    var asked = 0;
+    await tester.pumpWidget(IslaGptApp(
+      chatScreen: ChatScreen(
+        client: fake,
+        findArea: () async {
+          asked++;
+          return ApproxArea(40.71, -74.01);
+        },
+      ),
+    ));
+    await tester.tap(find.text(suggestions[0])); // "What's the weather today?"
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(asked, 1);
+    expect(fake.lastArea!.latitude, 40.7);
+
+    // Already shared, so the next weather question doesn't ask again.
+    await tester.enterText(find.byType(TextField), 'Will it rain?');
+    await tester.tap(find.byTooltip('Send'));
+    await tester.pumpAndSettle();
+    expect(asked, 1);
+  });
+
   testWidgets('suggestions can be tapped to ask', (tester) async {
     final fake = FakeIslaClient();
     await tester.pumpWidget(IslaGptApp(chatScreen: ChatScreen(client: fake)));

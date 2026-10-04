@@ -5,6 +5,15 @@ import '../services/location_service.dart';
 
 typedef AreaFinder = Future<ApproxArea?> Function();
 
+final _weatherWords = RegExp(
+    r'\b(weather|temperature|forecast|rain|raining|sunny|snow|snowing|windy|hot|cold|umbrella|coat)\b',
+    caseSensitive: false);
+final _namedPlace = RegExp(r'\b(in|at|for)\s+[A-Z]');
+
+/// A weather question that doesn't name a place, like "What's the weather today?"
+bool isLocalWeatherQuestion(String text) =>
+    _weatherWords.hasMatch(text) && !_namedPlace.hasMatch(text);
+
 const suggestions = [
   "What's the weather today?",
   'Tell me a fun fact about space',
@@ -33,6 +42,7 @@ class _ChatScreenState extends State<ChatScreen> {
   ApproxArea? _area;
   bool _thinking = false;
   bool _findingArea = false;
+  bool _askedForArea = false;
 
   @override
   void dispose() {
@@ -42,6 +52,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _shareArea() async {
+    _askedForArea = true;
     setState(() => _findingArea = true);
     ApproxArea? area;
     try {
@@ -77,6 +88,13 @@ class _ChatScreenState extends State<ChatScreen> {
       _thinking = true;
     });
     _scrollToEnd();
+
+    // For "what's the weather?", ask for the area the first time, so the
+    // answer can be about where they are. The browser asks permission.
+    if (_area == null && !_askedForArea && isLocalWeatherQuestion(text)) {
+      await _shareArea();
+      if (!mounted) return;
+    }
 
     String reply;
     try {
