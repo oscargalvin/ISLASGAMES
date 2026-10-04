@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../games/memory_match/memory_match_game.dart';
 import '../games/perfect_puzzles/perfect_puzzles_game.dart';
+import '../games/sand_drawing/sand_drawing_game.dart';
 import '../games/space_adventure/space_adventure_game.dart';
+import '../games/tic_tac_toe/tic_tac_toe_game.dart';
 
 /// A game that shows up on the home screen.
 class GameEntry {
@@ -28,6 +31,21 @@ final List<GameEntry> games = [
     title: 'Space Adventure',
     icon: Icons.rocket_launch,
     builder: (_) => const SpaceAdventureGame(),
+  ),
+  GameEntry(
+    title: 'Sand Drawing',
+    icon: Icons.gesture,
+    builder: (_) => const SandDrawingGame(),
+  ),
+  GameEntry(
+    title: 'Tic-Tac-Toe',
+    icon: Icons.grid_3x3,
+    builder: (_) => const TicTacToeGame(),
+  ),
+  GameEntry(
+    title: 'Memory Match',
+    icon: Icons.style,
+    builder: (_) => const MemoryMatchGame(),
   ),
 ];
 
