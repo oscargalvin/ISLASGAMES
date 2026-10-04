@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../games/perfect_puzzles/perfect_puzzles_game.dart';
+import '../games/space_adventure/space_adventure_game.dart';
 
 /// A game that shows up on the home screen.
 class GameEntry {
@@ -15,13 +16,18 @@ class GameEntry {
   final WidgetBuilder builder;
 }
 
-/// Add new games to this list. Space Adventure and Tap Counter are archived:
-/// their code is still here, they just aren't on the home screen.
+/// Add new games to this list. Tap Counter is archived: its code is still
+/// here, it just isn't on the home screen.
 final List<GameEntry> games = [
   GameEntry(
     title: 'Perfect Puzzles',
     icon: Icons.extension,
     builder: (_) => const PerfectPuzzlesGame(),
+  ),
+  GameEntry(
+    title: 'Space Adventure',
+    icon: Icons.rocket_launch,
+    builder: (_) => const SpaceAdventureGame(),
   ),
 ];
 

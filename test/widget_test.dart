@@ -5,7 +5,7 @@ import 'package:islas_games/main.dart';
 void main() {
   testWidgets('Perfect Puzzles lists the puzzles', (tester) async {
     await tester.pumpWidget(const IslasGamesApp());
-    expect(find.text('Space Adventure'), findsNothing);
+    expect(find.text('Space Adventure'), findsOneWidget);
     expect(find.text('Tap Counter'), findsNothing);
     await tester.tap(find.text('Perfect Puzzles'));
     await tester.pumpAndSettle();
