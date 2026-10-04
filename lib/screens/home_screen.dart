@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../games/battle/battle_game.dart';
 import '../games/chat/chat_game.dart';
 import '../games/memory_match/memory_match_game.dart';
 import '../games/perfect_puzzles/perfect_puzzles_game.dart';
@@ -54,6 +55,11 @@ final List<GameEntry> games = [
     title: 'Memory Match',
     picture: 'assets/icons/memory.png',
     builder: (_) => const MemoryMatchGame(),
+  ),
+  GameEntry(
+    title: 'Islas Battle',
+    picture: 'assets/icons/battle.png',
+    builder: (_) => const BattleGameScreen(),
   ),
 ];
 
