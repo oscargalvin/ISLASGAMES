@@ -16,6 +16,14 @@ void main() {
     expect(find.text('1'), findsOneWidget);
   });
 
+  testWidgets('Perfect Puzzles lists the puzzles', (tester) async {
+    await tester.pumpWidget(const IslasGamesApp());
+    await tester.tap(find.text('Perfect Puzzles'));
+    await tester.pumpAndSettle();
+    expect(find.text('Tutorial'), findsOneWidget);
+    expect(find.text('300 pieces'), findsOneWidget);
+  });
+
   testWidgets('Space Adventure opens on the launch pad', (tester) async {
     await tester.pumpWidget(const IslasGamesApp());
     await tester.tap(find.text('Space Adventure'));

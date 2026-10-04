@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../games/perfect_puzzles/perfect_puzzles_game.dart';
 import '../games/space_adventure/space_adventure_game.dart';
 
 /// A game that shows up on the home screen.
@@ -17,6 +18,11 @@ class GameEntry {
 
 /// Add new games to this list.
 final List<GameEntry> games = [
+  GameEntry(
+    title: 'Perfect Puzzles',
+    icon: Icons.extension,
+    builder: (_) => const PerfectPuzzlesGame(),
+  ),
   GameEntry(
     title: 'Space Adventure',
     icon: Icons.rocket_launch,
@@ -36,8 +42,8 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Islas Games')),
-      body: GridView.count(
-        crossAxisCount: 2,
+      body: GridView.extent(
+        maxCrossAxisExtent: 220,
         padding: const EdgeInsets.all(16),
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
