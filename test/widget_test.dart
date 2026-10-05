@@ -1,26 +1,47 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:islas_games/main.dart';
 
 void main() {
-  testWidgets('Home shows games and Tap Counter scores', (tester) async {
+  testWidgets('Perfect Puzzles lists the puzzles', (tester) async {
     await tester.pumpWidget(const IslasGamesApp());
-    expect(find.text('Islas Games'), findsOneWidget);
-
-    await tester.tap(find.text('Tap Counter'));
+    expect(find.text('Space Adventure'), findsOneWidget);
+    expect(find.text('Tap Counter'), findsNothing);
+    await tester.tap(find.text('Perfect Puzzles'));
     await tester.pumpAndSettle();
-    expect(find.text('0'), findsOneWidget);
-
-    await tester.tap(find.text('Tap!'));
-    await tester.pump();
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Tutorial'), findsOneWidget);
+    expect(find.text('300 pieces'), findsOneWidget);
   });
 
-  testWidgets('Space Adventure opens on the launch pad', (tester) async {
+  testWidgets('archived games are hidden until the creator code is typed',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const IslasGamesApp());
-    await tester.tap(find.text('Space Adventure'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('Get your rocket ready! 🚀'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('Walk to Australia'), findsNothing);
+    expect(find.text('Archived games'), findsNothing);
+
+    await tester.longPress(find.text('Islas Games'));
+    await tester.pumpAndSettle();
+    for (final d in ['1', '2', '3']) {
+      await tester.tap(find.text(d));
+      await tester.pump();
+    }
+    await tester.tap(find.byIcon(Icons.check));
+    await tester.pumpAndSettle();
+    expect(find.text('Walk to Australia'), findsNothing);
+
+    await tester.longPress(find.text('Islas Games'));
+    await tester.pumpAndSettle();
+    for (final d in ['2', '0', '2', '6']) {
+      await tester.tap(find.text(d));
+      await tester.pump();
+    }
+    await tester.tap(find.byIcon(Icons.check));
+    await tester.pumpAndSettle();
+    expect(find.text('Walk to Australia'), findsOneWidget);
+    expect(find.text('Islas Chat'), findsOneWidget);
   });
 }
