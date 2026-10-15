@@ -39,3 +39,7 @@ A calm, original space theme plays in the background. Tap the 🎵 button to tur
 ```bash
 flutter test
 ```
+
+## Other apps in this repo
+
+- **Isla GPT** (`isla-gpt/`): a friendly chat app with its own Vercel site. See `isla-gpt/README.md`.
