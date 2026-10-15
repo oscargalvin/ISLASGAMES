@@ -44,4 +44,23 @@ void main() {
     expect(find.text('Walk to Australia'), findsOneWidget);
     expect(find.text('Islas Chat'), findsOneWidget);
   });
+
+  testWidgets('Tapping the title 5 times opens the creator code pad',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(const IslasGamesApp());
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 5; i++) {
+      await tester.tap(find.text('Islas Games'));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.pumpAndSettle();
+    for (final d in ['2', '0', '2', '6']) {
+      await tester.tap(find.text(d));
+      await tester.pump();
+    }
+    await tester.tap(find.byIcon(Icons.check));
+    await tester.pumpAndSettle();
+    expect(find.text('Walk to Australia'), findsOneWidget);
+  });
 }

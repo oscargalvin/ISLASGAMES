@@ -87,6 +87,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _creator = false;
 
+  // Tapping the title 5 times quickly also opens the secret, because a
+  // press-and-hold is easy to miss on a phone.
+  int _titleTaps = 0;
+  DateTime _lastTitleTap = DateTime(2000);
+
   @override
   void initState() {
     super.initState();
@@ -122,6 +127,20 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _secret() => _creator ? _openArchive() : _askForCode();
+
+  void _onTitleTap() {
+    final now = DateTime.now();
+    _titleTaps = now.difference(_lastTitleTap).inMilliseconds < 800
+        ? _titleTaps + 1
+        : 1;
+    _lastTitleTap = now;
+    if (_titleTaps >= 5) {
+      _titleTaps = 0;
+      _secret();
+    }
+  }
+
   void _openArchive() {
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => ArchivedGamesScreen(onLock: () => _setCreator(false)),
@@ -133,8 +152,13 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: GestureDetector(
-          onLongPress: _creator ? _openArchive : _askForCode,
-          child: const Text('Islas Games'),
+          behavior: HitTestBehavior.opaque,
+          onTap: _onTitleTap,
+          onLongPress: _secret,
+          child: const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Text('Islas Games'),
+          ),
         ),
         actions: [
           if (_creator)
