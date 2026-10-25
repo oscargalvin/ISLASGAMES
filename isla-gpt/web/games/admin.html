@@ -232,7 +232,6 @@ dialog h2 { margin-top: 0; }
 <script>
 (() => {
   const API = '/api/admin';
-  const CODE_KEY = 'games-admin-code';
   const GAMES = [
     ['dont-look-back', "Don't Look Back", '👁️'], ['yeet-the-human', 'Yeet the Human', '🚀'], ['night-shift', 'Night Shift', '🏪'],
     ['floor-is-doom', 'Floor Is Doom', '🌋'], ['road-rage-x', 'Road Rage X', '🏎️'], ['teddy-exe', 'Teddy.exe', '🧸'], ['pizza-panic', 'Pizza Panic', '🍕'],
@@ -242,7 +241,8 @@ dialog h2 { margin-top: 0; }
 
   const $ = (s) => document.querySelector(s);
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
-  const ss = { get(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) {} } };
+  // The code is only kept while this page is open, so it's asked for every time.
+  try { sessionStorage.removeItem('games-admin-code'); } catch (e) {}
 
   let code = '', state = null, history = [], busy = false;
 
@@ -296,10 +296,10 @@ dialog h2 { margin-top: 0; }
     code = c;
     try {
       const { status, data } = await call({ action: 'login' });
-      if (status === 200) { ss.set(CODE_KEY, c); got(data); show('panel'); }
-      else if (status === 503 && data.needsStore) { ss.set(CODE_KEY, c); show('setup'); }
+      if (status === 200) { got(data); show('panel'); }
+      else if (status === 503 && data.needsStore) { code = ''; show('setup'); }
       else {
-        ss.set(CODE_KEY, null);
+        code = '';
         $('#lockMsg').textContent = data.error || 'Something went wrong. Try again.';
         $('#dots').classList.remove('shake'); void $('#dots').offsetWidth; $('#dots').classList.add('shake');
         show('lock');
@@ -310,8 +310,17 @@ dialog h2 { margin-top: 0; }
     }
     typed = ''; drawDots(); busy = false;
   }
-  $('#setupRetry').addEventListener('click', () => { const c = ss.get(CODE_KEY); c ? login(c) : show('lock'); });
-  $('#logout').addEventListener('click', () => { ss.set(CODE_KEY, null); code = ''; state = null; show('lock'); });
+  function lock() { code = ''; state = null; typed = ''; drawDots(); show('lock'); }
+  $('#setupRetry').addEventListener('click', lock);
+  $('#logout').addEventListener('click', lock);
+  // Coming back with the Back button, or after the page was put away for a
+  // minute, needs the code again.
+  window.addEventListener('pageshow', (e) => { if (e.persisted) lock(); });
+  let hiddenAt = 0;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) hiddenAt = Date.now();
+    else if (hiddenAt && Date.now() - hiddenAt > 60000) lock();
+  });
 
   // ---------- saving ----------
   function got(data) {
@@ -329,7 +338,7 @@ dialog h2 { margin-top: 0; }
       const { status, data } = await call({ action: 'save', v: state.v, state: next, note });
       if (status === 200) { got(data); toast(okText || 'Saved ✓'); return true; }
       if (status === 409) { got(data); toast(data.error, true); return false; }
-      if (status === 401) { ss.set(CODE_KEY, null); show('lock'); toast('Type the code again.', true); return false; }
+      if (status === 401) { lock(); toast('Type the code again.', true); return false; }
       toast(data.error || 'That did not save. Try again.', true);
       return false;
     } catch (e) {
@@ -510,8 +519,7 @@ dialog h2 { margin-top: 0; }
     try { const { status, data } = await call({ action: 'get' }); if (status === 200) got(data); } catch (e) {}
   });
 
-  const saved = ss.get(CODE_KEY);
-  if (saved) login(saved); else show('lock');
+  show('lock');
   window.__admin = { get state() { return state; } };
 })();
 </script>
