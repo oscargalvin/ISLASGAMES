@@ -3,6 +3,7 @@
 // opens the admin panel when the title is tapped 4 times quickly.
 (() => {
   const API = '/api/admin';
+  const SETTINGS = 'settings.json';
   const POLL_MS = 15000;
   const SEEN_KEY = 'games-seen-message';
   const THEMES = {
@@ -179,7 +180,7 @@
       const slug = b.dataset.src.replace(/\.html$/, '');
       const g = (games && games[slug]) || { status: 'live', badge: '' };
       gameStatus.set(b, g.status);
-      b.hidden = g.status === 'hidden';
+      b.hidden = g.status === 'archived' || g.status === 'hidden';
       b.classList.toggle('fixing', g.status === 'fixing');
       let tag = b.querySelector('.fixTag');
       if (g.status === 'fixing' && !tag) { tag = el('span', 'fixTag', '🔧 Getting an update!'); b.appendChild(tag); }
@@ -204,13 +205,21 @@
   }, true);
 
   // ---------- reading the settings ----------
+  async function read(url) {
+    try {
+      const res = await fetch(url, { cache: 'no-cache' });
+      return res.ok ? await res.json() : null;
+    } catch (e) { return null; }
+  }
   async function check() {
     if (document.hidden) return;
     try {
-      const res = await fetch(API, { cache: 'no-cache' });
-      if (!res.ok) return;
-      const s = await res.json();
-      if (!s || !s.configured) return;
+      // The admin panel's settings when it has a store connected, otherwise
+      // settings.json, which Claude edits when asked in the project chat.
+      let s = await read(API);
+      if (!s || !s.configured) s = await read(SETTINGS);
+      if (!s) return;
+      if (s.message && !(s.message.until > Date.now())) s.message = null;
       const updates = Array.isArray(s.updates) ? s.updates : [];
       showSeasons(updates.filter((u) => u.kind === 'season'));
       showNews(updates.filter((u) => u.kind === 'news'));

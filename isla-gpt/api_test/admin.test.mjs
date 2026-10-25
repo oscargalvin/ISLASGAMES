@@ -66,6 +66,7 @@ test("settings from the page are tidied", () => {
   assert.ok(!s.updates.some((u) => u.id === "bad id!"));
   assert.ok(s.updates.some((u) => u.id === "season-halloween"), "built-in themes always come back");
   assert.deepEqual(s.games["pizza-panic"], { status: "fixing", badge: "updated" });
+  assert.equal(cleanState({ games: { "teddy-exe": { status: "hidden" } } }).games["teddy-exe"].status, "archived");
   assert.ok(!("nope" in s.games));
 });
 

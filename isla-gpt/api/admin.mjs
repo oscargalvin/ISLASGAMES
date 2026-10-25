@@ -140,7 +140,7 @@ export function cleanState(input, now = Date.now()) {
   for (const [slug] of GAMES) {
     const x = g[slug] && typeof g[slug] === "object" ? g[slug] : {};
     out.games[slug] = {
-      status: ["live", "fixing", "hidden"].includes(x.status) ? x.status : "live",
+      status: x.status === "hidden" ? "archived" : ["live", "fixing", "archived"].includes(x.status) ? x.status : "live",
       badge: ["", "new", "updated"].includes(x.badge) ? x.badge : "",
     };
   }

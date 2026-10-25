@@ -84,7 +84,7 @@ textarea { min-height: 90px; resize: vertical; }
 .seg button[aria-pressed="true"] { background: var(--sun); }
 .seg button[aria-pressed="true"].g-live { background: var(--mint); }
 .seg button[aria-pressed="true"].g-fixing { background: var(--sun); }
-.seg button[aria-pressed="true"].g-hidden { background: var(--hot); color: #fff; }
+.game.archived { background: #f1ecdc; }
 .game { display: grid; gap: 8px; padding: 12px; border-radius: 18px; background: #fff; border: 3px solid #000; }
 .game b { font-size: 18px; }
 .game .row { gap: 8px 14px; }
@@ -121,17 +121,26 @@ dialog h2 { margin-top: 0; }
 
   <!-- 2. no store yet -->
   <section id="setup" hidden>
-    <h1>One quick setup step</h1>
+    <h1>Admin 🔓</h1>
     <div class="card">
-      <p>The code is right! The admin panel just needs somewhere to save its settings so every visitor can see them. This is free and only has to be done once:</p>
+      <p><b>The code is right!</b> To change the site, just tell Claude in the Isla &amp; Oscar's Games chat what you want, and it goes live for everyone in about 2 minutes. For example:</p>
+      <ul class="steps">
+        <li>📣 "Send everyone a message: We are doing an update!"</li>
+        <li>🎃 "Turn on the Halloween theme" (or Christmas, Easter, Summer, Valentine's, Bonfire Night)</li>
+        <li>✨ "Add a What's new card: Space Yeet is here!"</li>
+        <li>📦 "Put away the Halloween theme" or "Bring it back"</li>
+        <li>🔧 "Close Pizza Panic while it's being fixed" or "Give Yeet the Human an Updated badge"</li>
+        <li>📦 "Archive Teddy.exe" or "Put Teddy.exe back out"</li>
+        <li>🕘 "Go back to how the site was yesterday"</li>
+      </ul>
+      <details><summary>For a grown-up: make this panel work by itself</summary>
       <ol class="steps">
-        <li>Open <a href="https://vercel.com/dashboard" target="_blank" rel="noopener">vercel.com</a> and pick the <b>islasgames-isla-gpt</b> project.</li>
-        <li>Go to the <b>Storage</b> tab and press <b>Create Database</b>.</li>
-        <li>Pick <b>Upstash for Redis</b> (the free plan is fine) and connect it to this project.</li>
-        <li>Go to <b>Deployments</b>, press the <b>⋯</b> on the newest one and choose <b>Redeploy</b>.</li>
+        <li>Open the <b>islasgames-isla-gpt</b> project on <a href="https://vercel.com/dashboard" target="_blank" rel="noopener">vercel.com</a>.</li>
+        <li><b>Storage</b> → <b>Create Database</b> → <b>Upstash for Redis</b> (free) → connect it to this project, then redeploy.</li>
       </ol>
-      <p>Then come back here and type the code again.</p>
-      <button class="btn sun" id="setupRetry">Try again</button>
+      </details>
+      <p><a class="btn sun" href="index.html">← Back to the games</a></p>
+      <button class="btn" id="setupRetry" hidden>Try again</button>
     </div>
   </section>
 
@@ -194,8 +203,10 @@ dialog h2 { margin-top: 0; }
     </div>
 
     <div data-pane="games" hidden>
-      <h2>Games <small>Close a game while you fix it, hide it, or give it a badge.</small></h2>
+      <h2>Games <small>Close a game while you fix it, give it a badge, or archive it.</small></h2>
       <div class="list" id="gameList"></div>
+      <h2>📦 Archived games <small>Nobody can see these. Fix them here, then put them back out.</small></h2>
+      <div class="drawer"><div class="list" id="archList"></div></div>
     </div>
 
     <div data-pane="vers" hidden>
@@ -439,15 +450,33 @@ dialog h2 { margin-top: 0; }
     return box;
   }
   function drawGames() {
-    $('#gameList').replaceChildren(...GAMES.map(([slug, name, emoji]) => {
+    const card = ([slug, name, emoji]) => {
       const g = state.games[slug] || { status: 'live', badge: '' };
-      const card = el('div', 'game');
-      card.append(el('b', '', `${emoji} ${name}`));
-      const r1 = el('div', 'row'); r1.append(el('span', '', 'Status'), seg([['live', '✅ Live'], ['fixing', '🔧 Fixing'], ['hidden', '🙈 Hidden']], g.status, (v) => save((s) => { s.games[slug].status = v; }, `${name}: ${v === 'live' ? 'live again' : v === 'fixing' ? 'closed for fixing' : 'hidden'}`), 'g'));
+      const c = el('div', 'game' + (g.status === 'archived' ? ' archived' : ''));
+      c.append(el('b', '', `${emoji} ${name}`));
+      if (g.status === 'archived') {
+        const r = el('div', 'row');
+        const back = el('button', 'btn small mint', '↩️ Put back out');
+        back.addEventListener('click', () => save((s) => { s.games[slug].status = 'live'; }, `${name}: put back out`, `${emoji} ${name} is back!`));
+        const fix = el('button', 'btn small', '🔧 Put back as "Fixing"');
+        fix.addEventListener('click', () => save((s) => { s.games[slug].status = 'fixing'; }, `${name}: put back, still fixing`, `${emoji} Back, marked as fixing`));
+        r.append(back, fix);
+        c.append(r);
+        return c;
+      }
+      const r1 = el('div', 'row'); r1.append(el('span', '', 'Status'), seg([['live', '✅ Live'], ['fixing', '🔧 Fixing']], g.status, (v) => save((s) => { s.games[slug].status = v; }, `${name}: ${v === 'live' ? 'live again' : 'closed for fixing'}`), 'g'));
       const r2 = el('div', 'row'); r2.append(el('span', '', 'Badge'), seg([['', 'Normal'], ['new', '🆕 New!'], ['updated', '⬆️ Updated!']], g.badge, (v) => save((s) => { s.games[slug].badge = v; }, `${name}: badge ${v || 'normal'}`)));
-      card.append(r1, r2);
-      return card;
-    }));
+      const r3 = el('div', 'row');
+      const arch = el('button', 'btn small', '📦 Archive');
+      arch.addEventListener('click', () => save((s) => { s.games[slug].status = 'archived'; }, `${name}: archived`, `📦 ${name} archived`));
+      r3.append(arch);
+      c.append(r1, r2, r3);
+      return c;
+    };
+    const isArch = ([slug]) => (state.games[slug] || {}).status === 'archived';
+    const live = GAMES.filter((x) => !isArch(x)), arch = GAMES.filter(isArch);
+    $('#gameList').replaceChildren(...(live.length ? live.map(card) : [el('div', 'empty', 'Every game is archived!')]));
+    $('#archList').replaceChildren(...(arch.length ? arch.map(card) : [el('div', 'empty', 'No archived games.')]));
   }
   function drawVersions() {
     if (!history.length) { $('#verList').replaceChildren(el('div', 'empty', 'No versions yet. Change something and it shows up here.')); return; }
