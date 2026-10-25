@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Games Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;900&display=swap">
+<style>
+/* The secret admin panel for Isla & Oscar's Games. */
+:root {
+  --bg: #1d1b3a; --bg2: #2a2654; --ink: #1d1b3a; --paper: #fffaf0; --sun: #ffd23f; --hot: #ff4f6d; --mint: #3ddc97; --sky: #7cc8ff; --muted: #b9b4e0;
+  --display: "Lilita One", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--paper); }
+body { font-family: var(--body); font-weight: 700; background: radial-gradient(circle at 20% 0%, #3b3480 0, transparent 45%), radial-gradient(circle at 90% 100%, #5a2050 0, transparent 40%), var(--bg); min-height: 100vh; }
+main { max-width: 760px; margin: 0 auto; padding: calc(20px + env(safe-area-inset-top, 0px)) 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
+h1 { font-family: var(--display); font-weight: 400; margin: 0; font-size: clamp(30px, 7vw, 46px); color: var(--sun); text-shadow: 0 4px 0 #000, 2px 0 0 #000, -2px 0 0 #000, 0 -2px 0 #000; }
+h2 { font-family: var(--display); font-weight: 400; font-size: 24px; margin: 22px 0 10px; }
+h2 small { font-family: var(--body); font-size: 14px; color: var(--muted); font-weight: 700; }
+p { line-height: 1.45; }
+a { color: var(--sky); }
+button, select, input, textarea { font: inherit; }
+.btn { padding: 10px 16px; border-radius: 999px; border: 3px solid #000; background: var(--paper); color: var(--ink); font-weight: 900; cursor: pointer; box-shadow: 0 3px 0 #000; }
+.btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
+.btn.sun { background: var(--sun); } .btn.hot { background: var(--hot); color: #fff; } .btn.mint { background: var(--mint); } .btn.sky { background: var(--sky); }
+.btn.small { padding: 6px 12px; font-size: 14px; }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn:focus-visible, .key:focus-visible, .seg button:focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; }
+.card { background: var(--paper); color: var(--ink); border: 4px solid #000; border-radius: 22px; box-shadow: 0 6px 0 #000; padding: 16px; }
+
+/* code screen */
+#lock { max-width: 360px; margin: 6vh auto 0; text-align: center; }
+#dots { display: flex; gap: 14px; justify-content: center; margin: 22px 0 8px; }
+#dots i { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--paper); }
+#dots i.on { background: var(--sun); border-color: var(--sun); }
+#dots.shake { animation: shake .35s; }
+@keyframes shake { 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+#lockMsg { min-height: 24px; color: var(--hot); }
+.keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; }
+.key { aspect-ratio: 1.3; border-radius: 20px; border: 3px solid #000; background: var(--paper); color: var(--ink); font: 400 30px var(--display); cursor: pointer; box-shadow: 0 4px 0 #000; }
+.key:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
+.key.dim { background: var(--bg2); color: var(--paper); font: 900 16px var(--body); }
+
+/* panel */
+.top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.top h1 { flex: 1; min-width: 200px; }
+#ver { display: inline-block; margin-top: 6px; color: var(--muted); font-size: 14px; }
+#ver b { color: var(--mint); }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 18px 0 6px; }
+.tabs button { padding: 10px 4px; border-radius: 16px; border: 3px solid #000; background: var(--bg2); color: var(--paper); font-weight: 900; cursor: pointer; font-size: 15px; }
+.tabs button .e { display: block; font-size: 24px; }
+.tabs button[aria-selected="true"] { background: var(--sun); color: var(--ink); box-shadow: 0 4px 0 #000; }
+label.f { display: block; font-size: 14px; margin: 12px 0 6px; color: #4a4670; }
+textarea, input[type=text], select { width: 100%; padding: 12px 14px; border-radius: 14px; border: 3px solid #000; background: #fff; color: var(--ink); font-weight: 700; }
+textarea { min-height: 90px; resize: vertical; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.emojis { display: flex; gap: 6px; flex-wrap: wrap; }
+.emojis button { width: 44px; height: 44px; border-radius: 12px; border: 3px solid transparent; background: #f1ecdc; font-size: 22px; cursor: pointer; }
+.emojis button[aria-pressed="true"] { border-color: #000; background: var(--sun); }
+.hint { font-size: 13px; color: #6a6690; margin: 8px 0 0; }
+.live { display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 18px; background: #e9fff4; border: 3px solid var(--mint); margin-bottom: 12px; }
+.live .ico { font-size: 30px; }
+.live .txt { flex: 1; overflow-wrap: anywhere; }
+.live small { display: block; color: #2c7a55; font-size: 13px; }
+.list { display: grid; gap: 10px; }
+.item, .game, .ver { color: var(--ink); }
+.item { display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 18px; background: #fff; border: 3px solid #000; }
+.item .ico { font-size: 30px; width: 40px; text-align: center; }
+.item .txt { flex: 1; min-width: 0; }
+.item .txt b { display: block; font-size: 17px; }
+.item .txt span { font-size: 14px; color: #6a6690; overflow-wrap: anywhere; }
+.item .acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; background: #eee; color: #444; margin-left: 4px; vertical-align: 2px; }
+.pill.on { background: var(--mint); color: #063; }
+.empty { color: #6a6690; font-size: 14px; padding: 6px 2px; }
+.drawer { background: #f1ecdc; border-radius: 18px; padding: 12px; border: 3px dashed #8a85b0; }
+.seg { display: inline-flex; border: 3px solid #000; border-radius: 999px; overflow: hidden; }
+.seg button { padding: 7px 12px; border: 0; background: #fff; color: var(--ink); font-weight: 900; cursor: pointer; font-size: 14px; }
+.seg button + button { border-left: 2px solid #000; }
+.seg button[aria-pressed="true"] { background: var(--sun); }
+.seg button[aria-pressed="true"].g-live { background: var(--mint); }
+.seg button[aria-pressed="true"].g-fixing { background: var(--sun); }
+.seg button[aria-pressed="true"].g-hidden { background: var(--hot); color: #fff; }
+.game { display: grid; gap: 8px; padding: 12px; border-radius: 18px; background: #fff; border: 3px solid #000; }
+.game b { font-size: 18px; }
+.game .row { gap: 8px 14px; }
+.game .row span { font-size: 13px; color: #6a6690; width: 50px; }
+.ver { display: flex; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 16px; background: #fff; border: 3px solid #000; }
+.ver .n { font-family: var(--display); font-size: 20px; width: 54px; }
+.ver .txt { flex: 1; min-width: 0; }
+.ver .txt span { display: block; font-size: 13px; color: #6a6690; }
+.ver.now { background: #e9fff4; border-color: var(--mint); }
+#toast { position: fixed; z-index: 50; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); padding: 12px 20px; border-radius: 999px; background: #000; color: #fff; font-weight: 800; max-width: calc(100% - 24px); text-align: center; }
+#toast.bad { background: var(--hot); }
+dialog { border: 4px solid #000; border-radius: 22px; padding: 18px; background: var(--paper); color: var(--ink); width: min(520px, calc(100% - 24px)); box-shadow: 0 8px 0 #000; }
+dialog::backdrop { background: rgba(0, 0, 0, .6); }
+dialog h2 { margin-top: 0; }
+.steps { padding-left: 22px; line-height: 1.6; }
+@media (max-width: 520px) {
+  .item { flex-wrap: wrap; }
+  .item .acts { width: 100%; justify-content: flex-start; }
+  .tabs button { font-size: 13px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <!-- 1. the code screen -->
+  <section id="lock">
+    <h1>🔒 Admin</h1>
+    <p>Type the secret code.</p>
+    <div id="dots" aria-live="polite"><i></i><i></i><i></i><i></i></div>
+    <div id="lockMsg" role="alert"></div>
+    <div class="keys" id="keys"></div>
+    <p><a href="index.html">← Back to the games</a></p>
+  </section>
+
+  <!-- 2. no store yet -->
+  <section id="setup" hidden>
+    <h1>One quick setup step</h1>
+    <div class="card">
+      <p>The code is right! The admin panel just needs somewhere to save its settings so every visitor can see them. This is free and only has to be done once:</p>
+      <ol class="steps">
+        <li>Open <a href="https://vercel.com/dashboard" target="_blank" rel="noopener">vercel.com</a> and pick the <b>islasgames-isla-gpt</b> project.</li>
+        <li>Go to the <b>Storage</b> tab and press <b>Create Database</b>.</li>
+        <li>Pick <b>Upstash for Redis</b> (the free plan is fine) and connect it to this project.</li>
+        <li>Go to <b>Deployments</b>, press the <b>⋯</b> on the newest one and choose <b>Redeploy</b>.</li>
+      </ol>
+      <p>Then come back here and type the code again.</p>
+      <button class="btn sun" id="setupRetry">Try again</button>
+    </div>
+  </section>
+
+  <!-- 3. the panel -->
+  <section id="panel" hidden>
+    <div class="top">
+      <div style="flex:1;min-width:200px">
+        <h1>Admin Panel</h1>
+        <span id="ver"></span>
+      </div>
+      <a class="btn small" href="index.html" target="_blank" rel="noopener">👀 View site</a>
+      <button class="btn small" id="logout">🔒 Lock</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="msg" aria-selected="true"><span class="e">📣</span>Message</button>
+      <button role="tab" data-tab="upd" aria-selected="false"><span class="e">✨</span>Updates</button>
+      <button role="tab" data-tab="games" aria-selected="false"><span class="e">🎮</span>Games</button>
+      <button role="tab" data-tab="vers" aria-selected="false"><span class="e">🕘</span>Versions</button>
+    </div>
+
+    <div data-pane="msg">
+      <h2>Message everyone <small>Pops up for everyone on the site right now, even mid-game.</small></h2>
+      <div id="liveNow"></div>
+      <div class="card">
+        <label class="f" for="msgText">Your message</label>
+        <textarea id="msgText" maxlength="200" placeholder="We are doing an update! The games might be a bit slow for 5 minutes."></textarea>
+        <label class="f">Picture</label>
+        <div class="emojis" id="msgEmoji"></div>
+        <label class="f" for="msgFor">Show it for</label>
+        <select id="msgFor">
+          <option value="5">5 minutes</option>
+          <option value="15" selected>15 minutes</option>
+          <option value="60">1 hour</option>
+          <option value="1440">1 day</option>
+          <option value="10080">1 week</option>
+        </select>
+        <p class="hint">Rude words get turned into ##### automatically.</p>
+        <div class="row" style="margin-top:12px"><button class="btn hot" id="msgSend">📣 Send to everyone</button></div>
+      </div>
+    </div>
+
+    <div data-pane="upd" hidden>
+      <h2>On now <small>Everyone can see these.</small></h2>
+      <div class="list" id="updOn"></div>
+      <h2>Off <small>Ready to switch on.</small></h2>
+      <div class="list" id="updOff"></div>
+      <h2>Put away <small>Saved for later. Bring them back any time.</small></h2>
+      <div class="drawer"><div class="list" id="updAway"></div></div>
+      <h2>Make a new update</h2>
+      <div class="card">
+        <label class="f" for="newTitle">Title</label>
+        <input type="text" id="newTitle" maxlength="60" placeholder="New level in Yeet the Human!">
+        <label class="f" for="newText">Words (optional)</label>
+        <input type="text" id="newText" maxlength="240" placeholder="Go and try Space Yeet and find the secret character.">
+        <label class="f">Picture</label>
+        <div class="emojis" id="newEmoji"></div>
+        <p class="hint">It shows as a "What's new" card at the top of the games page. Rude words become #####.</p>
+        <div class="row" style="margin-top:12px"><button class="btn mint" id="newAdd">➕ Add and switch on</button><button class="btn" id="newAddOff">Add but keep off</button></div>
+      </div>
+    </div>
+
+    <div data-pane="games" hidden>
+      <h2>Games <small>Close a game while you fix it, hide it, or give it a badge.</small></h2>
+      <div class="list" id="gameList"></div>
+    </div>
+
+    <div data-pane="vers" hidden>
+      <h2>Versions <small>Every change makes a new version. Go back to any of the last 30.</small></h2>
+      <div class="list" id="verList"></div>
+    </div>
+  </section>
+</main>
+
+<dialog id="editDlg">
+  <h2>Edit update</h2>
+  <label class="f" for="edTitle">Title</label>
+  <input type="text" id="edTitle" maxlength="60">
+  <label class="f" for="edText">Words</label>
+  <input type="text" id="edText" maxlength="240">
+  <label class="f">Picture</label>
+  <div class="emojis" id="edEmoji"></div>
+  <div class="row" style="margin-top:14px"><button class="btn sun" id="edSave">Save</button><button class="btn" id="edCancel">Cancel</button></div>
+</dialog>
+
+<div id="toast" hidden role="status"></div>
+
+<script>
+(() => {
+  const API = '/api/admin';
+  const CODE_KEY = 'games-admin-code';
+  const GAMES = [
+    ['dont-look-back', "Don't Look Back", '👁️'], ['yeet-the-human', 'Yeet the Human', '🚀'], ['night-shift', 'Night Shift', '🏪'],
+    ['floor-is-doom', 'Floor Is Doom', '🌋'], ['road-rage-x', 'Road Rage X', '🏎️'], ['teddy-exe', 'Teddy.exe', '🧸'], ['pizza-panic', 'Pizza Panic', '🍕'],
+  ];
+  const MSG_EMOJI = ['📣', '🔧', '🎉', '⚠️', '👋', '🚀', '🎃', '🎄', '❤️', '😴'];
+  const NEWS_EMOJI = ['✨', '🆕', '🎮', '🚀', '🏆', '🎁', '🔥', '⭐', '🐛', '🎨'];
+
+  const $ = (s) => document.querySelector(s);
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const ss = { get(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) {} } };
+
+  let code = '', state = null, history = [], busy = false;
+
+  let toastT;
+  function toast(text, bad) {
+    const t = $('#toast');
+    t.textContent = text; t.className = bad ? 'bad' : ''; t.hidden = false;
+    clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2800);
+  }
+
+  async function call(body) {
+    const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, ...body }) });
+    let data = {};
+    try { data = await res.json(); } catch (e) {}
+    return { status: res.status, data };
+  }
+
+  function show(which) {
+    $('#lock').hidden = which !== 'lock';
+    $('#setup').hidden = which !== 'setup';
+    $('#panel').hidden = which !== 'panel';
+  }
+
+  // ---------- code screen ----------
+  let typed = '';
+  const keys = $('#keys');
+  ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'back'].forEach((k) => {
+    const b = el('button', 'key' + (k.length > 1 ? ' dim' : ''), k === 'back' ? '⌫' : k === 'clear' ? 'Clear' : k);
+    b.type = 'button';
+    if (k === 'back') b.setAttribute('aria-label', 'Delete');
+    b.addEventListener('click', () => press(k));
+    keys.appendChild(b);
+  });
+  document.addEventListener('keydown', (e) => {
+    if ($('#lock').hidden) return;
+    if (/^[0-9]$/.test(e.key)) press(e.key);
+    else if (e.key === 'Backspace') press('back');
+  });
+  function drawDots() { [...$('#dots').children].forEach((d, i) => d.classList.toggle('on', i < typed.length)); }
+  function press(k) {
+    if (busy) return;
+    if (k === 'back') typed = typed.slice(0, -1);
+    else if (k === 'clear') typed = '';
+    else if (typed.length < 4) typed += k;
+    $('#lockMsg').textContent = '';
+    drawDots();
+    if (typed.length === 4) login(typed);
+  }
+  async function login(c) {
+    busy = true;
+    code = c;
+    try {
+      const { status, data } = await call({ action: 'login' });
+      if (status === 200) { ss.set(CODE_KEY, c); got(data); show('panel'); }
+      else if (status === 503 && data.needsStore) { ss.set(CODE_KEY, c); show('setup'); }
+      else {
+        ss.set(CODE_KEY, null);
+        $('#lockMsg').textContent = data.error || 'Something went wrong. Try again.';
+        $('#dots').classList.remove('shake'); void $('#dots').offsetWidth; $('#dots').classList.add('shake');
+        show('lock');
+      }
+    } catch (e) {
+      $('#lockMsg').textContent = "Can't reach the site. Check the internet and try again.";
+      show('lock');
+    }
+    typed = ''; drawDots(); busy = false;
+  }
+  $('#setupRetry').addEventListener('click', () => { const c = ss.get(CODE_KEY); c ? login(c) : show('lock'); });
+  $('#logout').addEventListener('click', () => { ss.set(CODE_KEY, null); code = ''; state = null; show('lock'); });
+
+  // ---------- saving ----------
+  function got(data) {
+    if (data.state) state = data.state;
+    if (data.history) history = data.history;
+    draw();
+  }
+  // Every change is saved straight away and becomes a new version.
+  async function save(change, note, okText) {
+    if (busy) return false;
+    busy = true;
+    const next = structuredClone(state);
+    change(next);
+    try {
+      const { status, data } = await call({ action: 'save', v: state.v, state: next, note });
+      if (status === 200) { got(data); toast(okText || 'Saved ✓'); return true; }
+      if (status === 409) { got(data); toast(data.error, true); return false; }
+      if (status === 401) { ss.set(CODE_KEY, null); show('lock'); toast('Type the code again.', true); return false; }
+      toast(data.error || 'That did not save. Try again.', true);
+      return false;
+    } catch (e) {
+      toast("Couldn't save. Check the internet.", true);
+      return false;
+    } finally { busy = false; }
+  }
+
+  // ---------- tabs ----------
+  document.querySelectorAll('.tabs button').forEach((t) => t.addEventListener('click', () => {
+    document.querySelectorAll('.tabs button').forEach((x) => x.setAttribute('aria-selected', String(x === t)));
+    document.querySelectorAll('[data-pane]').forEach((p) => { p.hidden = p.dataset.pane !== t.dataset.tab; });
+  }));
+
+  function emojiPicker(box, list) {
+    let pick = list[0];
+    const set = (e) => { pick = e; [...box.children].forEach((b) => b.setAttribute('aria-pressed', String(b.textContent === e))); };
+    box.replaceChildren(...list.map((e) => { const b = el('button', '', e); b.type = 'button'; b.addEventListener('click', () => set(e)); return b; }));
+    set(pick);
+    return { get: () => pick, set: (e) => { if (!list.includes(e)) { const b = el('button', '', e); b.type = 'button'; b.addEventListener('click', () => set(e)); box.prepend(b); list.unshift(e); } set(e); } };
+  }
+  const msgEmoji = emojiPicker($('#msgEmoji'), MSG_EMOJI.slice());
+  const newEmoji = emojiPicker($('#newEmoji'), NEWS_EMOJI.slice());
+  const edEmoji = emojiPicker($('#edEmoji'), NEWS_EMOJI.slice());
+
+  const timeText = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }); };
+  const minsLeft = (until) => { const m = Math.round((until - Date.now()) / 60000); return m > 90 ? `${Math.round(m / 60)} hours` : `${Math.max(m, 1)} min`; };
+
+  // ---------- drawing ----------
+  function draw() {
+    if (!state) return;
+    $('#ver').replaceChildren('Version ', el('b', '', String(state.v)), state.at ? ` · saved ${timeText(state.at)}` : ' · nothing changed yet');
+    drawMessage(); drawUpdates(); drawGames(); drawVersions();
+  }
+
+  function drawMessage() {
+    const box = $('#liveNow');
+    const m = state.message;
+    if (!m || m.until <= Date.now()) { box.replaceChildren(); return; }
+    const live = el('div', 'live');
+    const txt = el('div', 'txt');
+    txt.append(el('small', '', `Showing now · ${minsLeft(m.until)} left`), document.createTextNode(m.text));
+    const stop = el('button', 'btn small', '⏹ Stop');
+    stop.addEventListener('click', () => save((s) => { s.message = null; }, 'Stopped the message', 'Message stopped'));
+    live.append(el('div', 'ico', m.emoji), txt, stop);
+    box.replaceChildren(live);
+  }
+  $('#msgSend').addEventListener('click', async () => {
+    const text = $('#msgText').value.trim();
+    if (!text) { toast('Type a message first.', true); $('#msgText').focus(); return; }
+    const ok = await save((s) => { s.message = { text, emoji: msgEmoji.get(), minutes: Number($('#msgFor').value) }; }, `Sent a message: "${text.slice(0, 40)}"`, '📣 Sent to everyone!');
+    if (ok) $('#msgText').value = '';
+  });
+
+  function updateItem(u) {
+    const item = el('div', 'item');
+    const txt = el('div', 'txt');
+    const b = el('b', '', u.title);
+    b.append(el('span', 'pill' + (u.status === 'on' ? ' on' : ''), u.kind === 'season' ? 'Theme' : 'News'));
+    txt.append(b);
+    txt.append(el('span', '', u.kind === 'season' ? 'Changes the colours and adds falling decorations.' : (u.text || '')));
+    const acts = el('div', 'acts');
+    const btn = (label, cls, fn) => { const x = el('button', 'btn small ' + cls, label); x.addEventListener('click', fn); acts.appendChild(x); };
+    const set = (status, note, ok) => save((s) => { const t = s.updates.find((x) => x.id === u.id); if (t) t.status = status; }, note, ok);
+    if (u.status === 'on') btn('Turn off', '', () => set('off', `Turned off ${u.title}`, `${u.emoji} Off`));
+    if (u.status === 'off') btn('Turn on', 'mint', () => set('on', `Turned on ${u.title}`, `${u.emoji} On for everyone!`));
+    if (u.status !== 'away') btn('Put away', '', () => set('away', `Put away ${u.title}`, '📦 Put away'));
+    if (u.status === 'away') {
+      btn('Bring back', 'sky', () => set('off', `Brought back ${u.title}`, '↩️ Brought back (it is off)'));
+      btn('Bring back on', 'mint', () => set('on', `Brought back ${u.title}`, `${u.emoji} Back on!`));
+    }
+    if (u.kind === 'news') {
+      btn('Edit', '', () => openEdit(u));
+      if (u.status === 'away') btn('Delete', 'hot', () => { if (confirm(`Delete "${u.title}" for good? (You can still get it back from Versions.)`)) save((s) => { s.updates = s.updates.filter((x) => x.id !== u.id); }, `Deleted ${u.title}`, '🗑️ Deleted'); });
+    }
+    item.append(el('div', 'ico', u.emoji), txt, acts);
+    return item;
+  }
+  function drawUpdates() {
+    const fill = (id, list, none) => $(id).replaceChildren(...(list.length ? list.map(updateItem) : [el('div', 'empty', none)]));
+    fill('#updOn', state.updates.filter((u) => u.status === 'on'), 'Nothing is on right now.');
+    fill('#updOff', state.updates.filter((u) => u.status === 'off'), 'Nothing here.');
+    fill('#updAway', state.updates.filter((u) => u.status === 'away'), 'Nothing put away.');
+  }
+  async function addNews(status) {
+    const title = $('#newTitle').value.trim();
+    if (!title) { toast('Give it a title first.', true); $('#newTitle').focus(); return; }
+    const u = { id: 'n' + Date.now().toString(36), kind: 'news', emoji: newEmoji.get(), title, text: $('#newText').value.trim(), status };
+    const ok = await save((s) => { s.updates.unshift(u); }, `Added ${title}`, status === 'on' ? '✨ Added and on!' : 'Added (off)');
+    if (ok) { $('#newTitle').value = ''; $('#newText').value = ''; }
+  }
+  $('#newAdd').addEventListener('click', () => addNews('on'));
+  $('#newAddOff').addEventListener('click', () => addNews('off'));
+
+  let editing = null;
+  function openEdit(u) {
+    editing = u.id;
+    $('#edTitle').value = u.title; $('#edText').value = u.text || ''; edEmoji.set(u.emoji);
+    $('#editDlg').showModal();
+  }
+  $('#edCancel').addEventListener('click', () => $('#editDlg').close());
+  $('#edSave').addEventListener('click', async () => {
+    const title = $('#edTitle').value.trim();
+    if (!title) { toast('Give it a title.', true); return; }
+    const ok = await save((s) => { const t = s.updates.find((x) => x.id === editing); if (t) { t.title = title; t.text = $('#edText').value.trim(); t.emoji = edEmoji.get(); } }, `Edited ${title}`, 'Saved ✓');
+    if (ok) $('#editDlg').close();
+  });
+
+  function seg(options, current, onPick, prefix) {
+    const box = el('div', 'seg');
+    for (const [val, label] of options) {
+      const b = el('button', prefix ? `${prefix}-${val || 'none'}` : '', label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(val === current));
+      b.addEventListener('click', () => { if (val !== current) onPick(val); });
+      box.appendChild(b);
+    }
+    return box;
+  }
+  function drawGames() {
+    $('#gameList').replaceChildren(...GAMES.map(([slug, name, emoji]) => {
+      const g = state.games[slug] || { status: 'live', badge: '' };
+      const card = el('div', 'game');
+      card.append(el('b', '', `${emoji} ${name}`));
+      const r1 = el('div', 'row'); r1.append(el('span', '', 'Status'), seg([['live', '✅ Live'], ['fixing', '🔧 Fixing'], ['hidden', '🙈 Hidden']], g.status, (v) => save((s) => { s.games[slug].status = v; }, `${name}: ${v === 'live' ? 'live again' : v === 'fixing' ? 'closed for fixing' : 'hidden'}`), 'g'));
+      const r2 = el('div', 'row'); r2.append(el('span', '', 'Badge'), seg([['', 'Normal'], ['new', '🆕 New!'], ['updated', '⬆️ Updated!']], g.badge, (v) => save((s) => { s.games[slug].badge = v; }, `${name}: badge ${v || 'normal'}`)));
+      card.append(r1, r2);
+      return card;
+    }));
+  }
+  function drawVersions() {
+    if (!history.length) { $('#verList').replaceChildren(el('div', 'empty', 'No versions yet. Change something and it shows up here.')); return; }
+    $('#verList').replaceChildren(...history.map((h) => {
+      const row = el('div', 'ver' + (h.v === state.v ? ' now' : ''));
+      const txt = el('div', 'txt');
+      txt.append(el('b', '', h.note), el('span', '', timeText(h.at)));
+      row.append(el('div', 'n', 'v' + h.v), txt);
+      if (h.v === state.v) row.append(el('span', 'pill on', 'Now'));
+      else {
+        const b = el('button', 'btn small', '↩️ Go back');
+        b.addEventListener('click', async () => {
+          if (!confirm(`Go back to version ${h.v}? Everything will look like it did then.`)) return;
+          busy = true;
+          try {
+            const { status, data } = await call({ action: 'restore', to: h.v });
+            if (status === 200) { got(data); toast(`↩️ Back to version ${h.v}`); } else { if (data.state) got(data); toast(data.error || 'That did not work.', true); }
+          } catch (e) { toast("Couldn't reach the site.", true); }
+          busy = false;
+        });
+        row.append(b);
+      }
+      return row;
+    }));
+  }
+
+  // Keep the timer on the live message fresh, and pick up changes from another device.
+  setInterval(() => { if (state && !$('#panel').hidden) drawMessage(); }, 30000);
+  document.addEventListener('visibilitychange', async () => {
+    if (document.hidden || !code || $('#panel').hidden || busy) return;
+    try { const { status, data } = await call({ action: 'get' }); if (status === 200) got(data); } catch (e) {}
+  });
+
+  const saved = ss.get(CODE_KEY);
+  if (saved) login(saved); else show('lock');
+  window.__admin = { get state() { return state; } };
+})();
+</script>
+</body>
+</html>

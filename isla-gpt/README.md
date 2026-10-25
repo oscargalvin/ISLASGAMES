@@ -20,6 +20,12 @@ Isla GPT lives in the `isla-gpt/` folder of the ISLASGAMES repo and gets its own
 
 Weather comes from Open-Meteo, and area names come from BigDataCloud. Neither needs a key.
 
+## The secret admin panel (games site)
+
+Tap **Isla & Oscar's Games** at the top of the games page 4 times quickly, then type the code (5522, or whatever `ADMIN_CODE` is set to in Vercel). From there you can message everyone on the site, switch seasonal themes and news on, off or put them away, close or hide a game while it's being fixed, and go back to any of the last 30 versions.
+
+It saves its settings in a free Upstash Redis store. One time: in Vercel open the project, go to **Storage → Create Database → Upstash for Redis**, connect it to this project, then redeploy. Until then the games work as normal and the panel shows these steps.
+
 ## How it's put together
 
 | Part | Where |
@@ -29,6 +35,9 @@ Weather comes from Open-Meteo, and area names come from BigDataCloud. Neither ne
 | Asking the browser for location | `lib/services/location_service.dart` |
 | The AI and weather (Vercel function) | `api/chat.mjs` |
 | Vercel build settings | `vercel.json` |
+| Games admin brain (Vercel function) | `api/admin.mjs` |
+| Admin panel page | `web/games/admin.html` |
+| Live messages and themes on the games page | `web/games/live.js` |
 
 ## Running locally
 
