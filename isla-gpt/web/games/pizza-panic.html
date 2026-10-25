@@ -62,6 +62,7 @@ button:focus-visible { outline: 3px solid var(--cheese); outline-offset: 3px; }
 #hpBar i { background: linear-gradient(90deg, #e63946, #ffc93c, #8ac926); }
 body.touch #speedo { right: 50%; transform: translateX(50%); bottom: auto; top: calc(10px + env(safe-area-inset-top, 0px)); text-align: center; }
 body.touch #spdNum { font-size: 30px; }
+body.touch #prompt { bottom: auto; top: 40%; font-size: 20px; }
 body.touch .bars { justify-content: center; }
 body.touch .bar { width: 76px; }
 body.touch #orders { top: calc(60px + env(safe-area-inset-top, 0px)); width: 170px; }
@@ -85,6 +86,7 @@ body.touch #orders { top: calc(60px + env(safe-area-inset-top, 0px)); width: 170
 #tBoost { right: calc(112px + env(safe-area-inset-right, 0px)); bottom: calc(98px + env(safe-area-inset-bottom, 0px)); width: 80px; height: 60px; font-size: 16px; background: rgba(255, 123, 0, .6); }
 #tThrow { right: calc(14px + env(safe-area-inset-right, 0px)); bottom: calc(136px + env(safe-area-inset-bottom, 0px)); width: 88px; height: 70px; font-size: 15px; line-height: 1; background: rgba(255, 201, 60, .65); color: #fff; }
 #tThrow.ready { animation: pulse .6s infinite alternate; }
+#tFight { left: calc(14px + env(safe-area-inset-left, 0px)); bottom: calc(116px + env(safe-area-inset-bottom, 0px)); width: 188px; height: 70px; font-size: 26px; background: rgba(230, 57, 70, .85); animation: pulse .35s infinite alternate; }
 @keyframes pulse { to { transform: scale(1.08); background: rgba(255, 201, 60, .95); } }
 body.autogas #tGas { opacity: .6; }
 
@@ -154,6 +156,7 @@ h3 { margin: 6px 0 0; font-family: var(--display); font-weight: 400; font-size: 
   #tLeft, #tRight { width: 80px; height: 80px; } #tRight { left: calc(104px + env(safe-area-inset-left, 0px)); }
   #tGas { width: 80px; height: 96px; } #tBrake, #tBoost { right: calc(102px + env(safe-area-inset-right, 0px)); width: 74px; } #tBoost { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); height: 54px; }
   #tThrow { bottom: calc(120px + env(safe-area-inset-bottom, 0px)); width: 80px; height: 60px; }
+  #tFight { bottom: calc(104px + env(safe-area-inset-bottom, 0px)); width: 170px; height: 60px; }
   .order { padding: 3px 6px; font-size: 12px; } .order b { font-size: 12.5px; }
 }
 @media (max-width: 600px) { .side { place-items: stretch; background: rgba(18, 10, 4, .92); } }
@@ -174,7 +177,7 @@ h3 { margin: 6px 0 0; font-family: var(--display); font-weight: 400; font-size: 
   <div id="pops"></div>
   <div id="bigMsg"></div>
   <div id="prompt" hidden></div>
-  <div id="hint" hidden>W/↑ gas · A D steer · Space brake · Shift BOOST · E deliver / throw pizza</div>
+  <div id="hint" hidden>W/↑ gas · A D steer · Space brake · Shift BOOST · E deliver / throw pizza · F fight</div>
   <div id="speedo">
     <div id="spdNum">0</div><div id="spdUnit">KM/H</div>
     <div class="bars"><div class="bar" id="boostBar"><div class="tr2"><i></i></div><span>BOOST</span></div><div class="bar" id="hpBar"><div class="tr2"><i></i></div><span>RIDE</span></div></div>
@@ -185,6 +188,7 @@ h3 { margin: 6px 0 0; font-family: var(--display); font-weight: 400; font-size: 
   <button class="tb" id="tLeft" aria-label="Steer left">◀</button>
   <button class="tb" id="tRight" aria-label="Steer right">▶</button>
   <button class="tb" id="tThrow">THROW<br>PIZZA</button>
+  <button class="tb" id="tFight" hidden>👊 FIGHT!</button>
   <button class="tb" id="tBoost">BOOST</button>
   <button class="tb" id="tBrake">BRAKE</button>
   <button class="tb" id="tGas">GAS</button>
@@ -249,10 +253,10 @@ h3 { margin: 6px 0 0; font-family: var(--display); font-weight: 400; font-size: 
     <div class="how">
       <p><b>Deliver pizzas!</b> Follow the arrow and the glowing beams to each customer's house. Get close and press <kbd>E</kbd> (or THROW PIZZA) to throw it to their door. Faster delivery = bigger tips. Throw at full speed for a DRIVE-BY bonus!</p>
       <p><b>Keep your pizzas on!</b> Your pizza boxes are stacked on your ride and they wobble. Hard turns, crashes and big jumps can send them flying. Out of pizzas? Drive back to the pizza shop (red beam) to restock and repair.</p>
-      <p><b>Zombies</b> want your pizza. Smash through them at speed for BONK points. Go too slowly and they grab on and eat your pizzas! Shake them off by boosting or swerving. No delivery nearby? THROW PIZZA bonks zombies too.</p>
+      <p><b>Zombies</b> want your pizza. Smash through them at speed for BONK points. Go too slowly and they hop onto your ride and eat your pizzas! FIGHT them off: tap 👊 FIGHT (or press <kbd>F</kbd>) to whack them until they fall off. Watch out for skeletons too. They are faster, but only need 2 whacks. No delivery nearby? THROW PIZZA bonks zombies too.</p>
       <p><b>Your shift ends</b> if 3 orders arrive too late or your ride gets wrecked. Grab power-ups: 🌶 boost, 🧄 garlic shield, 🧀 cheese bomb, 🧲 coin magnet, ⏰ extra time.</p>
-      <p><b>Computer:</b> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows to drive, <kbd>Space</kbd> brake, <kbd>Shift</kbd> boost, <kbd>E</kbd> deliver / throw, <kbd>H</kbd> horn, <kbd>Esc</kbd> pause.</p>
-      <p><b>Phone:</b> turn it sideways. ◀ ▶ steer, GAS, BRAKE, BOOST and THROW PIZZA on the right. Auto-gas is on by default.</p>
+      <p><b>Computer:</b> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows to drive, <kbd>Space</kbd> brake, <kbd>Shift</kbd> boost, <kbd>E</kbd> deliver / throw, <kbd>F</kbd> fight off zombies, <kbd>H</kbd> horn, <kbd>Esc</kbd> pause.</p>
+      <p><b>Phone:</b> turn it sideways. ◀ ▶ steer, GAS, BRAKE, BOOST and THROW PIZZA on the right. A big 👊 FIGHT button pops up when a zombie jumps on. Auto-gas is on by default.</p>
     </div>
     <button class="big" data-back>LET'S GO!</button>
   </div>
@@ -322,9 +326,9 @@ const GADGETS = [
   { id: 'garlic', name: 'Garlic Exhaust', icon: '🧄', price: 2000, blurb: 'BOOST blasts zombies away and shakes off grabbers' },
 ];
 const AREAS = {
-  town:  { name: 'Pizza Town', em: '🏙️', sub: 'Sunny downtown', tod: 0.42, todSpeed: 1 / 400, weather: 'clear', zombies: 1.0, seed: 11 },
-  burbs: { name: 'Spooky Suburbs', em: '🏡', sub: 'Rainy sunset', tod: 0.73, todSpeed: 1 / 500, weather: 'rain', zombies: 1.25, seed: 22, unlock: 900 },
-  grave: { name: 'Graveyard Hills', em: '🪦', sub: 'Foggy midnight', tod: 0.02, todSpeed: 0, weather: 'fog', zombies: 1.6, seed: 33, unlock: 2200 },
+  town:  { name: 'Pizza Town', em: '🏙️', sub: 'Sunny downtown', tod: 0.42, todSpeed: 1 / 400, weather: 'clear', zombies: 1.0, skel: 0.25, seed: 11 },
+  burbs: { name: 'Spooky Suburbs', em: '🏡', sub: 'Rainy sunset', tod: 0.73, todSpeed: 1 / 500, weather: 'rain', zombies: 1.25, skel: 0.35, seed: 22, unlock: 900 },
+  grave: { name: 'Graveyard Hills', em: '🪦', sub: 'Foggy midnight', tod: 0.02, todSpeed: 0, weather: 'fog', zombies: 1.6, skel: 0.55, seed: 33, unlock: 2200 },
 };
 const MISSION_POOL = [
   { id: 'del',   tiers: [3, 6, 10],      reward: [100, 250, 500], stat: 'delivered', text: (n) => `Deliver ${n} pizzas in one shift` },
@@ -335,6 +339,7 @@ const MISSION_POOL = [
   { id: 'perf',  tiers: [2, 4, 8],       reward: [150, 300, 600], stat: 'perfect', text: (n) => `Make ${n} super-fast deliveries` },
   { id: 'cheese', tiers: [1, 3],         reward: [150, 400],      stat: 'cheeseBombs', text: (n) => `Set off ${n} cheese bomb${n > 1 ? 's' : ''}` },
   { id: 'boom',  tiers: [2, 6],          reward: [150, 400],      stat: 'booms', text: (n) => `Blow up ${n} barrels` },
+  { id: 'fight', tiers: [3, 8, 15],     reward: [120, 250, 500], stat: 'fought', text: (n) => `Fight ${n} zombies off your ride` },
   { id: 'vip',   tiers: [1, 3],          reward: [200, 500],      stat: 'vips', text: (n) => `Deliver ${n} VIP order${n > 1 ? 's' : ''}` },
 ];
 const SAVE_KEY = 'pizza-panic-v1';
@@ -406,6 +411,8 @@ const A = {
   },
   nom(pan) { this.groan(0.5, pan, 'nom'); setTimeout(() => this.groan(0.5, pan, 'nom'), 180); },
   bonk(pan) { this.tone({ f: 300, to: 900, type: 'sine', v: 0.25, a: 0.005, r: 0.18, pan }); this.nz({ f: 600, v: 0.3, r: 0.08, pan }); this.tone({ f: 120, to: 60, v: 0.25, r: 0.1, pan }); },
+  rattle(pan) { if (!this.ctx) return; const t = this.ctx.currentTime; for (let i = 0; i < 7; i++) { this.nz({ f: rand(2500, 4500), type: 'bandpass', q: 6, v: 0.18, a: 0.002, r: 0.04, at: t + i * 0.045 + rand(0, 0.02), pan }); this.tone({ f: rand(700, 1100), type: 'square', v: 0.03, r: 0.03, at: t + i * 0.045, pan }); } },
+  whack(pan) { this.nz({ f: 1800, to: 300, v: 0.45, r: 0.09, pan }); this.tone({ f: 220, to: 70, type: 'triangle', v: 0.35, r: 0.12, pan }); },
   splat(pan) { this.nz({ f: 900, to: 200, v: 0.35, r: 0.25, pan }); this.tone({ f: 200, to: 80, type: 'triangle', v: 0.15, r: 0.2, pan }); },
   crash(v = 1) { this.nz({ f: 2400, to: 100, v: 0.6 * v, r: 0.6 }); this.tone({ f: 90, to: 40, v: 0.5 * v, r: 0.4 }); for (let i = 0; i < 3; i++) this.nz({ f: rand(2500, 5000), type: 'bandpass', q: 8, v: 0.12 * v, r: 0.12, at: this.ctx && this.ctx.currentTime + i * 0.05 }); },
   boom() { this.nz({ f: 1600, to: 50, v: 0.9, r: 1.3 }); this.tone({ f: 70, to: 25, v: 0.8, r: 1.0 }); },
@@ -543,6 +550,7 @@ const FX = { add: new Particles(IS_TOUCH ? 600 : 1200, true), norm: new Particle
 const C = { spark: [1, .8, .3], spark2: [1, .3, .05], smoke: [.55, .55, .58], fire: [1, .7, .2], fire2: [1, .2, .02], goo: [.55, .85, .2], goo2: [.25, .55, .1], cheese: [1, .85, .3], gold: [1, .85, .2], water: [.6, .8, 1], boost: [1, .6, .1], boost2: [1, .2, 0], sauce: [.9, .15, .1] };
 function sparks(x, y, z, n) { FX.add.burst(n, () => ({ x, y, z, vx: rand(-5, 5), vy: rand(1, 6), vz: rand(-5, 5), life: rand(.25, .55), size: rand(.08, .16), size1: .02, c0: C.spark, c1: C.spark2, g: 18 })); }
 function goo(x, y, z, n) { FX.norm.burst(n, () => ({ x, y, z, vx: rand(-4, 4), vy: rand(2, 7), vz: rand(-4, 4), life: rand(.5, 1), size: rand(.15, .35), size1: .05, c0: C.goo, c1: C.goo2, g: 16 })); }
+function bones(x, y, z, n) { FX.norm.burst(n, () => ({ x, y, z, vx: rand(-4, 4), vy: rand(2, 7), vz: rand(-4, 4), life: rand(.6, 1.1), size: rand(.12, .25), size1: .08, c0: [.95, .93, .85], c1: [.8, .78, .7], g: 16 })); }
 function explosionFX(x, y, z, s = 1, cheese) {
   FX.add.burst(Math.round(45 * s), () => { const a = rand(0, 6.28), b = rand(-0.1, 1.3), sp = rand(4, 13) * s; return { x, y: y + .5, z, vx: Math.cos(a) * Math.cos(b) * sp, vy: Math.sin(b) * sp + 2, vz: Math.sin(a) * Math.cos(b) * sp, life: rand(.4, .9), size: rand(.8, 1.7) * s, size1: .1, c0: cheese ? C.cheese : C.fire, c1: cheese ? [1, .6, .1] : C.fire2, drag: 2.5 }; });
   FX.norm.burst(Math.round(18 * s), () => ({ x: x + rand(-1, 1), y: y + rand(0, 1.5), z: z + rand(-1, 1), vx: rand(-2, 2), vy: rand(2, 5), vz: rand(-2, 2), life: rand(1.4, 2.4), size: rand(1, 2), size1: rand(3, 4.5), c0: cheese ? [1, .9, .6] : [.3, .27, .25], a: .5, drag: 1.2 }));
@@ -865,13 +873,13 @@ function buildVehicle(id, paint) {
     add(new THREE.BoxGeometry(0.42, 0.12, 0.6), darkMat, 0, 0.72, -0.3); add(new THREE.CylinderGeometry(0.03, 0.03, 0.7, 6).rotateZ(Math.PI / 2), chrome, 0, 1.3, 0.62);
     add(new THREE.BoxGeometry(0.16, 0.1, 0.06), headM, 0, 1.0, 0.74); add(new THREE.BoxGeometry(0.2, 0.08, 0.05), tailM, 0, 0.6, -0.78);
     W(0, 0.28, 0.62, 0.28, 0.16, true); W(0, 0.28, -0.6, 0.28, 0.18, false);
-    rider(body, 0.78, -0.18, 0.15); m.rack.position.set(0, 0.95, -0.62); m.lights.push({ x: 0, y: 1.0, z: 0.8, c: 'h' }, { x: 0, y: 0.6, z: -0.8, c: 't' });
+    m.rider = rider(body, 0.78, -0.18, 0.15); m.rack.position.set(0, 0.95, -0.62); m.lights.push({ x: 0, y: 1.0, z: 0.8, c: 'h' }, { x: 0, y: 0.6, z: -0.8, c: 't' });
   } else if (id === 'dirt') {
     add(new THREE.BoxGeometry(0.3, 0.35, 1.2), pm, 0, 0.75, 0); add(new THREE.BoxGeometry(0.36, 0.25, 0.5), pm, 0, 0.95, 0.35);
     add(new THREE.CylinderGeometry(0.04, 0.04, 0.9, 6), chrome, 0, 0.75, 0.68).rotation.x = 0.4; add(new THREE.CylinderGeometry(0.03, 0.03, 0.75, 6).rotateZ(Math.PI / 2), chrome, 0, 1.18, 0.58);
     add(new THREE.BoxGeometry(0.3, 0.1, 0.7), darkMat, 0, 0.98, -0.2); add(new THREE.CylinderGeometry(0.06, 0.08, 0.6, 8).rotateX(Math.PI / 2), chrome, 0.2, 0.55, -0.45);
     W(0, 0.38, 0.72, 0.38, 0.14, true); W(0, 0.38, -0.66, 0.38, 0.18, false);
-    rider(body, 1.02, -0.12, 0.35); m.rack.position.set(0, 1.1, -0.68); m.lights.push({ x: 0, y: 1.0, z: 0.75, c: 'h' }, { x: 0, y: 0.9, z: -0.75, c: 't' });
+    m.rider = rider(body, 1.02, -0.12, 0.35); m.rack.position.set(0, 1.1, -0.68); m.lights.push({ x: 0, y: 1.0, z: 0.75, c: 'h' }, { x: 0, y: 0.9, z: -0.75, c: 't' });
   } else if (id === 'van') {
     add(new THREE.BoxGeometry(2.1, 2.0, 4.6), pm, 0, 1.4, -0.1); add(new THREE.BoxGeometry(2.0, 1.0, 0.6), pm, 0, 0.9, 2.35);
     add(new THREE.BoxGeometry(1.9, 0.8, 0.05), glassM, 0, 1.85, 2.17); for (const s of [-1, 1]) add(new THREE.BoxGeometry(0.05, 0.7, 1.0), glassM, s * 1.06, 1.85, 1.5);
@@ -926,6 +934,12 @@ function buildZombieMeshes() {
   face.box(0, -0.1, 0.2, 0.16, 0.07, 0.06, 0, 0, '#3a0a0a');
   const fg = new THREE.BufferGeometry(); fg.setAttribute('position', new THREE.Float32BufferAttribute(face.p, 3)); fg.setAttribute('normal', new THREE.Float32BufferAttribute(face.n, 3)); fg.setAttribute('color', new THREE.Float32BufferAttribute(face.c, 3));
   zParts.face = mk(fg, new THREE.MeshBasicMaterial({ vertexColors: true }), false); zParts.face.castShadow = false;
+  const sk = new GB();
+  for (const ex of [-0.085, 0.085]) sk.geo(new THREE.SphereGeometry(0.065, 8, 6), M4.compose(new V3(ex, 0.04, 0.19), Q.identity(), new V3(1, 1.15, 0.6)), '#0a0a0a');
+  sk.geo(new THREE.ConeGeometry(0.03, 0.06, 3), M4.compose(new V3(0, -0.04, 0.22), Q.setFromEuler(new THREE.Euler(Math.PI, 0, 0)), S1), '#0a0a0a');
+  sk.box(0, -0.13, 0.19, 0.17, 0.06, 0.06, 0, 0, '#0a0a0a'); for (let k = -2; k <= 2; k++) sk.box(k * 0.032, -0.13, 0.215, 0.024, 0.05, 0.03, 0, 0, '#f4efdc');
+  const skg = new THREE.BufferGeometry(); skg.setAttribute('position', new THREE.Float32BufferAttribute(sk.p, 3)); skg.setAttribute('normal', new THREE.Float32BufferAttribute(sk.n, 3)); skg.setAttribute('color', new THREE.Float32BufferAttribute(sk.c, 3));
+  zParts.skull = mk(skg, new THREE.MeshBasicMaterial({ vertexColors: true }), false); zParts.skull.castShadow = false;
   zParts.hat = mk(new THREE.ConeGeometry(0.16, 0.36, 8).translate(0, 0.18, 0), stdMat({ roughness: 0.5 }), true); zParts.hat.castShadow = false;
 }
 const ZSKIN = ['#8fbc5a', '#9ccc65', '#7fb069', '#a3b18a', '#b5c99a', '#9db4a0'];
@@ -935,35 +949,40 @@ const HATS = ['#ff006e', '#3a86ff', '#ffbe0b', '#8338ec', '#06d6a0'];
 const zombies = [];
 function spawnZombie(x, z, opts = {}) {
   if (zombies.length >= ZMAX) return null;
-  const zb = { x, z, y: 0, vx: 0, vy: 0, vz: 0, yaw: rand(0, 6.28), state: 'wander', t: 0, phase: rand(0, 6), speed: rand(1.2, 2.4) * (opts.fast ? 1.6 : 1), wanderT: 0, spin: new V3(), rot: new THREE.Euler(), grabT: 0, grabSide: 0, hat: Math.random() < 0.22, lie: 0, groanT: rand(2, 10), size: rand(0.92, 1.12) };
-  const i = zombies.length; zombies.push(zb); zb.i = i; colorZombie(i);
+  const zb = { x, z, y: 0, vx: 0, vy: 0, vz: 0, yaw: rand(0, 6.28), state: 'wander', t: 0, phase: rand(0, 6), speed: rand(1.2, 2.4) * (opts.fast ? 1.6 : 1), wanderT: 0, spin: new V3(), rot: new THREE.Euler(), grabT: 0, grabSide: 0, hat: Math.random() < 0.22, lie: 0, groanT: rand(2, 10), size: rand(0.92, 1.12), skel: opts.skel != null ? opts.skel : Math.random() < (run ? AREAS[run.area].skel : 0.3), hits: 0, recoil: 0 };
+  if (zb.skel) zb.speed *= 1.3;
+  const i = zombies.length; zombies.push(zb); zb.i = i; colorZombie(i, zb);
   return zb;
 }
 const _c = new THREE.Color();
-function colorZombie(i) {
+const BONE = '#ece6cf';
+function colorZombie(i, zb) {
   const set = (im, col) => { _c.set(col); im.instanceColor.setXYZ(i, _c.r, _c.g, _c.b); im.instanceColor.needsUpdate = true; };
-  const skin = pick(ZSKIN), shirt = pick(ZSHIRT), pants = pick(ZPANTS);
+  const skin = zb.skel ? BONE : pick(ZSKIN), shirt = zb.skel ? '#d9d2b8' : pick(ZSHIRT), pants = zb.skel ? BONE : pick(ZPANTS);
   set(zParts.head, skin); set(zParts.armL, skin); set(zParts.armR, skin); set(zParts.torso, shirt); set(zParts.legL, pants); set(zParts.legR, pants); set(zParts.hat, pick(HATS));
 }
 function removeZombie(zb) {
   const i = zombies.indexOf(zb); if (i < 0) return; const last = zombies.pop();
-  if (last !== zb) { zombies[i] = last; last.i = i; colorZombie(i); }
+  if (last !== zb) { zombies[i] = last; last.i = i; colorZombie(i, last); }
 }
 const _m = new THREE.Matrix4(), _base = new THREE.Matrix4(), _part = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _v = new V3(), _s = new V3(), ZERO = new THREE.Matrix4().makeScale(0, 0, 0);
-function setPart(im, i, ox, oy, oz, rx, ry, rz) { _e.set(rx, ry, rz); _q.setFromEuler(_e); _part.compose(_v.set(ox, oy, oz), _q, S1); _m.multiplyMatrices(_base, _part); im.setMatrixAt(i, _m); }
+const _ps = new V3(), SK_LIMB = new V3(0.42, 1, 0.42), SK_TORSO = new V3(0.7, 1, 0.55), SK_HEAD = new V3(0.95, 1.05, 0.95);
+function setPart(im, i, ox, oy, oz, rx, ry, rz, sc) { _e.set(rx, ry, rz); _q.setFromEuler(_e); _part.compose(_v.set(ox, oy, oz), _q, sc || S1); _m.multiplyMatrices(_base, _part); im.setMatrixAt(i, _m); }
 function drawZombies(t) {
   const n = zombies.length;
   for (const k in zParts) zParts[k].count = n;
   for (let i = 0; i < n; i++) {
     const z = zombies[i];
-    if (z.state === 'fly') _q.setFromEuler(z.rot); else { _e.set(z.lie, z.yaw, 0, 'YXZ'); _q.setFromEuler(_e); _e.order = 'XYZ'; }
+    if (z.state === 'fly') _q.setFromEuler(z.rot); else { _e.set(z.lie - z.recoil, z.yaw, 0, 'YXZ'); _q.setFromEuler(_e); _e.order = 'XYZ'; }
     _base.compose(_v.set(z.x, z.y, z.z), _q, _s.set(z.size, z.size, z.size));
-    const walk = z.state === 'chase' || z.state === 'wander' ? Math.sin(z.phase) : 0, flail = z.state === 'grab' || z.state === 'fly' ? Math.sin(t * 18 + i) : 0;
-    setPart(zParts.legL, i, -0.15, 0.85, 0, walk * 0.55, 0, 0); setPart(zParts.legR, i, 0.15, 0.85, 0, -walk * 0.55, 0, 0);
-    setPart(zParts.torso, i, 0, 1.22, 0, 0.18, 0, Math.sin(z.phase * 0.5) * 0.06);
-    const headTilt = Math.sin(t * 1.3 + i) * 0.25;
-    setPart(zParts.head, i, 0, 1.78, 0.06, 0.1, 0, headTilt); setPart(zParts.face, i, 0, 1.78, 0.06, 0.1, 0, headTilt);
-    setPart(zParts.armL, i, -0.38, 1.52, 0.02, -1.45 + walk * 0.2 + flail * 0.6, 0, -0.1); setPart(zParts.armR, i, 0.38, 1.52, 0.02, -1.35 - walk * 0.2 - flail * 0.6, 0, 0.1);
+    const walk = z.state === 'chase' || z.state === 'wander' ? Math.sin(z.phase) : 0, flail = z.state === 'grab' || z.state === 'fly' || z.state === 'hop' ? Math.sin(t * 18 + i) : 0;
+    const sk = z.skel, sit = z.state === 'grab' && z.grabSide === 0, LS = sk ? SK_LIMB : null;
+    setPart(zParts.legL, i, -0.15, 0.85, 0, sit ? -1.4 : walk * 0.55, 0, sit ? -0.5 : 0, LS); setPart(zParts.legR, i, 0.15, 0.85, 0, sit ? -1.4 : -walk * 0.55, 0, sit ? 0.5 : 0, LS);
+    setPart(zParts.torso, i, 0, 1.22, 0, 0.18, 0, Math.sin(z.phase * 0.5) * 0.06, sk ? SK_TORSO : null);
+    const headTilt = sk ? Math.sin(t * 9 + i) * 0.12 : Math.sin(t * 1.3 + i) * 0.25;
+    setPart(zParts.head, i, 0, 1.78, 0.06, 0.1, 0, headTilt, sk ? SK_HEAD : null);
+    if (sk) { zParts.face.setMatrixAt(i, ZERO); setPart(zParts.skull, i, 0, 1.78, 0.06, 0.1, 0, headTilt); } else { zParts.skull.setMatrixAt(i, ZERO); setPart(zParts.face, i, 0, 1.78, 0.06, 0.1, 0, headTilt); }
+    setPart(zParts.armL, i, -0.38, 1.52, 0.02, -1.45 + walk * 0.2 + flail * 0.6, 0, -0.1, LS); setPart(zParts.armR, i, 0.38, 1.52, 0.02, -1.35 - walk * 0.2 - flail * 0.6, 0, 0.1, LS);
     if (z.hat) setPart(zParts.hat, i, 0, 1.98, 0.04, 0.1, 0, headTilt + 0.2); else zParts.hat.setMatrixAt(i, ZERO);
   }
   for (const k in zParts) zParts[k].instanceMatrix.needsUpdate = true;
@@ -1177,12 +1196,20 @@ function updateZombies(dt, t) {
       continue;
     }
     if (z.state === 'down') { if (z.t > 2.5) { z.lie = damp(z.lie, 0, 4, dt); if (z.lie > -0.05) { z.lie = 0; z.state = 'chase'; } } continue; }
+    z.recoil = Math.max(0, z.recoil - dt * 3);
+    if (z.state === 'hop') {
+      // leaping through the air onto your ride
+      z.hopT += dt / 0.42; const k = Math.min(1, z.hopT), [gx, gy, gz] = grabSpot(z);
+      z.x = lerp(z.hx, gx, k); z.z = lerp(z.hz, gz, k); z.y = lerp(z.hy, gy, k) + Math.sin(k * Math.PI) * 1.6; z.yaw = car.th;
+      if (k >= 1) { z.state = 'grab'; A.thump(0.4); kickPizzas(0.6); }
+      continue;
+    }
     if (z.state === 'grab') {
-      // hanging on to the side of your ride, munching
-      const side = z.grabSide, off = car.stats.hw + 0.35;
-      z.x = car.x + rxv * side * off + fx * z.grabZ; z.z = car.z + rzv * side * off + fz * z.grabZ; z.y = car.y + 0.2; z.yaw = car.th - side * Math.PI / 2; z.phase += dt * 10;
+      // clinging on to your ride, munching your pizzas until you fight it off
+      const side = z.grabSide, [gx, gy, gz] = grabSpot(z);
+      z.x = gx; z.z = gz; z.y = gy; z.yaw = side === 0 ? car.th : car.th - side * Math.PI / 2; z.phase += dt * 10;
       z.grabT += dt; if (z.grabT > 2.4) { z.grabT = 0; if (car.pizzas.length) { const b = car.pizzas[car.pizzas.length - 1]; car.pizzas.pop(); car.model.rack.remove(b.m); run.eaten++; pop('😋 NOM! A zombie ate a pizza!', '#8ac926'); A.nom(panTo(z.x, z.z)); layoutPizzas(); } else A.groan(0.3, 0); }
-      if (Math.abs(car.vl) > 5 || car.boosting || shield || Math.abs(car.vf) > 17) { flingGrabber(z); }
+      if (shield) flingGrabber(z);
       continue;
     }
     // walking
@@ -1199,21 +1226,52 @@ function updateZombies(dt, t) {
       if (Math.abs(lx) < car.stats.hw + 0.35 && Math.abs(lz) < car.stats.hl + 0.35) {
         const relSpeed = Math.hypot(car.vx, car.vz);
         if (relSpeed > 6 || shield || car.stats.crush && relSpeed > 3) { const up = hasGadget('spatula') ? 1.6 : 1; knockZombie(z, car.vx * 1.15 + lx * 2, car.vz * 1.15 + lz * 2, 'hit', up); if (!hasGadget('spatula') && !car.stats.crush) { damage(0.6, 'zombie'); car.vx *= 0.985; car.vz *= 0.985; } kickPizzas(0.25); }
-        else if (car.grabbers.length < 3) { z.state = 'grab'; z.grabSide = lx > 0 ? -1 : 1; z.grabZ = clamp(lz, -car.stats.hl * 0.6, car.stats.hl * 0.6); z.grabT = 0; car.grabbers.push(z); A.groan(0.4, panTo(z.x, z.z)); if (run.grabHint !== true) { run.grabHint = true; pop('🧟 A ZOMBIE GRABBED YOU! Swerve or BOOST!', '#8ac926'); } }
+        else if (car.grabbers.length < 3) hopOn(z, lx, lz);
       }
+    } else if (z.state === 'chase' && d < 4 && car.grabbers.length < 3 && Math.hypot(car.vx, car.vz) < 13 && !shield && !car.dead && car.grounded && Math.random() < dt * 0.9) {
+      hopOn(z, -dx * rxv - dz * rzv, -dx * fx - dz * fz);
     }
   }
-  car.grabbers = car.grabbers.filter((z) => z.state === 'grab' && zombies.includes(z));
+  car.grabbers = car.grabbers.filter((z) => (z.state === 'grab' || z.state === 'hop') && zombies.includes(z));
+}
+function grabSpot(z) {
+  const fx = Math.sin(car.th), fz = Math.cos(car.th), rxv = -Math.cos(car.th), rzv = Math.sin(car.th), side = z.grabSide;
+  const off = side === 0 ? 0 : car.stats.hw + 0.35, y = side === 0 ? car.y + (car.stats.hl > 1.5 ? car.stats.hw * 1.6 : 0.15) : car.y + 0.2;
+  return [car.x + rxv * side * off + fx * z.grabZ, y, car.z + rzv * side * off + fz * z.grabZ];
+}
+function hopOn(z, lx, lz) {
+  const bike = car.stats.hw < 0.6, seatFree = !car.grabbers.some((g) => g.grabSide === 0);
+  if (bike && seatFree) { z.grabSide = 0; z.grabZ = -0.75; }
+  else { z.grabSide = lx > 0 ? -1 : 1; z.grabZ = clamp(lz, -car.stats.hl * 0.6, car.stats.hl * 0.6); if (car.grabbers.some((g) => g.grabSide === z.grabSide && Math.abs(g.grabZ - z.grabZ) < 0.6)) z.grabZ = clamp(-z.grabZ || 0.6, -car.stats.hl * 0.6, car.stats.hl * 0.6); }
+  z.state = 'hop'; z.hopT = 0; z.hx = z.x; z.hy = z.y; z.hz = z.z; z.grabT = 0; z.hits = 0; car.grabbers.push(z);
+  if (z.skel) A.rattle(panTo(z.x, z.z)); else A.groan(0.4, panTo(z.x, z.z));
+  if (run.grabHint !== true) { run.grabHint = true; pop(IS_TOUCH ? (z.skel ? '💀 A SKELETON JUMPED ON! Tap 👊 FIGHT!' : '🧟 A ZOMBIE JUMPED ON! Tap 👊 FIGHT!') : (z.skel ? '💀 A SKELETON JUMPED ON! Press F to FIGHT!' : '🧟 A ZOMBIE JUMPED ON! Press F to FIGHT!'), '#ff5a5a'); }
+}
+let fightCD = 0;
+function fight() {
+  if (state !== 'playing' || car.dead || fightCD > 0) return; A.init();
+  const g = car.grabbers.filter((z) => z.state === 'grab'); if (!g.length) return;
+  fightCD = 0.16; run.punches = (run.punches || 0) + 1;
+  // whack whichever one is closest to eating a pizza
+  const z = g.sort((a, b) => b.grabT - a.grabT)[0];
+  z.hits++; z.recoil = 0.6; z.grabT = Math.max(0, z.grabT - 0.6);
+  car.punchT = 0.22; car.punchSide = z.grabSide === 0 ? 0 : z.grabSide;
+  const need = z.skel ? 2 : 3;
+  shake(0.15); A.whack(panTo(z.x, z.z));
+  if (z.skel) bones(z.x, z.y + 1.4, z.z, 5); else goo(z.x, z.y + 1.4, z.z, 5);
+  FX.add.burst(8, () => ({ x: z.x, y: z.y + 1.6, z: z.z, vx: rand(-3, 3), vy: rand(1, 4), vz: rand(-3, 3), life: .3, size: .3, size1: .05, c0: [1, 1, .7], c1: C.spark }));
+  if (z.hits >= need) { run.fought = (run.fought || 0) + 1; flingGrabber(z, true); }
+  else pop(pick(['WHACK!', 'BONK!', 'POW!', 'THWACK!', 'BOP!']) + ' 👊', '#ffc93c');
 }
 function knockZombie(z, vx, vz, why, up = 1) {
   if (z.state === 'fly') return;
-  if (z.state === 'grab') car.grabbers = car.grabbers.filter((g) => g !== z);
+  if (z.state === 'grab' || z.state === 'hop') car.grabbers = car.grabbers.filter((g) => g !== z);
   z.state = 'fly'; z.vx = vx; z.vz = vz; z.vy = rand(5, 9) * up; z.y = Math.max(z.y, 0.1); z.rot.set(z.lie, z.yaw, 0); z.spin.set(rand(-9, 9), rand(-6, 6), rand(-9, 9)); z.splat = why === 'bomb';
   run.bonks++; run.combo++; run.comboT = 2.5; const pts = 10 * Math.min(10, run.combo);
   addScore(pts, why === 'hit' && run.combo > 2 ? `BONK x${run.combo}! +${pts}` : null, '#8ac926');
-  A.bonk(panTo(z.x, z.z)); goo(z.x, 1.2, z.z, 6);
+  A.bonk(panTo(z.x, z.z)); if (z.skel) { bones(z.x, 1.2, z.z, 10); A.rattle(panTo(z.x, z.z)); } else goo(z.x, 1.2, z.z, 6);
 }
-function flingGrabber(z) { knockZombie(z, -Math.cos(car.th) * z.grabSide * -8 + car.vx * 0.5, Math.sin(car.th) * z.grabSide * -8 + car.vz * 0.5, 'fling'); pop('SHAKE OFF! 💨', '#4cc9f0'); }
+function flingGrabber(z, punched) { const s = z.grabSide || pick([-1, 1]), back = z.grabSide === 0 ? -6 : 0; knockZombie(z, -Math.cos(car.th) * s * -8 + Math.sin(car.th) * back + car.vx * 0.5, Math.sin(car.th) * s * -8 + Math.cos(car.th) * back + car.vz * 0.5, 'fling', 1.3); if (punched) { addScore(50); pop(z.skel ? '💀 KNOCKED HIS BLOCK OFF! +50' : '👊 KNOCKED OFF! +50', '#4cc9f0'); } else pop('SHAKE OFF! 💨', '#4cc9f0'); }
 function shakeOffGrabbers() { for (const z of car.grabbers.slice()) flingGrabber(z); }
 function explodeBarrel(s) {
   if (s.dead) return; s.dead = true; s.mesh.visible = false; run.booms++;
@@ -1395,7 +1453,7 @@ function startRun() {
   Object.assign(car, { x: shop.x - 6, z: shop.z - 2, y: 0, vy: 0, grounded: true, th: Math.PI / 2, vx: 0, vz: 0, steer: 0, hp: 100, boost: 100, boosting: false, pizzas: [], grabbers: [], dead: false, prevVx: 0, prevVz: 0, af: 0, ar: 0, vf: 0, vl: 0, airT: 0, camH: Math.PI / 2 });
   car.model.g.rotation.set(0, 0, 0);
   loadPizzas();
-  run = { area: save.area, score: 0, cash: 0, tips: 0, delivered: 0, bonks: 0, combo: 0, comboT: 0, strikes: 0, level: 0, orderCount: 0, orderT: 0, airTime: 0, driveBys: 0, perfect: 0, vips: 0, booms: 0, cheeseBombs: 0, lost: 0, eaten: 0, thrown: 0, coinsGot: 0, shieldT: 0, magnetT: 0, freezeT: 0, time: 0, missionCash: 0, missionsDone: [], endReason: '' };
+  run = { area: save.area, score: 0, cash: 0, tips: 0, delivered: 0, bonks: 0, combo: 0, comboT: 0, strikes: 0, level: 0, orderCount: 0, orderT: 0, airTime: 0, driveBys: 0, perfect: 0, vips: 0, booms: 0, cheeseBombs: 0, lost: 0, eaten: 0, thrown: 0, coinsGot: 0, fought: 0, punches: 0, shieldT: 0, magnetT: 0, freezeT: 0, time: 0, missionCash: 0, missionsDone: [], endReason: '' };
   for (const m of save.missions) m.doneThisRun = false;
   shopBeacon = makeBeacon(0xff3030); shopBeacon.position.set(shop.x, 0, shop.z);
   spawnAround(zombieTarget(), 25, 90);
@@ -1430,7 +1488,7 @@ function updateRun(dt, t) {
   stepCar(dt); updatePizzas(dt);
   updateZombies(dt, t); updateOrders(dt); updateFlyers(dt);
   spawnPickups(); updatePickups(dt, t);
-  run.comboT -= dt; if (run.comboT <= 0) run.combo = 0;
+  run.comboT -= dt; if (run.comboT <= 0) run.combo = 0; fightCD = Math.max(0, fightCD - dt); car.punchT = Math.max(0, (car.punchT || 0) - dt);
   run.shieldT = Math.max(0, run.shieldT - dt); run.magnetT = Math.max(0, run.magnetT - dt);
   car.model.shieldGlow.material.opacity = run.shieldT > 0 ? 0.6 + Math.sin(t * 10) * 0.2 : 0;
   if (car.boosting) for (const s of [-0.3, 0.3]) { const b = -car.stats.hl; FX.add.spawn({ x: car.x + Math.sin(car.th) * b - Math.cos(car.th) * s, y: car.y + 0.5, z: car.z + Math.cos(car.th) * b + Math.sin(car.th) * s, vx: -Math.sin(car.th) * 6 + car.vx, vy: rand(-.3, .5), vz: -Math.cos(car.th) * 6 + car.vz, life: .25, size: .6, size1: .1, c0: C.boost, c1: C.boost2 }); }
@@ -1453,6 +1511,7 @@ function updateCarVisual(dt) {
   car.pitch = damp(car.pitch, car.grounded ? (car.brake && car.vf > 3 ? 0.04 : 0) - (car.throttle && car.vf < 10 ? 0.03 : 0) : clamp(-car.vy * 0.03, -0.4, 0.4), 5, dt);
   m.body.rotation.set(car.pitch, 0, -car.roll);
   for (const w of m.wheels) { w.g.rotation.x += car.vf * dt / w.r; if (w.front) w.g.rotation.y = car.steer * 0.4; }
+  if (m.rider) { const p = car.punchT > 0 ? Math.sin((1 - car.punchT / 0.22) * Math.PI) : 0; m.rider.rotation.y = p * (car.punchSide === 0 ? Math.PI * 0.8 : -car.punchSide * 1.1); m.rider.rotation.z = p * 0.25 * (car.punchSide || 1); }
   const fx = Math.sin(car.th), fz = Math.cos(car.th);
   headL.position.set(car.x + fx * 2, car.y + 1.2, car.z + fz * 2); headL.target.position.set(car.x + fx * 25, 0, car.z + fz * 25);
 }
@@ -1495,7 +1554,9 @@ function updateHUD() {
   $('strikes').textContent = '❌'.repeat(run.strikes) + '⬜'.repeat(Math.max(0, 3 - run.strikes));
   $('pizzaRow').textContent = car.pizzas.length ? '🍕'.repeat(car.pizzas.length) : 'No pizzas! 🏪';
   const [o, d] = nearestOrder(), can = o && d < 16 && car.pizzas.length >= (o ? o.need : 1);
-  $('prompt').hidden = !can; if (can) $('prompt').textContent = IS_TOUCH ? 'THROW PIZZA NOW!' : 'PRESS E TO DELIVER!';
+  const grabbed = car.grabbers.some((z) => z.state === 'grab');
+  $('prompt').hidden = !can && !grabbed; if (grabbed) $('prompt').textContent = IS_TOUCH ? '👊 TAP FIGHT TO KNOCK THEM OFF!' : '👊 PRESS F TO FIGHT THEM OFF!'; else if (can) $('prompt').textContent = IS_TOUCH ? 'THROW PIZZA NOW!' : 'PRESS E TO DELIVER!';
+  $('tFight').hidden = !grabbed;
   $('tThrow').classList.toggle('ready', !!can);
   renderOrders(false);
 }
@@ -1571,14 +1632,14 @@ function menuScene(rdt, t) {
   showCam.lookAt(side * Math.cos(a), state === 'title' ? 3.4 : 1.0, -side * Math.sin(a));
   showZombies.children.forEach((z, i) => { z.rotation.y = Math.sin(t * 0.7 + i) * 0.3 + z.userData.yaw; z.position.y = Math.abs(Math.sin(t * 3 + i)) * 0.08; z.children[2].rotation.x = -1.4 + Math.sin(t * 3 + i) * 0.2; z.children[3].rotation.x = -1.4 - Math.sin(t * 3 + i) * 0.2; });
 }
-function menuZombie(x, z, yaw) {
+function menuZombie(x, z, yaw, skel) {
   const g = new THREE.Group(); g.position.set(x, 0, z); g.userData.yaw = yaw; showZombies.add(g);
-  const skin = stdMat({ color: pick(ZSKIN) }), cloth = stdMat({ color: pick(ZSHIRT) });
+  const skin = stdMat({ color: skel ? BONE : pick(ZSKIN) }), cloth = stdMat({ color: skel ? '#d9d2b8' : pick(ZSHIRT) });
   const t = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.72, 0.36), cloth); t.position.y = 1.22; g.add(t);
   const h = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 10), skin); h.position.y = 1.78; g.add(h);
   for (const s of [-1, 1]) { const arm = new THREE.Group(); arm.position.set(s * 0.38, 1.52, 0); const am = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.7, 0.18), skin); am.position.y = -0.35; arm.add(am); g.add(arm); }
-  for (const s of [-1, 1]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.82, 0.24), stdMat({ color: pick(ZPANTS) })); l.position.set(s * 0.15, 0.42, 0); g.add(l); }
-  for (const [ex, r] of [[-0.09, 0.075], [0.1, 0.055]]) { const e = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff })); e.position.set(ex, 1.83, 0.2); g.add(e); const pp = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 4), new THREE.MeshBasicMaterial({ color: 0x111111 })); pp.position.set(ex, 1.83, 0.27); g.add(pp); }
+  for (const s of [-1, 1]) { const l = new THREE.Mesh(new THREE.BoxGeometry(skel ? 0.1 : 0.22, 0.82, skel ? 0.1 : 0.24), stdMat({ color: skel ? BONE : pick(ZPANTS) })); l.position.set(s * 0.15, 0.42, 0); g.add(l); }
+  for (const [ex, r] of [[-0.09, 0.075], [0.1, 0.055]]) { const e = new THREE.Mesh(new THREE.SphereGeometry(skel ? 0.065 : r, 8, 6), new THREE.MeshBasicMaterial({ color: skel ? 0x0a0a0a : 0xffffff })); e.position.set(ex, 1.83, 0.2); g.add(e); const pp = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 4), new THREE.MeshBasicMaterial({ color: 0x111111 })); pp.position.set(ex, 1.83, 0.27); g.add(pp); }
   g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
 }
 const SHEETS = { title: 'mTitle', garage: 'mGarage', missions: 'mMissions', settings: 'mSettings', how: 'mHow', paused: 'mPause', over: 'mEnd' };
@@ -1635,7 +1696,7 @@ window.addEventListener('keydown', (e) => {
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
   if (e.repeat) return;
   if (e.code === 'KeyM') { A.init(); save.settings.sound = !save.settings.sound; persist(); A.apply(); }
-  if (state === 'playing') { if (e.code === 'KeyE' || e.code === 'KeyQ') throwAction(); if (e.code === 'KeyH') A.horn(); if (e.code === 'Escape' || e.code === 'KeyP') pause(); }
+  if (state === 'playing') { if (e.code === 'KeyE' || e.code === 'KeyQ') throwAction(); if (e.code === 'KeyF' || e.code === 'KeyR') fight(); if (e.code === 'KeyH') A.horn(); if (e.code === 'Escape' || e.code === 'KeyP') pause(); }
   else if (state === 'paused' && (e.code === 'Escape' || e.code === 'KeyP')) resume();
 });
 window.addEventListener('keyup', (e) => keys.delete(e.code));
@@ -1650,6 +1711,8 @@ function hold(id, key) {
 hold('tLeft', 'left'); hold('tRight', 'right'); hold('tGas', 'gas'); hold('tBrake', 'brake'); hold('tBoost', 'boost');
 $('tThrow').addEventListener('pointerdown', (e) => { e.preventDefault(); $('tThrow').classList.add('held'); throwAction(); });
 $('tThrow').addEventListener('pointerup', () => $('tThrow').classList.remove('held'));
+$('tFight').addEventListener('pointerdown', (e) => { e.preventDefault(); $('tFight').classList.add('held'); fight(); });
+$('tFight').addEventListener('pointerup', () => $('tFight').classList.remove('held'));
 
 // ---------- buttons ----------
 function pause() { if (state !== 'playing') return; setState('paused'); A.set(A.eng, 0); Music.on = false; }
@@ -1702,7 +1765,7 @@ function boot() {
   makeTextures();
   floorDisc.material.map = TEX.floor; floorDisc.material.needsUpdate = true;
   setupShowroomEnv(); buildZombieMeshes();
-  menuZombie(-3.2, -1.5, 0.6); menuZombie(3.4, -1.2, -0.6); menuZombie(-1.5, -3.5, 0.2); menuZombie(2, -3.8, -0.3);
+  menuZombie(-3.2, -1.5, 0.6); menuZombie(3.4, -1.2, -0.6, true); menuZombie(-1.5, -3.5, 0.2); menuZombie(2, -3.8, -0.3, true);
   arrow = new THREE.Group(); const sh = new THREE.Shape(); sh.moveTo(0, 0.9); sh.lineTo(0.6, 0.1); sh.lineTo(0.22, 0.1); sh.lineTo(0.22, -0.6); sh.lineTo(-0.22, -0.6); sh.lineTo(-0.22, 0.1); sh.lineTo(-0.6, 0.1); sh.closePath();
   const ah = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.15, bevelEnabled: false }).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x8ac926 })); arrow.add(ah); scene.add(arrow); arrow.visible = false;
   syncMute();
@@ -1710,7 +1773,7 @@ function boot() {
   setState('title');
   requestAnimationFrame(frame);
 }
-window.__pzp = { get state() { return state; }, car, zombies, orders, get run() { return run; }, save, startRun, endRun, throwAction, keys, input, houses, get shop() { return shop; }, usePower, damage, statics, ramps, groundH,
+window.__pzp = { get state() { return state; }, car, zombies, orders, get run() { return run; }, save, startRun, endRun, throwAction, fight, spawnZombie, hopOn, keys, input, houses, get shop() { return shop; }, usePower, damage, statics, ramps, groundH,
   fast(sec) { if (state === 'countdown') { countdown = 0; setState('playing'); } const n = Math.round(sec * 60); for (let i = 0; i < n && (state === 'playing' || state === 'ending'); i++) updateRun(1 / 60, i / 60); } };
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot, boot); else boot();
 })();
