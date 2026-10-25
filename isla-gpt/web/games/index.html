@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Isla &amp; Oscar's Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;900&display=swap">
+<style>
+/* A games shelf: one big square per game. Tap a square and the game opens full screen. */
+:root {
+  --bg: #1d1b3a;
+  --bg2: #2a2654;
+  --ink: #1d1b3a;
+  --paper: #fffaf0;
+  --sun: #ffd23f;
+  --hot: #ff4f6d;
+  --mint: #3ddc97;
+  --muted: #b9b4e0;
+  --display: "Lilita One", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--paper); }
+body { font-family: var(--body); font-weight: 700; background: radial-gradient(circle at 20% 0%, #3b3480 0, transparent 45%), radial-gradient(circle at 90% 100%, #5a2050 0, transparent 40%), var(--bg); min-height: 100vh; }
+main { max-width: 1040px; margin: 0 auto; padding: calc(28px + env(safe-area-inset-top, 0px)) 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
+header { text-align: center; margin-bottom: 26px; }
+h1 { font-family: var(--display); font-weight: 400; margin: 0; font-size: clamp(38px, 8vw, 72px); line-height: 1; color: var(--sun); text-shadow: 0 5px 0 #000, 3px 0 0 #000, -3px 0 0 #000, 0 -3px 0 #000; transform: rotate(-2deg); text-wrap: balance; }
+h1 span { color: var(--hot); }
+header p { margin: 12px 0 0; color: var(--muted); font-size: 16px; }
+.shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 20px; }
+.game { position: relative; display: flex; flex-direction: column; aspect-ratio: 1 / 1; padding: 0; border: 4px solid #000; border-radius: 26px; overflow: hidden; cursor: pointer; text-align: left; color: var(--paper); font: inherit; box-shadow: 0 8px 0 #000; transition: transform .12s ease, box-shadow .12s ease; }
+.game:hover { transform: translateY(-4px) rotate(-.6deg); box-shadow: 0 12px 0 #000; }
+.game:active { transform: translateY(4px); box-shadow: 0 4px 0 #000; }
+.game:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
+.art { flex: 1; position: relative; overflow: hidden; }
+.art svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.label { padding: 14px 84px 16px 18px; background: rgba(0, 0, 0, .55); backdrop-filter: blur(4px); }
+.label b { display: block; font-family: var(--display); font-weight: 400; font-size: 28px; line-height: 1.05; letter-spacing: .01em; }
+.label span { font-size: 14px; color: #ddd8ff; }
+.badge { position: absolute; top: 14px; left: 14px; padding: 4px 12px; border-radius: 999px; background: var(--paper); color: var(--ink); font-family: var(--display); font-size: 14px; border: 3px solid #000; }
+.badge.new { background: var(--mint); }
+.play { position: absolute; right: 14px; bottom: 14px; width: 56px; height: 56px; border-radius: 50%; background: var(--sun); border: 3px solid #000; display: grid; place-items: center; box-shadow: 0 4px 0 #000; }
+.play svg { width: 24px; height: 24px; margin-left: 4px; }
+.soon { cursor: default; background: repeating-linear-gradient(45deg, var(--bg2) 0 18px, #24214a 18px 36px); border-style: dashed; border-color: #6a64a8; box-shadow: none; display: grid; place-items: center; text-align: center; color: var(--muted); }
+.soon:hover { transform: none; box-shadow: none; }
+.soon b { font-family: var(--display); font-weight: 400; font-size: 26px; color: var(--paper); display: block; }
+
+/* the open game */
+#player { position: fixed; inset: 0; z-index: 100; background: #000; }
+#player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+#closeBtn { position: absolute; z-index: 2; left: 50%; top: calc(8px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); padding: 6px 14px; border-radius: 999px; border: 2px solid rgba(255,255,255,.5); background: rgba(0, 0, 0, .55); color: #fff; font: 900 13px var(--body); letter-spacing: .04em; cursor: pointer; }
+#closeBtn:hover { background: rgba(0, 0, 0, .8); }
+#closeBtn:focus-visible { outline: 3px solid var(--sun); }
+@media (prefers-reduced-motion: reduce) { .game, .game:hover { transition: none; transform: none; } }
+</style>
+
+<main>
+  <header>
+    <h1>Isla &amp; Oscar's <span>Games</span></h1>
+    <p>Pick a square to play.</p>
+  </header>
+  <div class="shelf">
+    <button class="game" data-src="dont-look-back.html" style="background:#07070a" aria-label="Play Don't Look Back">
+      <div class="art">
+        <svg viewBox="0 0 300 220" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <radialGradient id="dl1" cx="50%" cy="35%" r="60%"><stop offset="0" stop-color="#3a2a2a"/><stop offset="1" stop-color="#07070a"/></radialGradient>
+            <radialGradient id="eye" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff"/><stop offset=".25" stop-color="#ff3a2a"/><stop offset="1" stop-color="#ff3a2a" stop-opacity="0"/></radialGradient>
+          </defs>
+          <rect width="300" height="220" fill="url(#dl1)"/>
+          <polygon points="0,220 110,95 190,95 300,220" fill="#16141a"/>
+          <polygon points="110,95 190,95 190,40 110,40" fill="#0d0c10"/>
+          <g fill="#23303a"><rect x="20" y="60" width="14" height="120"/><rect x="38" y="70" width="12" height="102"/><rect x="54" y="78" width="11" height="88"/><rect x="266" y="60" width="14" height="120"/><rect x="250" y="70" width="12" height="102"/><rect x="235" y="78" width="11" height="88"/></g>
+          <rect x="138" y="44" width="24" height="5" fill="#e8f2ff" opacity=".5"/>
+          <path d="M150 60 c-9 0-12 8-12 16 0 6 3 10 5 12 l-12 6 c-6 24-10 40-8 60 h4 l6-40 4 40 h6 l2-30 2 30 h6 l4-40 6 40 h4 c2-20-2-36-8-60 l-12-6 c2-2 5-6 5-12 0-8-3-16-12-16z" fill="#000"/>
+          <circle cx="145" cy="74" r="9" fill="url(#eye)"/><circle cx="155" cy="74" r="9" fill="url(#eye)"/>
+        </svg>
+        <span class="badge">Horror</span>
+      </div>
+      <div class="label"><b>DON'T LOOK BACK</b><span>Find 5 keys. It only moves when you look away.</span></div>
+      <span class="play"><svg viewBox="0 0 24 24" fill="#1d1b3a"><path d="M6 4l14 8-14 8z"/></svg></span>
+    </button>
+
+    <button class="game" data-src="yeet-the-human.html" style="background:#7cc8ff" aria-label="Play Yeet the Human">
+      <div class="art">
+        <svg viewBox="0 0 300 220" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <rect width="300" height="220" fill="#7cc8ff"/>
+          <ellipse cx="230" cy="40" rx="40" ry="12" fill="#fff" opacity=".9"/><ellipse cx="70" cy="30" rx="30" ry="9" fill="#fff" opacity=".8"/>
+          <rect y="160" width="300" height="60" fill="#5cbf4a"/>
+          <path d="M60 150 Q150 -10 250 120" fill="none" stroke="#fff" stroke-width="4" stroke-dasharray="2 10" stroke-linecap="round"/>
+          <g transform="translate(55 150) rotate(-38)"><rect x="-6" y="-16" width="70" height="32" rx="10" fill="#e23b4e" stroke="#1d1b3a" stroke-width="4"/><rect x="40" y="-18" width="6" height="36" fill="#ffc93c"/><rect x="10" y="-18" width="6" height="36" fill="#ffc93c"/></g>
+          <circle cx="45" cy="168" r="16" fill="#2a2c3a" stroke="#1d1b3a" stroke-width="4"/>
+          <g transform="translate(175 52) rotate(35)" stroke="#1d1b3a" stroke-width="3" stroke-linecap="round">
+            <line x1="0" y1="10" x2="-22" y2="-6" stroke="#ff7a1a" stroke-width="9"/><line x1="0" y1="10" x2="24" y2="-2" stroke="#ff7a1a" stroke-width="9"/>
+            <line x1="-2" y1="34" x2="-20" y2="56" stroke="#2b59c3" stroke-width="10"/><line x1="2" y1="34" x2="26" y2="48" stroke="#2b59c3" stroke-width="10"/>
+            <rect x="-11" y="2" width="22" height="34" rx="9" fill="#ff7a1a"/>
+            <circle cx="0" cy="-10" r="12" fill="#f1c27d"/>
+            <ellipse cx="0" cy="-5" rx="4" ry="5" fill="#4a0d14" stroke="none"/>
+          </g>
+          <text x="214" y="100" font-family="Lilita One, sans-serif" font-size="22" fill="#fff" stroke="#1d1b3a" stroke-width="4" paint-order="stroke">AAAH!</text>
+        </svg>
+        <span class="badge new">New!</span>
+      </div>
+      <div class="label"><b>YEET THE HUMAN</b><span>Fire a floppy human from a giant cannon.</span></div>
+      <span class="play"><svg viewBox="0 0 24 24" fill="#1d1b3a"><path d="M6 4l14 8-14 8z"/></svg></span>
+    </button>
+
+    <div class="game soon" aria-label="More games coming soon"><div><b>More soon…</b>Your next idea goes here!</div></div>
+  </div>
+</main>
+
+<div id="player" hidden>
+  <button id="closeBtn">✕ All games</button>
+</div>
+
+<script>
+(() => {
+  const player = document.getElementById('player');
+  let frame = null, lastBtn = null;
+  function open(src, btn) {
+    lastBtn = btn;
+    frame = document.createElement('iframe');
+    frame.src = src;
+    frame.title = btn.querySelector('b').textContent;
+    frame.allow = 'autoplay; fullscreen; gamepad';
+    player.appendChild(frame);
+    player.hidden = false;
+    document.body.style.overflow = 'hidden';
+    frame.addEventListener('load', () => { try { frame.contentWindow.focus(); } catch (e) {} });
+  }
+  function close() {
+    if (frame) { frame.remove(); frame = null; }   // removing the frame stops the game and its sound
+    player.hidden = true;
+    document.body.style.overflow = '';
+    if (lastBtn) lastBtn.focus();
+  }
+  document.querySelectorAll('.game[data-src]').forEach((b) => b.addEventListener('click', () => open(b.dataset.src, b)));
+  document.getElementById('closeBtn').addEventListener('click', close);
+})();
+</script>

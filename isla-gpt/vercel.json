@@ -5,6 +5,20 @@
   "buildCommand": "flutter/bin/flutter build web --release",
   "outputDirectory": "build/web",
   "functions": {
-    "api/chat.mjs": { "maxDuration": 60 }
-  }
+    "api/chat.mjs": {
+      "maxDuration": 60
+    }
+  },
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/games/index.html",
+      "permanent": false
+    },
+    {
+      "source": "/games",
+      "destination": "/games/index.html",
+      "permanent": false
+    }
+  ]
 }
