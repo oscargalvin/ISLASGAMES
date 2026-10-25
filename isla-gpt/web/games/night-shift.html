@@ -27,7 +27,6 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: var(--night)
 body { font-family: var(--body); -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; }
 #stage { position: fixed; inset: 0; }
 #stage canvas { display: block; width: 100%; height: 100%; }
-#stage.cctv canvas { filter: grayscale(1) sepia(1) hue-rotate(55deg) saturate(2.4) brightness(1.35) contrast(1.15); }
 button { font: inherit; color: inherit; cursor: pointer; }
 button:focus-visible { outline: 2px solid var(--neon); outline-offset: 3px; }
 
@@ -213,6 +212,7 @@ h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
       <div class="qs">
         <button data-q="why">Why are you here?</button>
         <button data-q="name">What's your name?</button>
+        <button data-q="age">How old are you?</button>
         <button data-q="hands">Show me your hands</button>
         <button id="bRules">📋 Rules</button>
       </div>
@@ -229,9 +229,10 @@ h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
       <li>The ID must not be expired. Tonight is <b>31 OCT 2026</b>.</li>
       <li>The ID photo must match: same hair colour, same glasses.</li>
       <li>The name they say must match the ID.</li>
+      <li>The age they say must match the ID.</li>
       <li>Real people have <b>5 fingers</b> on each hand.</li>
       <li>Real people <b>blink</b>. Watch the eyes.</li>
-      <li>No glowing eyes. <b>CCTV night vision</b> shows them.</li>
+      <li>No glowing eyes. The <b>CCTV</b> shows them.</li>
       <li>No twitching or snapping heads.</li>
       <li>Normal smiles and answers that make sense.</li>
     </ol>
@@ -266,7 +267,7 @@ h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
     <div class="how">
       <div class="wide"><h3>THE JOB</h3><p>When someone knocks, inspect them through the window by the door desk, or from anywhere with the CCTV. Check their ID, ask questions, then press <b>LET IN</b> or <b>DENY</b>. Letting in a monster or turning away a real person is a mistake. Too many mistakes and it's over. Monsters you let in will hunt you, so run, hide in the staff locker or the storeroom boxes, and close doors behind you. Monsters can't open closed doors.</p></div>
       <div><h3>SPOT THE MONSTERS</h3><ol>
-        <li>ID not expired (tonight is 31 Oct 2026)</li><li>Photo matches: hair colour and glasses</li><li>Spoken name matches the ID</li><li>5 fingers on each hand</li><li>They blink</li><li>No glowing eyes on CCTV</li><li>No twitching</li><li>Normal smile, sensible answers</li></ol></div>
+        <li>ID not expired (tonight is 31 Oct 2026)</li><li>Photo matches: hair colour and glasses</li><li>Spoken name matches the ID</li><li>Spoken age matches the ID</li><li>5 fingers on each hand</li><li>They blink</li><li>No glowing eyes on CCTV</li><li>No twitching</li><li>Normal smile, sensible answers</li></ol></div>
       <div><h3>CONTROLS</h3><p><b>Computer:</b> <kbd>WASD</kbd> move, mouse look, <kbd>Shift</kbd> run, <kbd>E</kbd> use, <kbd>C</kbd> CCTV, <kbd>Q</kbd> inspect the door, <kbd>F</kbd> torch, <kbd>Esc</kbd> back or pause, <kbd>M</kbd> mute. Click the buttons to decide.<br><b>Phone:</b> turn sideways. Joystick to walk, swipe to look, and big USE, CCTV, RUN and LIGHT buttons.</p>
       <h3 style="margin-top:10px">JOBS</h3><p>Lock the back door, mop the spill, restock aisle 3 and reset the breaker when the power cuts out.</p></div>
     </div>
@@ -743,10 +744,10 @@ const JACKETS = ['#2d4a7a', '#7a2d2d', '#2d6a4a', '#5a5a5a', '#c28a2d', '#3a2d5a
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const fmtDate = (d, m, y) => String(d).padStart(2, '0') + ' ' + MONTHS[m] + ' ' + y;
 const MONSTER_TYPES = {
-  mimic:   { name: 'Mimic',   pool: ['photo', 'name', 'answer', 'expired', 'fingers'] },
+  mimic:   { name: 'Mimic',   pool: ['photo', 'name', 'age', 'answer', 'expired', 'fingers'] },
   grinner: { name: 'Grinner', pool: ['grin', 'noblink', 'answer', 'glow'] },
-  hollow:  { name: 'Hollow',  pool: ['glow', 'fingers', 'noblink', 'expired'] },
-  twitcher:{ name: 'Twitcher',pool: ['twitch', 'answer', 'name', 'photo', 'glow'] },
+  hollow:  { name: 'Hollow',  pool: ['glow', 'fingers', 'noblink', 'expired', 'age'] },
+  twitcher:{ name: 'Twitcher',pool: ['twitch', 'answer', 'name', 'age', 'photo', 'glow'] },
 };
 const WHY_HUMAN = ['I just need milk for the morning.', "My little girl is sick. I need medicine.", 'Ran out of coffee. Long night.', "Cat food. She won't stop yelling at me.", 'Batteries. The power keeps going off on my street.', 'Just some snacks for my night shift.', "Bread and eggs, please. I'm starving.", 'My car broke down. Can I buy some water?', 'Plasters. I cut my hand fixing the fence.', "Ice cream. Don't judge me.", 'Nappies. The baby is awake again.', 'Phone charger. Mine just died.'];
 const WHY_MONSTER_LOUD = ['I HEARD YOU WERE ALONE.', 'Let me in. Let me in. Let me in.', 'I am hungry. The shelves will not be enough.', 'Your door is so thin.', 'I came for the person behind the glass.'];
@@ -758,13 +759,14 @@ function tellsFor(hourIdx) { return DIFF[diffKey].tells[clamp(hourIdx, 0, 5)]; }
 function genCustomer(hourIdx, force) {
   const monster = force ? force === 'monster' : Math.random() < lerp(DIFF[diffKey].monster[0], DIFF[diffKey].monster[1], hourIdx / 5);
   const first = pick(FIRST), last = pick(LAST);
+  const bd = randi(1, 28), bm = randi(0, 11), by = randi(1952, 2006), age = 2026 - by - (bm > 9 || (bm === 9 && bd > 31) ? 1 : 0);
   const look = {
     skin: pick(SKIN), hair: pick(HAIR_NAMES), style: pick(['short', 'long', 'bun', 'curly', 'short']), glasses: Math.random() < 0.3,
     jacket: pick(JACKETS), pants: pick(['#2a2f3a', '#3a3428', '#1f1f22', '#4a4f5a']), height: rand(1.58, 1.92), eye: pick(['#3a6ad8', '#5a3a1e', '#2d7a4a', '#4a4a4a']),
   };
   const c = {
     id: ++custSeq, human: !monster, first, last, idName: first + ' ' + last, look, photo: { ...look },
-    born: fmtDate(randi(1, 28), randi(0, 11), randi(1952, 2006)), expires: fmtDate(randi(1, 28), randi(0, 11), randi(2027, 2033)), idNo: 'MP-' + randi(100000, 999999),
+    born: fmtDate(bd, bm, by), age, spokenAge: String(age), expires: fmtDate(randi(1, 28), randi(0, 11), randi(2027, 2033)), idNo: 'MP-' + randi(100000, 999999),
     tells: new Set(), fingers: 5, spokenName: first + ' ' + last, why: pick(WHY_HUMAN), voice: rand(130, 260), asked: {},
   };
   if (monster) {
@@ -779,6 +781,7 @@ function genCustomer(hourIdx, force) {
       if (loud && Math.random() < 0.5) c.photo.glasses = !look.glasses;
     }
     if (c.tells.has('name')) { let f2 = pick(FIRST); while (f2 === first) f2 = pick(FIRST); c.spokenName = loud ? pick(['Not ' + first, 'The One Who Waits', 'Me', 'Mr Skin']) : f2 + ' ' + last; }
+    if (c.tells.has('age')) c.spokenAge = loud ? pick(['400', 'Older than this town', 'Zero. I was born tonight', 'All of the ages']) : String(age + pick([-1, 1]) * randi(4, 12));
     if (c.tells.has('fingers')) c.fingers = loud ? 7 : 6;
     if (c.tells.has('answer')) c.why = loud ? pick(WHY_MONSTER_LOUD) : pick(WHY_MONSTER_QUIET);
   }
@@ -1323,13 +1326,14 @@ function drawID(c) {
   x.strokeStyle = '#1d4634'; x.lineWidth = 3; x.strokeRect(px, py, pw, ph);
   // fields
   const fld = (label, val, y, hot) => { x.fillStyle = '#5a6b72'; x.font = '700 16px Inter, Arial'; x.fillText(label, 220, y); x.fillStyle = hot ? '#b00020' : '#0d1a20'; x.font = '800 26px "IBM Plex Mono", monospace'; x.fillText(val, 220, y + 30); };
-  fld('NAME', c.idName.toUpperCase(), 92); fld('DATE OF BIRTH', c.born, 152); fld('EXPIRES', c.expires, 212); fld('ID NUMBER', c.idNo, 272);
+  fld('NAME', c.idName.toUpperCase(), 92); fld('DATE OF BIRTH', c.born, 152); x.fillStyle = '#5a6b72'; x.font = '700 16px Inter, Arial'; x.fillText('AGE', 440, 152); x.fillStyle = '#0d1a20'; x.font = '800 26px "IBM Plex Mono", monospace'; x.fillText(String(c.age), 440, 182); fld('EXPIRES', c.expires, 212); fld('ID NUMBER', c.idNo, 272);
   x.fillStyle = 'rgba(29,70,52,.15)'; x.beginPath(); x.arc(w - 60, h - 60, 40, 0, 7); x.fill();
 }
 function ask(q) {
   const c = doorCust; if (!c || c.state !== 'waiting') return;
   let text;
   if (q === 'why') text = c.why;
+  else if (q === 'age') text = /^\d+$/.test(c.spokenAge) ? (c.human ? `I'm ${c.spokenAge}.` : `I am ${c.spokenAge}.`) : `${c.spokenAge}.`;
   else if (q === 'name') text = c.human ? `It's ${c.spokenName}.` : c.tells.has('name') ? `It's ${c.spokenName}.` : `...${c.spokenName}.`;
   else { c.handsT = 5; text = c.human ? pick(HANDS_HUMAN) : c.tells.has('fingers') ? '...There. All of them.' : 'Here. Normal hands.'; }
   const creepy = !c.human && (c.tells.has('answer') || q === 'hands');
@@ -1576,7 +1580,7 @@ window.addEventListener('keydown', (e) => {
     if (e.code === 'Escape' || e.code === 'KeyP') setState('paused');
   } else if (state === 'inspect') {
     if (e.code === 'Escape' || e.code === 'KeyC' || e.code === 'KeyQ') setView('fp');
-    if (e.code === 'Digit1') ask('why'); if (e.code === 'Digit2') ask('name'); if (e.code === 'Digit3') ask('hands');
+    if (e.code === 'Digit1') ask('why'); if (e.code === 'Digit2') ask('name'); if (e.code === 'Digit3') ask('hands'); if (e.code === 'Digit4') ask('age');
   } else if (state === 'paused' && (e.code === 'Escape' || e.code === 'KeyP')) resume();
 });
 window.addEventListener('keyup', (e) => keys.delete(e.code));
