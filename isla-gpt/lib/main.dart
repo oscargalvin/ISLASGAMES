@@ -1,25 +1,18 @@
 import 'package:flutter/material.dart';
 
-import 'screens/age_gate.dart';
-import 'screens/chat_screen.dart';
-
 void main() {
-  runApp(const IslaGptApp());
+  runApp(const OscarAndIslaGamesApp());
 }
 
-class IslaGptApp extends StatelessWidget {
-  const IslaGptApp({super.key, this.chatScreen, this.askAge = true});
-
-  /// Lets tests swap in a chat screen with a fake backend.
-  final Widget? chatScreen;
-
-  /// Shows the 11+ check before the chat.
-  final bool askAge;
+/// A blank page for now. The Isla GPT chat is in isla_gpt_app.dart,
+/// ready to switch back on later.
+class OscarAndIslaGamesApp extends StatelessWidget {
+  const OscarAndIslaGamesApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Isla GPT',
+      title: 'Oscar and Isla Games',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -32,9 +25,9 @@ class IslaGptApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: askAge
-          ? AgeGate(child: chatScreen ?? const ChatScreen())
-          : chatScreen ?? const ChatScreen(),
+      home: Scaffold(
+        appBar: AppBar(title: const Text('Oscar and Isla Games')),
+      ),
     );
   }
 }
