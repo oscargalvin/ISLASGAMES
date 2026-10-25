@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:isla_gpt/isla_gpt_app.dart';
 import 'package:isla_gpt/main.dart';
 import 'package:isla_gpt/screens/chat_screen.dart';
 import 'package:isla_gpt/services/isla_client.dart';
@@ -18,6 +19,12 @@ class FakeIslaClient implements IslaClient {
 }
 
 void main() {
+  testWidgets('the site is a blank Oscar and Isla Games page', (tester) async {
+    await tester.pumpWidget(const OscarAndIslaGamesApp());
+    expect(find.text('Oscar and Isla Games'), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+  });
+
   testWidgets('asks if you are 11+ before chatting', (tester) async {
     await tester.pumpWidget(
         IslaGptApp(chatScreen: ChatScreen(client: FakeIslaClient())));

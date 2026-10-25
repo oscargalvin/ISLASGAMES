@@ -1,11 +1,11 @@
 {
-    "name": "Isla GPT",
-    "short_name": "Isla GPT",
+    "name": "Oscar and Isla Games",
+    "short_name": "Oscar & Isla",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#7C4DFF",
     "theme_color": "#7C4DFF",
-    "description": "Isla GPT - ask me anything!",
+    "description": "Oscar and Isla Games",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
