@@ -2,5 +2,7 @@
   "configured": true,
   "message": null,
   "updates": [],
-  "games": {}
+  "games": {
+    "teddy-exe": { "status": "archived", "badge": "" }
+  }
 }
