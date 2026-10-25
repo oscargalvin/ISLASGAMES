@@ -212,7 +212,7 @@ h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
       <div class="qs">
         <button data-q="why">Why are you here?</button>
         <button data-q="name">What's your name?</button>
-        <button data-q="age">How old are you?</button>
+        <button data-q="age">How old are you? Birthday?</button>
         <button data-q="hands">Show me your hands</button>
         <button id="bRules">📋 Rules</button>
       </div>
@@ -229,7 +229,7 @@ h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
       <li>The ID must not be expired. Tonight is <b>31 OCT 2026</b>.</li>
       <li>The ID photo must match: same hair colour, same glasses.</li>
       <li>The name they say must match the ID.</li>
-      <li>The age they say must match the ID.</li>
+      <li>The age <b>and birthday</b> they say must match the ID's date of birth.</li>
       <li>Real people have <b>5 fingers</b> on each hand.</li>
       <li>Real people <b>blink</b>. Watch the eyes.</li>
       <li>No glowing eyes. The <b>CCTV</b> shows them.</li>
@@ -267,7 +267,7 @@ h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
     <div class="how">
       <div class="wide"><h3>THE JOB</h3><p>When someone knocks, inspect them through the window by the door desk, or from anywhere with the CCTV. Check their ID, ask questions, then press <b>LET IN</b> or <b>DENY</b>. Letting in a monster or turning away a real person is a mistake. Too many mistakes and it's over. Monsters you let in will hunt you, so run, hide in the staff locker or the storeroom boxes, and close doors behind you. Monsters can't open closed doors.</p></div>
       <div><h3>SPOT THE MONSTERS</h3><ol>
-        <li>ID not expired (tonight is 31 Oct 2026)</li><li>Photo matches: hair colour and glasses</li><li>Spoken name matches the ID</li><li>Spoken age matches the ID</li><li>5 fingers on each hand</li><li>They blink</li><li>No glowing eyes on CCTV</li><li>No twitching</li><li>Normal smile, sensible answers</li></ol></div>
+        <li>ID not expired (tonight is 31 Oct 2026)</li><li>Photo matches: hair colour and glasses</li><li>Spoken name matches the ID</li><li>Spoken age and birthday match the ID</li><li>5 fingers on each hand</li><li>They blink</li><li>No glowing eyes on CCTV</li><li>No twitching</li><li>Normal smile, sensible answers</li></ol></div>
       <div><h3>CONTROLS</h3><p><b>Computer:</b> <kbd>WASD</kbd> move, mouse look, <kbd>Shift</kbd> run, <kbd>E</kbd> use, <kbd>C</kbd> CCTV, <kbd>Q</kbd> inspect the door, <kbd>F</kbd> torch, <kbd>Esc</kbd> back or pause, <kbd>M</kbd> mute. Click the buttons to decide.<br><b>Phone:</b> turn sideways. Joystick to walk, swipe to look, and big USE, CCTV, RUN and LIGHT buttons.</p>
       <h3 style="margin-top:10px">JOBS</h3><p>Lock the back door, mop the spill, restock aisle 3 and reset the breaker when the power cuts out.</p></div>
     </div>
@@ -742,12 +742,15 @@ const HAIR = { black: '#1a1714', brown: '#5a3a1e', blonde: '#e2c06a', red: '#a34
 const HAIR_NAMES = Object.keys(HAIR);
 const JACKETS = ['#2d4a7a', '#7a2d2d', '#2d6a4a', '#5a5a5a', '#c28a2d', '#3a2d5a', '#1d1d22', '#8a6a4a', '#2a7a8a'];
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const ordinal = (n) => n + (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th');
+const sayBday = (d, m) => `the ${ordinal(d)} of ${MONTH_NAMES[m]}`;
 const fmtDate = (d, m, y) => String(d).padStart(2, '0') + ' ' + MONTHS[m] + ' ' + y;
 const MONSTER_TYPES = {
-  mimic:   { name: 'Mimic',   pool: ['photo', 'name', 'age', 'answer', 'expired', 'fingers'] },
+  mimic:   { name: 'Mimic',   pool: ['photo', 'name', 'age', 'birthday', 'answer', 'expired', 'fingers'] },
   grinner: { name: 'Grinner', pool: ['grin', 'noblink', 'answer', 'glow'] },
-  hollow:  { name: 'Hollow',  pool: ['glow', 'fingers', 'noblink', 'expired', 'age'] },
-  twitcher:{ name: 'Twitcher',pool: ['twitch', 'answer', 'name', 'age', 'photo', 'glow'] },
+  hollow:  { name: 'Hollow',  pool: ['glow', 'fingers', 'noblink', 'expired', 'age', 'birthday'] },
+  twitcher:{ name: 'Twitcher',pool: ['twitch', 'answer', 'name', 'age', 'birthday', 'photo', 'glow'] },
 };
 const WHY_HUMAN = ['I just need milk for the morning.', "My little girl is sick. I need medicine.", 'Ran out of coffee. Long night.', "Cat food. She won't stop yelling at me.", 'Batteries. The power keeps going off on my street.', 'Just some snacks for my night shift.', "Bread and eggs, please. I'm starving.", 'My car broke down. Can I buy some water?', 'Plasters. I cut my hand fixing the fence.', "Ice cream. Don't judge me.", 'Nappies. The baby is awake again.', 'Phone charger. Mine just died.'];
 const WHY_MONSTER_LOUD = ['I HEARD YOU WERE ALONE.', 'Let me in. Let me in. Let me in.', 'I am hungry. The shelves will not be enough.', 'Your door is so thin.', 'I came for the person behind the glass.'];
@@ -766,7 +769,7 @@ function genCustomer(hourIdx, force) {
   };
   const c = {
     id: ++custSeq, human: !monster, first, last, idName: first + ' ' + last, look, photo: { ...look },
-    born: fmtDate(bd, bm, by), age, spokenAge: String(age), expires: fmtDate(randi(1, 28), randi(0, 11), randi(2027, 2033)), idNo: 'MP-' + randi(100000, 999999),
+    born: fmtDate(bd, bm, by), age, spokenAge: String(age), spokenBday: sayBday(bd, bm), expires: fmtDate(randi(1, 28), randi(0, 11), randi(2027, 2033)), idNo: 'MP-' + randi(100000, 999999),
     tells: new Set(), fingers: 5, spokenName: first + ' ' + last, why: pick(WHY_HUMAN), voice: rand(130, 260), asked: {},
   };
   if (monster) {
@@ -782,6 +785,11 @@ function genCustomer(hourIdx, force) {
     }
     if (c.tells.has('name')) { let f2 = pick(FIRST); while (f2 === first) f2 = pick(FIRST); c.spokenName = loud ? pick(['Not ' + first, 'The One Who Waits', 'Me', 'Mr Skin']) : f2 + ' ' + last; }
     if (c.tells.has('age')) c.spokenAge = loud ? pick(['400', 'Older than this town', 'Zero. I was born tonight', 'All of the ages']) : String(age + pick([-1, 1]) * randi(4, 12));
+    if (c.tells.has('birthday')) {
+      if (loud) c.spokenBday = pick(['My birthday is EVERY DAY.', 'My birthday is tonight. It is always tonight.', 'My birthday is the 31st of February.', 'Birthday? I was not born. I was made.']);
+      else if (Math.random() < 0.5) { let m2 = randi(0, 11); while (m2 === bm) m2 = randi(0, 11); c.spokenBday = sayBday(bd, m2); }
+      else c.spokenBday = sayBday(bd > 14 ? bd - randi(3, 12) : bd + randi(3, 12), bm);
+    }
     if (c.tells.has('fingers')) c.fingers = loud ? 7 : 6;
     if (c.tells.has('answer')) c.why = loud ? pick(WHY_MONSTER_LOUD) : pick(WHY_MONSTER_QUIET);
   }
@@ -1333,7 +1341,11 @@ function ask(q) {
   const c = doorCust; if (!c || c.state !== 'waiting') return;
   let text;
   if (q === 'why') text = c.why;
-  else if (q === 'age') text = /^\d+$/.test(c.spokenAge) ? (c.human ? `I'm ${c.spokenAge}.` : `I am ${c.spokenAge}.`) : `${c.spokenAge}.`;
+  else if (q === 'age') {
+    const a = /^\d+$/.test(c.spokenAge) ? (c.human ? `I'm ${c.spokenAge}.` : `I am ${c.spokenAge}.`) : `${c.spokenAge}.`;
+    const b = !/^the \d/.test(c.spokenBday) ? ' ' + c.spokenBday : c.human ? ` My birthday's ${c.spokenBday}.` : ` My birthday is ${c.spokenBday}.`;
+    text = a + b;
+  }
   else if (q === 'name') text = c.human ? `It's ${c.spokenName}.` : c.tells.has('name') ? `It's ${c.spokenName}.` : `...${c.spokenName}.`;
   else { c.handsT = 5; text = c.human ? pick(HANDS_HUMAN) : c.tells.has('fingers') ? '...There. All of them.' : 'Here. Normal hands.'; }
   const creepy = !c.human && (c.tells.has('answer') || q === 'hands');
