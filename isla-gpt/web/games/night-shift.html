@@ -205,6 +205,7 @@ h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
     <button class="tbtn" id="tLight">LIGHT</button>
     <button class="tbtn" id="tCctv">CCTV</button>
     <button class="tbtn" id="tUse">USE</button>
+    <button class="tbtn big" id="tHit">🏏 HIT</button>
   </div>
 </div>
 
@@ -281,8 +282,8 @@ h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
       <div class="wide"><h3>THE JOB</h3><p>When someone knocks, inspect them through the window by the door desk, or from anywhere with the CCTV. Check their ID, ask questions, then press <b>LET IN</b> or <b>DENY</b>. Letting in a monster or turning away a real person is a mistake. Too many mistakes and it's over. Monsters you let in will hunt you, so run, hide in the staff locker or the storeroom boxes, and close doors behind you. Monsters can't open closed doors.</p></div>
       <div><h3>SPOT THE MONSTERS</h3><ol>
         <li>ID not expired (check tonight's date at the top of the rules)</li><li>Photo matches: hair colour and glasses</li><li>Spoken name matches the ID</li><li>Spoken age and birthday match the ID</li><li>5 fingers on each hand</li><li>They blink</li><li>No glowing eyes on CCTV</li><li>No twitching</li><li>Normal smile, sensible answers</li></ol></div>
-      <div><h3>CONTROLS</h3><p><b>Computer:</b> <kbd>WASD</kbd> move, mouse look, <kbd>Shift</kbd> run, <kbd>E</kbd> use, <kbd>C</kbd> CCTV, <kbd>Q</kbd> inspect the door, <kbd>F</kbd> torch, <kbd>Esc</kbd> back or pause, <kbd>M</kbd> mute. Click the buttons to decide.<br><b>Phone:</b> turn sideways. Joystick to walk, swipe to look, and big USE, CCTV, RUN and LIGHT buttons.</p>
-      <h3 style="margin-top:10px">JOBS</h3><p>Every night has different jobs: lock the back door, mop spills, restock, check the freezer, take out the rubbish, count the till, check the cameras, fix lights and answer the phone. Reset the breaker when the power cuts out. Beat a night to unlock the next one.</p></div>
+      <div><h3>CONTROLS</h3><p><b>Computer:</b> <kbd>WASD</kbd> move, mouse look, <kbd>Shift</kbd> run, <kbd>E</kbd> use, <kbd>Space</kbd> or click to swing the bat, <kbd>C</kbd> CCTV, <kbd>Q</kbd> inspect the door, <kbd>F</kbd> torch, <kbd>Esc</kbd> back or pause, <kbd>M</kbd> mute. Click the buttons to decide.<br><b>Phone:</b> turn sideways. Joystick to walk, swipe to look, and big USE, HIT, CCTV, RUN and LIGHT buttons.</p>
+      <h3 style="margin-top:10px">FIGHT BACK</h3><p>You've got a baseball bat. If you let a monster in while a shopper is inside, it goes for them, so run over and hit it to break up the fight before it eats them. Think someone is a monster? Hit them first, but if they're a real person that's a mistake.</p><h3 style="margin-top:10px">JOBS</h3><p>Every night has different jobs: lock the back door, mop spills, restock, check the freezer, take out the rubbish, count the till, check the cameras, fix lights and answer the phone. Reset the breaker when the power cuts out. Beat a night to unlock the next one.</p></div>
     </div>
     <button class="big" id="bHowBack">Got it</button>
   </div>
@@ -346,9 +347,9 @@ const store = {
 };
 
 const DIFF = {
-  easy:      { label: 'Easy',      strikes: 4, hourLen: 70, tells: [3, 3, 2, 2, 2, 2], monster: [0.3, 0.45], gap: [12, 18], patience: 90, huntSpeed: 2.3, huntTime: 30, mult: 1,   note: 'Monsters show lots of clues, slow hunters, 4 mistakes allowed.' },
-  normal:    { label: 'Normal',    strikes: 3, hourLen: 75, tells: [3, 2, 2, 2, 1, 1], monster: [0.35, 0.55], gap: [9, 15], patience: 75, huntSpeed: 2.9, huntTime: 40, mult: 1.5, note: 'Clues get subtle after 3 AM. 3 mistakes allowed.' },
-  nightmare: { label: 'Nightmare', strikes: 2, hourLen: 80, tells: [2, 2, 1, 1, 1, 1], monster: [0.4, 0.6], gap: [7, 12], patience: 60, huntSpeed: 3.5, huntTime: 50, mult: 2.5, note: 'Usually just one clue. Fast hunters. Only 2 mistakes.' },
+  easy:      { label: 'Easy',      strikes: 4, hourLen: 70, tells: [3, 3, 2, 2, 2, 2], monster: [0.3, 0.45], gap: [12, 18], patience: 90, huntSpeed: 2.3, huntTime: 30, hp: 3, eatTime: 12, mult: 1,   note: 'Monsters show lots of clues, slow hunters, 4 mistakes allowed.' },
+  normal:    { label: 'Normal',    strikes: 3, hourLen: 75, tells: [3, 2, 2, 2, 1, 1], monster: [0.35, 0.55], gap: [9, 15], patience: 75, huntSpeed: 2.9, huntTime: 40, hp: 4, eatTime: 9, mult: 1.5, note: 'Clues get subtle after 3 AM. 3 mistakes allowed.' },
+  nightmare: { label: 'Nightmare', strikes: 2, hourLen: 80, tells: [2, 2, 1, 1, 1, 1], monster: [0.4, 0.6], gap: [7, 12], patience: 60, huntSpeed: 3.5, huntTime: 50, hp: 5, eatTime: 7, mult: 2.5, note: 'Usually just one clue. Fast hunters. Only 2 mistakes.' },
 };
 let diffKey = store.get('ns-diff', 'normal'); if (!DIFF[diffKey]) diffKey = 'normal';
 
@@ -525,6 +526,8 @@ const Sfx = {
     const g = c.createGain(); this.env(g, t, 0.08, 0.12, 0.9);
     o.connect(f).connect(g).connect(this.master); o.start(t); lfo.start(t); o.stop(t + 1.1); lfo.stop(t + 1.1);
   },
+  swish() { this.nz({ freq: 1400, to: 500, type: 'bandpass', vol: 0.18, a: 0.02, r: 0.18 }); },
+  whack() { this.nz({ freq: 500, vol: 0.6, r: 0.12 }); this.tone({ freq: 120, to: 50, type: 'square', vol: 0.3, r: 0.15 }); },
   slam() { this.nz({ freq: 900, vol: 0.5, r: 0.25 }); this.tone({ freq: 80, to: 45, type: 'square', vol: 0.25, r: 0.25 }); },
   bang(pan = 0) { this.nz({ freq: 600, vol: 0.55, r: 0.2, pan }); this.tone({ freq: 70, to: 40, vol: 0.35, r: 0.2 }); },
   clunk() { this.tone({ freq: 140, to: 60, type: 'square', vol: 0.18, r: 0.15 }); this.nz({ freq: 2000, type: 'bandpass', vol: 0.2, r: 0.06 }); },
@@ -623,6 +626,24 @@ const phong = (o) => new THREE.MeshPhongMaterial(Object.assign({ shininess: 20 }
 // =====================================================================
 const hemi = new THREE.HemisphereLight(0xe8fff0, 0x2a2f2a, 0.55); scene.add(hemi);
 const torch = new THREE.SpotLight(0xfff2d8, 0, 22, 0.5, 0.5, 1.3); torch.position.set(0.2, -0.15, 0); torch.target.position.set(0, 0, -1); camera.add(torch); camera.add(torch.target);
+// the bat you carry: held low on the right, swung across the screen
+const bat = new THREE.Group();
+{
+  const wood = new THREE.MeshLambertMaterial({ color: 0x9a6a3a, emissive: 0x2a1a0c });
+  const grip = new THREE.MeshLambertMaterial({ color: 0x1a1a1a, emissive: 0x0a0a0a });
+  const h = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.02, 0.28, 10), grip); h.position.y = 0.14; bat.add(h);
+  const b = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.022, 0.5, 12), wood); b.position.y = 0.53; bat.add(b);
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.042, 12, 8), wood); cap.position.y = 0.78; cap.scale.y = 0.4; bat.add(cap);
+  bat.position.set(0.3, -0.38, -0.55); camera.add(bat);
+}
+function updateBat(dt) {
+  swingCd = Math.max(0, swingCd - dt); swingT = Math.max(0, swingT - dt);
+  bat.visible = view === 'fp' && !player.hidden && (state === 'playing' || state === 'paused');
+  const k = swingT > 0 ? Math.sin((1 - swingT / 0.32) * Math.PI) : 0;
+  const sway = Math.sin(player.bob * 2) * 0.015;
+  bat.rotation.set(-0.35 - k * 1.1, -0.2 + k * 0.6, -0.45 + k * 1.9);
+  bat.position.set(0.3 - k * 0.25, -0.38 + sway + k * 0.08, -0.55 - k * 0.1);
+}
 const awning = new THREE.PointLight(0xffe2b0, 1.4, 7, 1.6); awning.position.set(13, 3.0, 32.2); scene.add(awning);
 const streetLamp = new THREE.PointLight(0xffb060, 1.2, 18, 1.5); streetLamp.position.set(5, 6, 40); scene.add(streetLamp);
 const emergency = new THREE.PointLight(0xff2020, 0, 30, 1.2); emergency.position.set(13, 2.9, 14); scene.add(emergency);
@@ -981,7 +1002,7 @@ let customers = [];        // all active customers
 let doorCust = null;       // the one waiting at the door
 let nextArrival = 4, musicT = 5, whisperT = 15, thunderT = 20, phantomT = 30, heartT = 0, powerCutT = 999;
 let shake = 0, toastT = 0, scareT = 0, endT = 0, backDoorEvent = false, decisionCount = 0;
-const stats = { served: 0, caught: 0, mistakes: 0, hunts: 0 };
+const stats = { served: 0, caught: 0, mistakes: 0, hunts: 0, saved: 0, eaten: 0, beaten: 0 };
 let endingPending = null;
 const keys = new Set();
 const input = { jx: 0, jy: 0, lx: 0, ly: 0, run: false };
@@ -1024,7 +1045,7 @@ function newGame() {
   player.pos.set(20.5, 0, 26.5);
   elapsed = 0; hourIdx = 0; score = 0; strikes = 0; decisionCount = 0; backDoorEvent = false;
   $('score').textContent = '0';
-  Object.assign(stats, { served: 0, caught: 0, mistakes: 0, hunts: 0 });
+  Object.assign(stats, { served: 0, caught: 0, mistakes: 0, hunts: 0, saved: 0, eaten: 0, beaten: 0 }); swingT = 0; swingCd = 0;
   nextArrival = 3; musicT = 4; whisperT = rand(12, 20); thunderT = rand(10, 20); phantomT = rand(35, 60); powerCutT = DIFF[diffKey].hourLen * rand(1.2, 1.8) / NT().cuts;
   setupNight();
   for (const d of doors) { d.open = 1; d.target = 1; }
@@ -1207,7 +1228,7 @@ function updateCustomer(c, dt, t) {
     case 'lurking':
       stepAlong(c, dt);
       c.revealIn -= dt;
-      if (c.revealIn <= 0 && !customers.some((o) => o.state === 'hunt')) startHunt(c);
+      if (c.revealIn <= 0 && !customers.some(isHostile)) { const v = victimFor(c); if (v) startAttack(c, v); else startHunt(c); }
       break;
     case 'denied-reveal':
       c.reveal = Math.min(1, c.reveal + dt * 1.6);
@@ -1217,6 +1238,12 @@ function updateCustomer(c, dt, t) {
       break;
     case 'hunt':
       updateHunter(c, dt);
+      break;
+    case 'attack':
+      updateAttacker(c, dt);
+      break;
+    case 'scared':
+      faceTowards(c, Math.atan2(c.foe.pos.x - c.pos.x, c.foe.pos.z - c.pos.z), dt);
       break;
     case 'vanish':
       c.vanishT -= dt; c.group.visible = Math.random() < 0.4;
@@ -1229,7 +1256,7 @@ function updateCustomer(c, dt, t) {
 function animatePerson(c, dt, t) {
   const P = c.parts, g = c.group; if (!g) return;
   g.position.set(c.pos.x, 0, c.pos.z);
-  const moving = ['arriving', 'entering', 'shopping', 'checkout', 'exiting', 'leaving', 'lurking', 'hunt'].includes(c.state) && (c.path && c.path.length || c.final);
+  const moving = ['arriving', 'entering', 'shopping', 'checkout', 'exiting', 'leaving', 'lurking', 'hunt', 'attack'].includes(c.state) && (c.path && c.path.length || c.final);
   const sw = moving ? Math.sin(c.anim * 2) : 0;
   P.legs[0].rotation.x = sw * 0.55; P.legs[1].rotation.x = -sw * 0.55;
   // arms: idle swing / knock / hands up / reveal claws
@@ -1307,7 +1334,7 @@ function addStrike() {
 
 // ---------- the hunt ----------
 function startHunt(c, fromBack, msg) {
-  c.state = 'hunt'; c.reveal = 0.01; c.path = null; c.final = null; c.repath = 0; c.huntLeft = DIFF[diffKey].huntTime; c.speed = DIFF[diffKey].huntSpeed; c.lastSeen = null; c.bangT = 0;
+  c.state = 'hunt'; c.reveal = 0.01; c.path = null; c.final = null; c.repath = 0; c.huntLeft = DIFF[diffKey].huntTime; c.speed = DIFF[diffKey].huntSpeed; c.lastSeen = null; c.bangT = 0; c.hp = c.hp || DIFF[diffKey].hp; c.stunT = c.stunT || 0;
   stats.hunts++;
   if (!fromBack) { addStrike(); toast(`${c.first} WASN'T HUMAN! RUN AND HIDE!`, 'bad', 3.5); }
   else toast(msg || 'THE BACK DOOR WAS OPEN. SOMETHING GOT IN. HIDE!', 'bad', 3.5);
@@ -1319,6 +1346,7 @@ function startHunt(c, fromBack, msg) {
 }
 function updateHunter(c, dt) {
   c.reveal = Math.min(1, c.reveal + dt * 1.5);
+  if (c.stunT > 0) { c.stunT -= dt; return; }
   c.huntLeft -= dt;
   if (c.huntLeft <= 0 || state === 'end') { c.state = 'vanish'; c.vanishT = 1.2; Sfx.whisper(); Sfx.setDrone(0.4); addScore(200); toast('It faded into the dark. You survived it. +' + Math.round(200 * DIFF[diffKey].mult), 'good'); return; }
   const P = player.pos, dist = Math.hypot(P.x - c.pos.x, P.z - c.pos.z);
@@ -1355,6 +1383,104 @@ function updateHunter(c, dt) {
   }
   if (player.hidden && player.hidden.seen && Math.hypot(player.hidden.spot.fx - c.pos.x, player.hidden.spot.fz - c.pos.z) < 0.9) { caught('It watched you hide.'); return; }
   if (!player.hidden && dist < 0.95) caught();
+}
+
+
+// ---------- fighting back ----------
+// A monster you let in goes for any shopper inside first. Hit it with the bat to save them, or beat it before it shows itself.
+const isHostile = (c) => c.state === 'hunt' || c.state === 'attack';
+const INSIDE_HUMAN = ['shopping', 'checkout'];
+function victimFor(m) {
+  let best = null, bd = 1e9;
+  for (const o of customers) if (o.human && INSIDE_HUMAN.includes(o.state) && o.pos.z < 28) { const d = Math.hypot(o.pos.x - m.pos.x, o.pos.z - m.pos.z); if (d < bd) { bd = d; best = o; } }
+  return best;
+}
+function startAttack(c, v) {
+  c.state = 'attack'; c.victim = v; c.reveal = 0.01; c.path = null; c.final = null; c.hpath = null; c.repath = 0; c.speed = DIFF[diffKey].huntSpeed * 1.1; c.hp = c.hp || DIFF[diffKey].hp; c.stunT = 0; c.eatT = null;
+  v.state = 'scared'; v.foe = c; v.path = null; v.final = null; v.handsT = 99;
+  for (const o of customers) if (o !== v && o.human && ['shopping', 'checkout', 'entering'].includes(o.state)) { routeTo(o, DOOR_SPOT.x, 31.5); o.state = 'exiting'; o.speed = 2.4; }
+  if (state === 'inspect') setView('fp');
+  Sfx.screech(); Sfx.talk('aaaah! help!', v.voice, false); shake = 0.4; Sfx.setDrone(0.9);
+  toast(`${c.first} WASN'T HUMAN! It's going for ${v.first}! GRAB THE BAT AND FIGHT IT!`, 'bad', 4);
+}
+function chase(c, tx, tz, dt) {
+  c.repath -= dt;
+  if (c.repath <= 0 || !c.hpath) { c.hpath = findPath(cell(c.pos.x), cell(c.pos.z), cell(tx), cell(tz), walkHunter); c.repath = 0.4; }
+  let gx = tx, gz = tz;
+  if (c.hpath && c.hpath.length > 1) { [gx, gz] = c.hpath[0]; if (Math.hypot(gx - c.pos.x, gz - c.pos.z) < 0.3) c.hpath.shift(); }
+  const dx = gx - c.pos.x, dz = gz - c.pos.z, dl = Math.hypot(dx, dz);
+  if (dl < 0.01) return;
+  const st = Math.min(dl, c.speed * dt), nx = c.pos.x + dx / dl * st, nz = c.pos.z + dz / dl * st;
+  if (walkHunter(cell(nx), cell(nz))) { c.pos.x = nx; c.pos.z = nz; }
+  faceTowards(c, Math.atan2(dx, dz), dt); c.anim += st * 2.5; c.stepD += st;
+  if (c.stepD > 0.9) { c.stepD = 0; Sfx.heavyStep(clamp(1 - Math.hypot(c.pos.x - player.pos.x, c.pos.z - player.pos.z) / 18, 0.05, 0.9), clamp((c.pos.x - player.pos.x) / 8, -1, 1)); }
+}
+function updateAttacker(c, dt) {
+  const v = c.victim;
+  c.reveal = Math.min(1, c.reveal + dt * 1.5);
+  if (c.stunT > 0) { c.stunT -= dt; return; }
+  const d = Math.hypot(v.pos.x - c.pos.x, v.pos.z - c.pos.z);
+  if (c.eatT === null) {
+    chase(c, v.pos.x, v.pos.z, dt);
+    if (d < 0.8) { c.eatT = DIFF[diffKey].eatTime; c.cryT = 0; Sfx.screech(); shake = 0.35; toast(`It's got ${v.first}! Hit it to break up the fight!`, 'bad', 3); }
+    return;
+  }
+  faceTowards(c, Math.atan2(v.pos.x - c.pos.x, v.pos.z - c.pos.z), dt);
+  c.anim += dt * 6; c.eatT -= dt; c.cryT -= dt;
+  if (c.cryT <= 0) { c.cryT = rand(1.2, 2); Sfx.talk(pick(['help!', 'get it off me!', 'aaaah!', 'please!']), v.voice, false); Sfx.bang(clamp((c.pos.x - player.pos.x) / 10, -1, 1)); toast(`${v.first} is being attacked! ${Math.ceil(c.eatT)}...`, 'bad', 1.2); }
+  if (c.eatT <= 0) {
+    v.state = 'vanish'; v.vanishT = 1.2; v.handsT = 0; stats.eaten++;
+    Sfx.jumpscare(); shake = 0.8;
+    $('redflash').style.opacity = 0.6; setTimeout(() => { $('redflash').style.opacity = 0; }, 300);
+    c.victim = null; startHunt(c, true, `IT ATE ${v.first.toUpperCase()}. NOW IT'S COMING FOR YOU! FIGHT OR HIDE!`);
+    addStrike();
+  }
+}
+function freeVictim(c, thenHunt = true) {
+  const v = c.victim; if (!v) return;
+  c.victim = null; v.foe = null; v.handsT = 0;
+  if (v.state === 'scared') { routeTo(v, DOOR_SPOT.x, 31.5); v.state = 'exiting'; v.speed = 2.6; }
+  stats.saved++; addScore(150);
+  if (thenHunt) startHunt(c, true, `You saved ${v.first}! Now it's after YOU. Keep hitting it!`);
+}
+let swingT = 0, swingCd = 0;
+function swing() {
+  if (state !== 'playing' || view !== 'fp' || player.hidden || swingCd > 0) return;
+  swingT = 0.32; swingCd = 0.55; Sfx.swish();
+  const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw);
+  let hit = null, hd = 1e9;
+  for (const c of customers) {
+    if (!c.group || !['shopping', 'checkout', 'entering', 'exiting', 'lurking', 'hunt', 'attack', 'scared'].includes(c.state)) continue;
+    const dx = c.pos.x - player.pos.x, dz = c.pos.z - player.pos.z, d = Math.hypot(dx, dz);
+    if (d > 1.9 || (dx * fx + dz * fz) / (d || 1) < 0.45 || !lineOfSight(player.pos.x, player.pos.z, c.pos.x, c.pos.z)) continue;
+    if (d < hd) { hd = d; hit = c; }
+  }
+  if (hit) setTimeout(() => landHit(hit, fx, fz), 110);
+}
+function landHit(c, fx, fz) {
+  if (state !== 'playing' || !customers.includes(c)) return;
+  Sfx.whack(); shake = Math.max(shake, 0.25);
+  if (c.human) {
+    if (c.state === 'scared') return;
+    routeTo(c, DOOR_SPOT.x, 31.5); c.state = 'exiting'; c.speed = 2.6; c.handsT = 3;
+    Sfx.talk('ow! what is wrong with you?!', c.voice, false);
+    toast(`OW! ${c.first} was a real person! They're leaving to call the police. Mistake!`, 'bad', 3.2);
+    addStrike(); return;
+  }
+  c.hp = (c.hp || DIFF[diffKey].hp) - 1; c.stunT = 0.9; c.reveal = Math.max(c.reveal, 0.4);
+  const nx = c.pos.x + fx * 1.3, nz = c.pos.z + fz * 1.3;
+  if (walkHunter(cell(nx), cell(nz))) { c.pos.x = nx; c.pos.z = nz; }
+  Sfx.screech();
+  if (c.hp <= 0) {
+    if (c.victim) freeVictim(c, false);
+    c.state = 'denied-reveal'; c.vanishT = 1.6; c.victim = null;
+    stats.caught++; stats.beaten++; addScore(300); Sfx.setDrone(0.4); Sfx.good();
+    toast(`YOU BEAT IT! It crumbles into dust. +${Math.round(300 * DIFF[diffKey].mult)}`, 'good', 3);
+    return;
+  }
+  if (c.state === 'lurking') { c.revealIn = 999; startHunt(c, true, `You hit ${c.first}... and it's NOT human! Keep hitting it!`); addScore(100); }
+  else if (c.state === 'attack') freeVictim(c);
+  else toast(`WHACK! ${c.hp} more hit${c.hp === 1 ? '' : 's'}!`, 'warn', 1.4);
 }
 
 // ---------- endings ----------
@@ -1406,7 +1532,7 @@ function showEnd(e) {
   $('endText').textContent = e.text + (newBest && e.good ? ' New best score!' : '');
   endGood = !!e.good;
   $('bAgain').textContent = e.good ? (night < 5 ? `NIGHT ${night + 1} ▶` : 'PLAY AGAIN') : `TRY NIGHT ${night} AGAIN`;
-  $('endStats').innerHTML = [['Night', night + ' of 5'], ['Score', score], ['Mistakes', stats.mistakes], ['Monsters caught', stats.caught], ['Customers served', stats.served], ['Jobs done', activeTasks.filter((id) => tasksState[id]).length + '/' + activeTasks.length]].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
+  $('endStats').innerHTML = [['Night', night + ' of 5'], ['Score', score], ['Mistakes', stats.mistakes], ['Monsters caught', stats.caught], ['Shoppers saved', stats.saved], ['Customers served', stats.served], ['Jobs done', activeTasks.filter((id) => tasksState[id]).length + '/' + activeTasks.length]].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
   setState('end');
 }
 
@@ -1493,7 +1619,7 @@ function answerPhone() {
 }
 function spawnHunterAt(x, z, msg) {
   if (state !== 'playing' && state !== 'inspect') return;
-  if (customers.some((c) => c.state === 'hunt')) return;
+  if (customers.some(isHostile)) return;
   const m = genCustomer(hourIdx, 'monster'); buildPerson(m);
   Object.assign(m, { pos: new THREE.Vector3(x, 0, z), blinkT: 1, blinking: 0, anim: 0, twitchT: 2, twitch: 0, knockT: 0, knocking: 0, hands: 0, handsT: 0, reveal: 0, seed: Math.random() * 99, stepD: 0 });
   customers.push(m); startHunt(m, true, msg);
@@ -1641,7 +1767,7 @@ function updateWorld(dt, t) {
   Gd[30][12] = Gd[30][13] = 'E';
   // lights
   const camX = camera.position.x, camZ = camera.position.z;
-  const hunter = customers.find((c) => c.state === 'hunt');
+  const hunter = customers.find(isHostile);
   for (const p of panels) {
     let lvl = power ? 1 : 0;
     if (power && p.broken) { const n = Math.sin(t * 13 + p.phase) + Math.sin(t * 31 + p.phase * 2) + Math.sin(t * 5 + p.phase * 3); lvl = n > 1.3 ? 1 : n > 0.7 ? 0.3 : 0.05; }
@@ -1696,12 +1822,12 @@ function updateEvents(dt, t) {
     customers.push(m); Sfx.creak(); startHunt(m, true);
   }
   // arrivals
-  const busy = !!doorCust || customers.some((c) => c.state === 'hunt');
+  const busy = !!doorCust || customers.some(isHostile);
   if (!busy) { nextArrival -= dt; if (nextArrival <= 0) spawnCustomer(decisionCount === 0 && custSeq === 0 ? 'human' : decisionCount === 1 && custSeq === 1 ? 'monster' : null); }
   // power cuts
   if (power && hourIdx >= 1) { powerCutT -= dt; if (powerCutT <= 0) { setPower(false); toast('The power just cut out. Reset the breaker in the staff room.', 'warn', 3.5); Sfx.whisper(); powerCutT = 999; } }
   // ambience
-  const hunter = customers.find((c) => c.state === 'hunt');
+  const hunter = customers.find(isHostile);
   const intensity = clamp(hourIdx / 6 + (hunter ? 0.5 : 0), 0, 1);
   musicT -= dt; if (musicT <= 0) { Sfx.music(intensity); musicT = rand(4, 7) - intensity * 2; }
   whisperT -= dt; if (whisperT <= 0) { Sfx.whisper(); whisperT = rand(14, 28) * (1 - intensity * 0.5); }
@@ -1754,6 +1880,7 @@ function updateHUD(dt) {
 }
 
 function placeCamera(dt, t) {
+  updateBat(dt);
   if (view === 'fp' || state === 'scare') {
     const by = Math.sin(player.bob * 2) * 0.04;
     camera.position.set(player.pos.x, (player.hidden ? 1.5 : 1.62) + by, player.pos.z);
@@ -1834,6 +1961,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyM') Sfx.setMuted(!muted);
   if (state === 'playing') {
     if (e.code === 'KeyE') interact();
+    if (e.code === 'Space') swing();
     if (e.code === 'KeyF') { player.torch = !player.torch; Sfx.clunk(); }
     if (e.code === 'KeyC') openInspect('cctv');
     if (e.code === 'KeyQ') openInspect(nearDesk() ? 'window' : 'cctv');
@@ -1849,6 +1977,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && (st
 if (!IS_TOUCH) {
   canvas.addEventListener('mousedown', () => {
     if (state !== 'playing') return; dragging = true;
+    if (document.pointerLockElement === canvas) swing();
     if (!document.pointerLockElement && canvas.requestPointerLock) { try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (err) {} }
   });
   window.addEventListener('mouseup', () => { dragging = false; });
@@ -1867,7 +1996,7 @@ if (!IS_TOUCH) {
   lz.addEventListener('pointermove', (e) => { if (e.pointerId !== lid) return; input.lx += (e.clientX - lx) * 1.6; input.ly += (e.clientY - ly) * 1.6; lx = e.clientX; ly = e.clientY; });
   const endL = (e) => { if (e.pointerId === lid) lid = null; }; lz.addEventListener('pointerup', endL); lz.addEventListener('pointercancel', endL);
   const tap = (id, fn) => $(id).addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); Sfx.init(); fn(); });
-  tap('tUse', interact); tap('tCctv', () => openInspect('cctv')); tap('tLight', () => { player.torch = !player.torch; Sfx.clunk(); });
+  tap('tUse', interact); tap('tHit', swing); tap('tCctv', () => openInspect('cctv')); tap('tLight', () => { player.torch = !player.torch; Sfx.clunk(); });
   const run = $('tRun');
   run.addEventListener('pointerdown', (e) => { e.preventDefault(); input.run = true; run.classList.add('held'); try { run.setPointerCapture(e.pointerId); } catch (er) {} });
   const ru = () => { input.run = false; run.classList.remove('held'); }; run.addEventListener('pointerup', ru); run.addEventListener('pointercancel', ru);
@@ -1934,7 +2063,7 @@ function boot() {
   setState('title');
   requestAnimationFrame(frame);
 }
-window.__ns = { get state() { return state; }, get view() { return view; }, get customers() { return customers; }, get doorCust() { return doorCust; }, player, decide, ask, newGame, setView, startHunt, get strikes() { return strikes; }, get score() { return score; }, get elapsed() { return elapsed; }, set elapsed(v) { elapsed = v; }, spawnCustomer, tasksState, doTask, interact, Gd, get night() { return night; }, set night(v) { night = v; }, set unlocked(v) { unlocked = v; renderBest(); }, get activeTasks() { return activeTasks; }, get phone() { return phone; }, answerPhone, openBrief, creepEvent, spawnHunterAt, props, setHour(h) { elapsed = h * DIFF[diffKey].hourLen - 0.5; }, get camGhost() { return camGhost; } };
+window.__ns = { swing, get stats() { return stats; }, get state() { return state; }, get view() { return view; }, get customers() { return customers; }, get doorCust() { return doorCust; }, player, decide, ask, newGame, setView, startHunt, get strikes() { return strikes; }, get score() { return score; }, get elapsed() { return elapsed; }, set elapsed(v) { elapsed = v; }, spawnCustomer, tasksState, doTask, interact, Gd, get night() { return night; }, set night(v) { night = v; }, set unlocked(v) { unlocked = v; renderBest(); }, get activeTasks() { return activeTasks; }, get phone() { return phone; }, answerPhone, openBrief, creepEvent, spawnHunterAt, props, setHour(h) { elapsed = h * DIFF[diffKey].hourLen - 0.5; }, get camGhost() { return camGhost; } };
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot, boot); else boot();
 })();
 </script>
