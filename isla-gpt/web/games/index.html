@@ -35,6 +35,7 @@ header p { margin: 12px 0 0; color: var(--muted); font-size: 16px; }
 .game:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 .art { flex: 1; position: relative; overflow: hidden; }
 .art svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .label { padding: 14px 84px 16px 18px; background: rgba(0, 0, 0, .55); backdrop-filter: blur(4px); }
 .label b { display: block; font-family: var(--display); font-weight: 400; font-size: 28px; line-height: 1.05; letter-spacing: .01em; }
 .label span { font-size: 14px; color: #ddd8ff; }
@@ -63,19 +64,7 @@ header p { margin: 12px 0 0; color: var(--muted); font-size: 16px; }
   <div class="shelf">
     <button class="game" data-src="dont-look-back.html" style="background:#07070a" aria-label="Play Don't Look Back">
       <div class="art">
-        <svg viewBox="0 0 300 220" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <defs>
-            <radialGradient id="dl1" cx="50%" cy="35%" r="60%"><stop offset="0" stop-color="#3a2a2a"/><stop offset="1" stop-color="#07070a"/></radialGradient>
-            <radialGradient id="eye" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff"/><stop offset=".25" stop-color="#ff3a2a"/><stop offset="1" stop-color="#ff3a2a" stop-opacity="0"/></radialGradient>
-          </defs>
-          <rect width="300" height="220" fill="url(#dl1)"/>
-          <polygon points="0,220 110,95 190,95 300,220" fill="#16141a"/>
-          <polygon points="110,95 190,95 190,40 110,40" fill="#0d0c10"/>
-          <g fill="#23303a"><rect x="20" y="60" width="14" height="120"/><rect x="38" y="70" width="12" height="102"/><rect x="54" y="78" width="11" height="88"/><rect x="266" y="60" width="14" height="120"/><rect x="250" y="70" width="12" height="102"/><rect x="235" y="78" width="11" height="88"/></g>
-          <rect x="138" y="44" width="24" height="5" fill="#e8f2ff" opacity=".5"/>
-          <path d="M150 60 c-9 0-12 8-12 16 0 6 3 10 5 12 l-12 6 c-6 24-10 40-8 60 h4 l6-40 4 40 h6 l2-30 2 30 h6 l4-40 6 40 h4 c2-20-2-36-8-60 l-12-6 c2-2 5-6 5-12 0-8-3-16-12-16z" fill="#000"/>
-          <circle cx="145" cy="74" r="9" fill="url(#eye)"/><circle cx="155" cy="74" r="9" fill="url(#eye)"/>
-        </svg>
+        <img src="pics/dont-look-back.jpg" alt="" loading="lazy" style="object-position:left center">
         <span class="badge">Horror</span>
       </div>
       <div class="label"><b>DON'T LOOK BACK</b><span>Find 5 keys. It only moves when you look away.</span></div>
@@ -84,22 +73,7 @@ header p { margin: 12px 0 0; color: var(--muted); font-size: 16px; }
 
     <button class="game" data-src="yeet-the-human.html" style="background:#7cc8ff" aria-label="Play Yeet the Human">
       <div class="art">
-        <svg viewBox="0 0 300 220" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <rect width="300" height="220" fill="#7cc8ff"/>
-          <ellipse cx="230" cy="40" rx="40" ry="12" fill="#fff" opacity=".9"/><ellipse cx="70" cy="30" rx="30" ry="9" fill="#fff" opacity=".8"/>
-          <rect y="160" width="300" height="60" fill="#5cbf4a"/>
-          <path d="M60 150 Q150 -10 250 120" fill="none" stroke="#fff" stroke-width="4" stroke-dasharray="2 10" stroke-linecap="round"/>
-          <g transform="translate(55 150) rotate(-38)"><rect x="-6" y="-16" width="70" height="32" rx="10" fill="#e23b4e" stroke="#1d1b3a" stroke-width="4"/><rect x="40" y="-18" width="6" height="36" fill="#ffc93c"/><rect x="10" y="-18" width="6" height="36" fill="#ffc93c"/></g>
-          <circle cx="45" cy="168" r="16" fill="#2a2c3a" stroke="#1d1b3a" stroke-width="4"/>
-          <g transform="translate(175 52) rotate(35)" stroke="#1d1b3a" stroke-width="3" stroke-linecap="round">
-            <line x1="0" y1="10" x2="-22" y2="-6" stroke="#ff7a1a" stroke-width="9"/><line x1="0" y1="10" x2="24" y2="-2" stroke="#ff7a1a" stroke-width="9"/>
-            <line x1="-2" y1="34" x2="-20" y2="56" stroke="#2b59c3" stroke-width="10"/><line x1="2" y1="34" x2="26" y2="48" stroke="#2b59c3" stroke-width="10"/>
-            <rect x="-11" y="2" width="22" height="34" rx="9" fill="#ff7a1a"/>
-            <circle cx="0" cy="-10" r="12" fill="#f1c27d"/>
-            <ellipse cx="0" cy="-5" rx="4" ry="5" fill="#4a0d14" stroke="none"/>
-          </g>
-          <text x="214" y="100" font-family="Lilita One, sans-serif" font-size="22" fill="#fff" stroke="#1d1b3a" stroke-width="4" paint-order="stroke">AAAH!</text>
-        </svg>
+        <img src="pics/yeet-the-human.jpg" alt="" loading="lazy">
         <span class="badge">Physics</span>
       </div>
       <div class="label"><b>YEET THE HUMAN</b><span>Fire a floppy human from a giant cannon.</span></div>
@@ -108,21 +82,7 @@ header p { margin: 12px 0 0; color: var(--muted); font-size: 16px; }
 
     <button class="game" data-src="night-shift.html" style="background:#050807" aria-label="Play Night Shift">
       <div class="art">
-        <svg viewBox="0 0 300 220" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <defs>
-            <radialGradient id="nsg" cx="50%" cy="40%" r="65%"><stop offset="0" stop-color="#16302a"/><stop offset="1" stop-color="#030605"/></radialGradient>
-            <radialGradient id="nseye" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff"/><stop offset=".3" stop-color="#ff2a10"/><stop offset="1" stop-color="#ff2a10" stop-opacity="0"/></radialGradient>
-          </defs>
-          <rect width="300" height="220" fill="url(#nsg)"/>
-          <rect x="40" y="38" width="220" height="150" fill="#0b1512" stroke="#2f6b4f" stroke-width="6"/>
-          <g stroke="#9fb8c8" stroke-width="1.5" opacity=".45"><line x1="60" y1="50" x2="56" y2="70"/><line x1="100" y1="80" x2="96" y2="100"/><line x1="220" y1="60" x2="216" y2="80"/><line x1="240" y1="120" x2="236" y2="140"/><line x1="80" y1="130" x2="76" y2="150"/><line x1="200" y1="150" x2="196" y2="170"/></g>
-          <path d="M150 70 c-16 0-24 12-24 26 0 10 5 17 10 20 l-26 10 c-6 20-8 40-8 62 h96 c0-22-2-42-8-62 l-26-10 c5-3 10-10 10-20 0-14-8-26-24-26z" fill="#000"/>
-          <circle cx="142" cy="94" r="8" fill="url(#nseye)"/><circle cx="158" cy="94" r="8" fill="url(#nseye)"/>
-          <path d="M136 106 q14 10 28 0" stroke="#e8e2d0" stroke-width="3" fill="none" stroke-linecap="round"/>
-          <line x1="150" y1="38" x2="150" y2="188" stroke="#2f6b4f" stroke-width="4"/>
-          <rect x="96" y="14" width="108" height="16" rx="3" fill="#7dffb0" opacity=".85"/>
-          <text x="150" y="27" text-anchor="middle" font-family="Lilita One, sans-serif" font-size="12" fill="#04110a">OPEN 24 HOURS</text>
-        </svg>
+        <img src="pics/night-shift.jpg" alt="" loading="lazy">
         <span class="badge">Horror</span>
       </div>
       <div class="label"><b>NIGHT SHIFT</b><span>Some customers aren't human. Let them in?</span></div>
@@ -161,9 +121,9 @@ header p { margin: 12px 0 0; color: var(--muted); font-size: 16px; }
       <span class="play"><svg viewBox="0 0 24 24" fill="#1d1b3a"><path d="M6 4l14 8-14 8z"/></svg></span>
     </button>
 
-    <button class="game" data-src="road-rage-x.html" style="background:linear-gradient(180deg,#ff7a59 0%,#7b2cbf 55%,#1b1036 100%)" aria-label="Play Road Rage X"><div class="art"><svg viewBox="0 0 300 220" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><circle cx="150" cy="78" r="34" fill="#ffd23f"/><rect x="0" y="70" width="300" height="40" fill="#2a1446" opacity=".6"/><rect x="20" y="40" width="40" height="70" fill="#1b1036"/><rect x="240" y="30" width="44" height="80" fill="#1b1036"/><path d="M0 220 L130 110 L170 110 L300 220Z" fill="#2b2d31"/><path d="M147 110 L150 110 L146 220 L139 220Z" fill="#f2c230"/><path d="M152 110 L155 110 L161 220 L154 220Z" fill="#f2c230"/><path d="M96 180 q54 -30 108 0 l8 22 h-124z" fill="#ff2e63"/><rect x="104" y="196" width="22" height="8" rx="3" fill="#ffd0d0"/><rect x="174" y="196" width="22" height="8" rx="3" fill="#ffd0d0"/><path d="M118 172 q32 -20 64 0z" fill="#111827"/><path d="M135 205 l-20 15 M165 205 l20 15" stroke="#22d3ee" stroke-width="6"/></svg><span class="badge">Racing</span></div><div class="label"><b>ROAD RAGE X</b><span>Race, drift and escape the cops!</span></div><span class="play"><svg viewBox="0 0 24 24" fill="#1d1b3a"><path d="M6 4l14 8-14 8z"/></svg></span></button>
-    <button class="game" data-src="teddy-exe.html" style="background:radial-gradient(circle at 50% 40%,#3a0a0e 0%,#120204 60%,#000 100%)" aria-label="Play Teddy.exe"><div class="art"><svg viewBox="0 0 300 220" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><circle cx="110" cy="62" r="26" fill="#5a3a24"/><circle cx="190" cy="62" r="26" fill="#5a3a24"/><circle cx="110" cy="62" r="13" fill="#8a6a4a"/><ellipse cx="150" cy="118" rx="72" ry="64" fill="#5a3a24"/><ellipse cx="150" cy="140" rx="34" ry="24" fill="#8a6a4a"/><ellipse cx="150" cy="128" rx="11" ry="8" fill="#140806"/><circle cx="122" cy="104" r="9" fill="#ff1a2a"/><circle cx="178" cy="104" r="9" fill="#ff1a2a"/><circle cx="122" cy="104" r="20" fill="#ff1a2a" opacity=".25"/><circle cx="178" cy="104" r="20" fill="#ff1a2a" opacity=".25"/><path d="M126 150 h48 l-6 10 -6-10 -6 10 -6-10 -6 10 -6-10 -6 10z" fill="#e8e0c8"/><path d="M0 220 L40 190 H260 L300 220Z" fill="#000" opacity=".6"/></svg><span class="badge">Horror</span></div><div class="label"><b>TEDDY.EXE</b><span>Escape the toy factory!</span></div><span class="play"><svg viewBox="0 0 24 24" fill="#1d1b3a"><path d="M6 4l14 8-14 8z"/></svg></span></button>
-    <button class="game" data-src="pizza-panic.html" style="background:linear-gradient(160deg,#e63946,#2a1a10)" aria-label="Play Pizza Panic"><div class="art"><svg viewBox="0 0 300 220" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="300" height="220" fill="#2a1a10"/><rect y="150" width="300" height="70" fill="#34363a"/><rect x="0" y="182" width="300" height="5" fill="#e9c43a"/><circle cx="235" cy="45" r="24" fill="#ffc93c"/><g fill="#8ac926" stroke="#000" stroke-width="3"><circle cx="40" cy="105" r="16"/><rect x="28" y="120" width="24" height="34" rx="4" fill="#5b6c8f"/><path d="M50 128h28" stroke-width="8" stroke-linecap="round" stroke="#8ac926"/><circle cx="262" cy="110" r="15"/><rect x="251" y="124" width="22" height="32" rx="4" fill="#8f5b5b"/><path d="M252 132h-26" stroke-width="8" stroke-linecap="round" stroke="#8ac926"/></g><circle cx="35" cy="102" r="4" fill="#fff"/><circle cx="46" cy="100" r="3" fill="#fff"/><circle cx="258" cy="107" r="4" fill="#fff"/><g stroke="#000" stroke-width="3"><rect x="105" y="128" width="90" height="30" rx="10" fill="#e63946"/><circle cx="118" cy="164" r="13" fill="#222"/><circle cx="182" cy="164" r="13" fill="#222"/><circle cx="150" cy="104" r="14" fill="#fff"/><rect x="138" y="116" width="24" height="16" fill="#e63946"/><rect x="104" y="92" width="34" height="8" fill="#f2ead8"/><rect x="104" y="82" width="34" height="8" fill="#f2ead8"/><rect x="108" y="72" width="34" height="8" fill="#f2ead8"/></g><g transform="rotate(-20 150 40)"><path d="M150 18l26 50h-52z" fill="#ffc93c" stroke="#000" stroke-width="3"/><circle cx="146" cy="50" r="5" fill="#b5121b"/><circle cx="158" cy="58" r="4" fill="#b5121b"/></g></svg><span class="badge new">New!</span></div><div class="label"><b>PIZZA PANIC</b><span>Deliver pizzas through a zombie town</span></div><span class="play"><svg viewBox="0 0 24 24" fill="#1d1b3a"><path d="M6 4l14 8-14 8z"/></svg></span></button>
+    <button class="game" data-src="road-rage-x.html" style="background:linear-gradient(180deg,#ff7a59 0%,#7b2cbf 55%,#1b1036 100%)" aria-label="Play Road Rage X"><div class="art"><img src="pics/road-rage-x.jpg" alt="" loading="lazy"><span class="badge">Racing</span></div><div class="label"><b>ROAD RAGE X</b><span>Race, drift and escape the cops!</span></div><span class="play"><svg viewBox="0 0 24 24" fill="#1d1b3a"><path d="M6 4l14 8-14 8z"/></svg></span></button>
+    <button class="game" data-src="teddy-exe.html" style="background:radial-gradient(circle at 50% 40%,#3a0a0e 0%,#120204 60%,#000 100%)" aria-label="Play Teddy.exe"><div class="art"><img src="pics/teddy-exe.jpg" alt="" loading="lazy"><span class="badge">Horror</span></div><div class="label"><b>TEDDY.EXE</b><span>Escape the toy factory!</span></div><span class="play"><svg viewBox="0 0 24 24" fill="#1d1b3a"><path d="M6 4l14 8-14 8z"/></svg></span></button>
+    <button class="game" data-src="pizza-panic.html" style="background:linear-gradient(160deg,#e63946,#2a1a10)" aria-label="Play Pizza Panic"><div class="art"><img src="pics/pizza-panic.jpg" alt="" loading="lazy"><span class="badge new">New!</span></div><div class="label"><b>PIZZA PANIC</b><span>Deliver pizzas through a zombie town</span></div><span class="play"><svg viewBox="0 0 24 24" fill="#1d1b3a"><path d="M6 4l14 8-14 8z"/></svg></span></button>
     <div class="game soon" aria-label="More games coming soon"><div><b>More soon…</b>Your next idea goes here!</div></div>
   </div>
 </main>
