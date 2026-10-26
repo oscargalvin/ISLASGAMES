@@ -39,6 +39,14 @@ button:focus-visible { outline: 3px solid var(--cheese); outline-offset: 3px; }
 #scoreTxt { font-size: 14px; color: var(--dim); }
 #strikes { font-size: 18px; letter-spacing: 2px; }
 #pizzaRow { font-size: 18px; }
+#split { position: fixed; top: 0; bottom: 0; left: 50%; width: 4px; margin-left: -2px; background: #000; z-index: 1; pointer-events: none; }
+.duo { position: absolute; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); width: min(300px, 44vw); display: flex; flex-direction: column; gap: 4px; text-shadow: 0 2px 0 #000, 0 0 6px #000; }
+#duo1 { left: calc(12px + env(safe-area-inset-left, 0px)); } #duo2 { right: calc(12px + env(safe-area-inset-right, 0px)); text-align: right; align-items: flex-end; }
+.duo b { font-family: var(--display); font-size: 22px; letter-spacing: .04em; }
+.duo .db { width: 100%; height: 10px; border-radius: 5px; background: rgba(0,0,0,.55); border: 2px solid #000; overflow: hidden; } .duo .db i { display: block; height: 100%; width: 100%; }
+.duo .hp i { background: linear-gradient(90deg, #e63946, #8ac926); } .duo .bo i { background: linear-gradient(90deg, #ff7b00, #ffc93c); }
+.duo .dp { font-family: var(--display); font-size: 17px; color: var(--cheese); min-height: 22px; }
+body.duoOn #speedo, body.duoOn #pizzaRow, body.duoOn #prompt { display: none; }
 #orders { position: absolute; top: calc(62px + env(safe-area-inset-top, 0px)); right: calc(10px + env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 6px; width: 200px; }
 .order { background: rgba(20, 10, 4, .78); border: 2px solid #000; border-left: 6px solid var(--zombie); border-radius: 10px; padding: 5px 8px; font-size: 13px; line-height: 1.2; }
 .order.vip { border-left-color: var(--cheese); }
@@ -177,6 +185,8 @@ h3 { margin: 6px 0 0; font-family: var(--display); font-weight: 400; font-size: 
   <div id="pops"></div>
   <div id="bigMsg"></div>
   <div id="prompt" hidden></div>
+  <div id="split" hidden></div>
+  <div class="duo" id="duo1" hidden></div><div class="duo" id="duo2" hidden></div>
   <div id="hint" hidden>W/↑ gas · A D steer · Space brake · Shift BOOST · E deliver / throw pizza · F fight</div>
   <div id="speedo">
     <div id="spdNum">0</div><div id="spdUnit">KM/H</div>
@@ -201,6 +211,7 @@ h3 { margin: 6px 0 0; font-family: var(--display); font-weight: 400; font-size: 
     <div class="small" style="max-width:520px">The zombies are hungry. The customers are hungrier. Deliver hot pizzas across a town full of the undead!</div>
     <div class="bank">$<span class="bankTxt">0</span></div>
     <div class="grid3" id="areas"></div>
+    <div class="row" id="players"></div>
     <div class="tagline" id="titleNote"></div>
     <button class="big" id="bPlay">START SHIFT!</button>
     <div class="row">
@@ -256,6 +267,7 @@ h3 { margin: 6px 0 0; font-family: var(--display); font-weight: 400; font-size: 
       <p><b>Zombies</b> want your pizza. Smash through them at speed for BONK points. Go too slowly and they hop onto your ride and eat your pizzas! FIGHT them off: tap 👊 FIGHT (or press <kbd>F</kbd>) to whack them until they fall off. Watch out for skeletons too. They are faster, but only need 2 whacks. No delivery nearby? THROW PIZZA bonks zombies too.</p>
       <p><b>Your shift ends</b> if 3 orders arrive too late or your ride gets wrecked. Grab power-ups: 🌶 boost, 🧄 garlic shield, 🧀 cheese bomb, 🧲 coin magnet, ⏰ extra time.</p>
       <p><b>Computer:</b> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows to drive, <kbd>Space</kbd> brake, <kbd>Shift</kbd> boost, <kbd>E</kbd> deliver / throw, <kbd>F</kbd> fight off zombies, <kbd>H</kbd> horn, <kbd>Esc</kbd> pause.</p>
+      <p><b>2 players (one keyboard, split screen):</b> Player 1 drives with <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>, <kbd>Left Shift</kbd> boost, <kbd>E</kbd> throw, <kbd>F</kbd> fight. Player 2 drives with the arrow keys, <kbd>Right Shift</kbd> boost, <kbd>Enter</kbd> throw, <kbd>/</kbd> fight. You share the orders and the cash, so work together! A wrecked ride comes back at the pizza shop.</p>
       <p><b>Phone:</b> turn it sideways. ◀ ▶ steer, GAS, BRAKE, BOOST and THROW PIZZA on the right. A big 👊 FIGHT button pops up when a zombie jumps on. Auto-gas is on by default.</p>
     </div>
     <button class="big" data-back>LET'S GO!</button>
@@ -992,14 +1004,25 @@ function drawZombies(t) {
 //  GAME STATE
 // =====================================================================
 let state = 'loading', run = null;
-const car = { x: 0, z: 0, y: 0, vy: 0, grounded: true, th: 0, vx: 0, vz: 0, steer: 0, hp: 100, boost: 100, boosting: false, model: null, stats: null, air: 0, pitch: 0, roll: 0, vf: 0, vl: 0, prevVx: 0, prevVz: 0, pizzas: [], drift: 0, grabbers: [] };
+const newCar = (n) => ({ n, x: 0, z: 0, y: 0, vy: 0, grounded: true, th: 0, vx: 0, vz: 0, steer: 0, hp: 100, boost: 100, boosting: false, model: null, stats: null, air: 0, pitch: 0, roll: 0, vf: 0, vl: 0, prevVx: 0, prevVz: 0, pizzas: [], drift: 0, grabbers: [], fightCD: 0, arrow: null });
+// 2-player mode: both rides share the town, the orders and the cash. Most game code works on
+// whichever ride is in `car`, so `as(c, fn)` points `car` at one ride while fn runs.
+const car1 = newCar(1), car2 = newCar(2);
+let car = car1, riders = [car1];
+function as(c, fn) { const prev = car; car = c; try { return fn(); } finally { car = prev; } }
+const CTL = [
+  { left: ['KeyA'], right: ['KeyD'], gas: ['KeyW'], brake: ['KeyS', 'Space'], boost: ['ShiftLeft'] },
+  { left: ['ArrowLeft'], right: ['ArrowRight'], gas: ['ArrowUp'], brake: ['ArrowDown'], boost: ['ShiftRight'] },
+];
+const P2_PAINT = '#118ab2', P2_PAINT_ALT = '#ffd166';
+const camera2 = new THREE.PerspectiveCamera(64, 1, 0.1, 900);
 const input = { left: false, right: false, gas: false, brake: false, boost: false };
 const keys = new Set();
 const flyers = []; // pizzas, debris, thrown boxes
 let timeScale = 1, shakeK = 0;
 const orders = [];
 const pickups = [], coins = [];
-let arrow = null, beacons = [];
+let beacons = [];
 
 // =====================================================================
 //  WORLD PER RUN
@@ -1043,11 +1066,17 @@ function stepCar(dt) {
   const S = car.stats;
   let steerIn = 0, throttle = 0, brake = 0;
   if (state === 'playing') {
-    if (keys.has('KeyA') || keys.has('ArrowLeft') || input.left) steerIn -= 1; if (keys.has('KeyD') || keys.has('ArrowRight') || input.right) steerIn += 1;
-    throttle = keys.has('KeyW') || keys.has('ArrowUp') || input.gas || (save.settings.autoGas && IS_TOUCH) ? 1 : 0;
-    brake = keys.has('Space') || keys.has('KeyS') || keys.has('ArrowDown') || input.brake ? 1 : 0;
-    if (brake && IS_TOUCH && save.settings.autoGas) throttle = 0;
-    const wantBoost = (keys.has('ShiftLeft') || keys.has('ShiftRight') || input.boost) && car.boost > 1 && throttle;
+    const ctl = run && run.duo ? CTL[car.n - 1] : null, k = (a) => a.some((c) => keys.has(c)), tin = car === car1 ? input : {};
+    if (ctl) {
+      if (k(ctl.left) || tin.left) steerIn -= 1; if (k(ctl.right) || tin.right) steerIn += 1;
+      throttle = k(ctl.gas) || tin.gas ? 1 : 0; brake = k(ctl.brake) || tin.brake ? 1 : 0;
+    } else {
+      if (keys.has('KeyA') || keys.has('ArrowLeft') || input.left) steerIn -= 1; if (keys.has('KeyD') || keys.has('ArrowRight') || input.right) steerIn += 1;
+      throttle = keys.has('KeyW') || keys.has('ArrowUp') || input.gas || (save.settings.autoGas && IS_TOUCH) ? 1 : 0;
+      brake = keys.has('Space') || keys.has('KeyS') || keys.has('ArrowDown') || input.brake ? 1 : 0;
+      if (brake && IS_TOUCH && save.settings.autoGas) throttle = 0;
+    }
+    const wantBoost = (ctl ? k(ctl.boost) || tin.boost : keys.has('ShiftLeft') || keys.has('ShiftRight') || input.boost) && car.boost > 1 && throttle;
     if (wantBoost && !car.boosting) { A.whoosh(); if (hasGadget('garlic')) garlicBlast(); }
     car.boosting = wantBoost;
   } else car.boosting = false;
@@ -1126,7 +1155,9 @@ function damage(amount, why) {
 function wreck() {
   car.dead = true; explosionFX(car.x, car.y + 0.5, car.z, 1.4); A.boom(); shake(1.2);
   for (const b of car.pizzas.slice()) loseBox(b, true);
+  for (const z of car.grabbers.slice()) knockZombie(z, rand(-6, 6), rand(-6, 6), 'boom');
   car.wreckVel = new V3(car.vx * 0.4, 9, car.vz * 0.4); car.wreckSpin = new V3(rand(-5, 5), rand(-4, 4), rand(-5, 5));
+  if (run.duo) { car.respawnT = 3; bigMsg(`💥 PLAYER ${car.n} WRECKED!`, '#ff5a5a', 1400); pop(`Player ${car.n} is back at the pizza shop in 3…`, '#ffc93c'); return; }
   run.endReason = 'wrecked'; state = 'crashing'; run.crashT = 0; timeScale = 0.4; setBody();
 }
 function garlicBlast() {
@@ -1184,12 +1215,13 @@ function spawnAround(n, minD, maxD) {
 }
 function updateZombies(dt, t) {
   if (zombies.length < zombieTarget() && Math.random() < 0.5) spawnAround(2, 35, 80);
-  const shield = run.shieldT > 0, spd = 1 + run.level * 0.06;
-  const fx = Math.sin(car.th), fz = Math.cos(car.th), rxv = -Math.cos(car.th), rzv = Math.sin(car.th);
+  const shield = run.shieldT > 0, spd = 1 + run.level * 0.06, home = car;
   for (let i = zombies.length - 1; i >= 0; i--) {
     const z = zombies[i]; z.t += dt;
+    car = (z.state === 'hop' || z.state === 'grab') && z.on ? z.on : nearestRider(z.x, z.z);
+    const fx = Math.sin(car.th), fz = Math.cos(car.th), rxv = -Math.cos(car.th), rzv = Math.sin(car.th);
     const dx = car.x - z.x, dz = car.z - z.z, d = Math.hypot(dx, dz);
-    if (d > 120 && z.state !== 'fly') { removeZombie(z); continue; }
+    if (d > 120 && z.state !== 'fly') { car = home; removeZombie(z); continue; }
     if (z.state === 'fly') {
       z.vy -= 20 * dt; z.x += z.vx * dt; z.y += z.vy * dt; z.z += z.vz * dt; z.rot.x += z.spin.x * dt; z.rot.y += z.spin.y * dt; z.rot.z += z.spin.z * dt;
       if (z.y <= 0) { z.y = 0; if (Math.random() < 0.45 || z.splat) { goo(z.x, 0.6, z.z, 14); A.splat(panTo(z.x, z.z)); removeZombie(z); continue; } z.state = 'down'; z.t = 0; z.lie = -Math.PI / 2; z.vx = z.vz = 0; A.thump(0.2); }
@@ -1232,8 +1264,10 @@ function updateZombies(dt, t) {
       hopOn(z, -dx * rxv - dz * rzv, -dx * fx - dz * fz);
     }
   }
-  car.grabbers = car.grabbers.filter((z) => (z.state === 'grab' || z.state === 'hop') && zombies.includes(z));
+  car = home;
+  for (const c of riders) c.grabbers = c.grabbers.filter((z) => (z.state === 'grab' || z.state === 'hop') && zombies.includes(z));
 }
+function nearestRider(x, z) { let best = car1, bd = 1e9; for (const c of riders) { if (c.dead) continue; const d = Math.hypot(c.x - x, c.z - z); if (d < bd) { bd = d; best = c; } } return best; }
 function grabSpot(z) {
   const fx = Math.sin(car.th), fz = Math.cos(car.th), rxv = -Math.cos(car.th), rzv = Math.sin(car.th), side = z.grabSide;
   const off = side === 0 ? 0 : car.stats.hw + 0.35, y = side === 0 ? car.y + (car.stats.hl > 1.5 ? car.stats.hw * 1.6 : 0.15) : car.y + 0.2;
@@ -1243,15 +1277,14 @@ function hopOn(z, lx, lz) {
   const bike = car.stats.hw < 0.6, seatFree = !car.grabbers.some((g) => g.grabSide === 0);
   if (bike && seatFree) { z.grabSide = 0; z.grabZ = -0.75; }
   else { z.grabSide = lx > 0 ? -1 : 1; z.grabZ = clamp(lz, -car.stats.hl * 0.6, car.stats.hl * 0.6); if (car.grabbers.some((g) => g.grabSide === z.grabSide && Math.abs(g.grabZ - z.grabZ) < 0.6)) z.grabZ = clamp(-z.grabZ || 0.6, -car.stats.hl * 0.6, car.stats.hl * 0.6); }
-  z.state = 'hop'; z.hopT = 0; z.hx = z.x; z.hy = z.y; z.hz = z.z; z.grabT = 0; z.hits = 0; car.grabbers.push(z);
+  z.state = 'hop'; z.on = car; z.hopT = 0; z.hx = z.x; z.hy = z.y; z.hz = z.z; z.grabT = 0; z.hits = 0; car.grabbers.push(z);
   if (z.skel) A.rattle(panTo(z.x, z.z)); else A.groan(0.4, panTo(z.x, z.z));
   if (run.grabHint !== true) { run.grabHint = true; pop(IS_TOUCH ? (z.skel ? '💀 A SKELETON JUMPED ON! Tap 👊 FIGHT!' : '🧟 A ZOMBIE JUMPED ON! Tap 👊 FIGHT!') : (z.skel ? '💀 A SKELETON JUMPED ON! Press F to FIGHT!' : '🧟 A ZOMBIE JUMPED ON! Press F to FIGHT!'), '#ff5a5a'); }
 }
-let fightCD = 0;
 function fight() {
-  if (state !== 'playing' || car.dead || fightCD > 0) return; A.init();
+  if (state !== 'playing' || car.dead || car.fightCD > 0) return; A.init();
   const g = car.grabbers.filter((z) => z.state === 'grab'); if (!g.length) return;
-  fightCD = 0.16; run.punches = (run.punches || 0) + 1;
+  car.fightCD = 0.16; run.punches = (run.punches || 0) + 1;
   // whack whichever one is closest to eating a pizza
   const z = g.sort((a, b) => b.grabT - a.grabT)[0];
   z.hits++; z.recoil = 0.6; z.grabT = Math.max(0, z.grabT - 0.6);
@@ -1265,7 +1298,7 @@ function fight() {
 }
 function knockZombie(z, vx, vz, why, up = 1) {
   if (z.state === 'fly') return;
-  if (z.state === 'grab' || z.state === 'hop') car.grabbers = car.grabbers.filter((g) => g !== z);
+  if (z.state === 'grab' || z.state === 'hop') for (const c of riders) c.grabbers = c.grabbers.filter((g) => g !== z);
   z.state = 'fly'; z.vx = vx; z.vz = vz; z.vy = rand(5, 9) * up; z.y = Math.max(z.y, 0.1); z.rot.set(z.lie, z.yaw, 0); z.spin.set(rand(-9, 9), rand(-6, 6), rand(-9, 9)); z.splat = why === 'bomb';
   run.bonks++; run.combo++; run.comboT = 2.5; const pts = 10 * Math.min(10, run.combo);
   addScore(pts, why === 'hit' && run.combo > 2 ? `BONK x${run.combo}! +${pts}` : null, '#8ac926');
@@ -1314,7 +1347,8 @@ function updateOrders(dt) {
   }
   // keep up to 3 orders while you still have pizzas
   run.orderT -= dt; if (orders.length < Math.min(3, 1 + Math.floor(run.level / 2) + 1) && run.orderT <= 0) { run.orderT = 4; newOrder(); }
-  // at the shop: restock + repair
+}
+function shopStop(dt) { // at the shop: restock + repair
   const ds = Math.hypot(car.x - shop.x, car.z - shop.z);
   shopBeacon.material.opacity = car.pizzas.length < car.stats.slots ? 0.3 : 0.08;
   if (ds < 9 && car.grounded) {
@@ -1379,8 +1413,10 @@ function randomRoadPoint(minD, maxD) {
   return null;
 }
 function spawnPickups() {
+  if (run.duo) car = pick(riders.filter((c) => !c.dead).concat([car1]));
   if (coins.length < 50) { const p = randomRoadPoint(30, 140); if (p) for (let k = 0; k < 6; k++) { const m = new THREE.Mesh(coinGeo, coinMat); const x = p.horiz ? p.x + k * 3 : p.x, z = p.horiz ? p.z : p.z + k * 3; m.position.set(x, 1, z); scene.add(m); coins.push({ x, z, m }); } }
   if (pickups.length < 6) { const p = randomRoadPoint(40, 160); if (p) { const [kind, em, col] = pick(POWERS); powerTex[kind] = powerTex[kind] || emojiTex(em, col); const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: powerTex[kind] })); s.scale.setScalar(1.8); s.position.set(p.x, 1.6, p.z); scene.add(s); pickups.push({ kind, x: p.x, z: p.z, m: s }); } }
+  car = car1;
 }
 function updatePickups(dt, t) {
   const magnet = run.magnetT > 0;
@@ -1389,12 +1425,12 @@ function updatePickups(dt, t) {
     if (magnet && d < 18) { c.x = damp(c.x, car.x, 6, dt); c.z = damp(c.z, car.z, 6, dt); }
     c.m.position.set(c.x, 1 + Math.sin(t * 3 + c.x) * 0.15 + car.y * (d < 3 ? 1 : 0), c.z); c.m.rotation.y = t * 3 + c.z;
     if (d < 2 + car.stats.hw && Math.abs(car.y - 0) < 3) { run.cash += 1; run.coinsGot++; A.coin(); scene.remove(c.m); coins.splice(coins.indexOf(c), 1); continue; }
-    if (d > 170) { scene.remove(c.m); coins.splice(coins.indexOf(c), 1); }
+    if (d > 170 && (!run.duo || Math.hypot(c.x - car2.x, c.z - car2.z) > 170)) { scene.remove(c.m); coins.splice(coins.indexOf(c), 1); }
   }
   for (const p of pickups.slice()) {
     const d = Math.hypot(p.x - car.x, p.z - car.z); p.m.position.y = 1.6 + Math.sin(t * 3 + p.x) * 0.2;
     if (d < 2.4 + car.stats.hw) { usePower(p.kind); scene.remove(p.m); pickups.splice(pickups.indexOf(p), 1); continue; }
-    if (d > 200) { scene.remove(p.m); pickups.splice(pickups.indexOf(p), 1); }
+    if (d > 200 && (!run.duo || Math.hypot(p.x - car2.x, p.z - car2.z) > 200)) { scene.remove(p.m); pickups.splice(pickups.indexOf(p), 1); }
   }
   // knock over trash cans, cones and hydrants
   for (const k of knockables) {
@@ -1406,7 +1442,7 @@ function updatePickups(dt, t) {
       if (k.kind === 'hydrant') { k.spray = 4; A.water(); pop('💦 SPLASH!', '#4cc9f0'); }
     }
   }
-  for (const k of knockables) if (k.spray > 0) { k.spray -= dt; for (let i = 0; i < 3; i++) FX.norm.spawn({ x: k.home[0], y: 0.3, z: k.home[1], vx: rand(-1.2, 1.2), vy: rand(9, 13), vz: rand(-1.2, 1.2), life: 1.4, size: .3, size1: .6, c0: C.water, a: 0.6, g: 16 }); }
+  if (car === car1) for (const k of knockables) if (k.spray > 0) { k.spray -= dt; for (let i = 0; i < 3; i++) FX.norm.spawn({ x: k.home[0], y: 0.3, z: k.home[1], vx: rand(-1.2, 1.2), vy: rand(9, 13), vz: rand(-1.2, 1.2), life: 1.4, size: .3, size1: .6, c0: C.water, a: 0.6, g: 16 }); }
 }
 function usePower(kind) {
   A.power();
@@ -1448,19 +1484,27 @@ function startRun() {
   A.init(); clearRunObjects();
   if (!save.areas[save.area]) save.area = 'town';
   setupWorld(save.area);
-  if (car.model) scene.remove(car.model.g);
-  car.model = buildVehicle(save.sel, paintOf(save.sel)); scene.add(car.model.g); car.stats = vstats(save.sel);
-  Object.assign(car, { x: shop.x - 6, z: shop.z - 2, y: 0, vy: 0, grounded: true, th: Math.PI / 2, vx: 0, vz: 0, steer: 0, hp: 100, boost: 100, boosting: false, pizzas: [], grabbers: [], dead: false, prevVx: 0, prevVz: 0, af: 0, ar: 0, vf: 0, vl: 0, airT: 0, camH: Math.PI / 2 });
-  car.model.g.rotation.set(0, 0, 0);
-  loadPizzas();
-  run = { area: save.area, score: 0, cash: 0, tips: 0, delivered: 0, bonks: 0, combo: 0, comboT: 0, strikes: 0, level: 0, orderCount: 0, orderT: 0, airTime: 0, driveBys: 0, perfect: 0, vips: 0, booms: 0, cheeseBombs: 0, lost: 0, eaten: 0, thrown: 0, coinsGot: 0, fought: 0, punches: 0, shieldT: 0, magnetT: 0, freezeT: 0, time: 0, missionCash: 0, missionsDone: [], endReason: '' };
+  const duo = !!save.duo; car = car1; riders = duo ? [car1, car2] : [car1];
+  for (const c of [car1, car2]) { if (c.model) { scene.remove(c.model.g); c.model = null; } }
+  car2.arrow.visible = false;
+  for (const c of riders) {
+    const p1 = paintOf(save.sel), paint = c.n === 1 ? p1 : (p1 === P2_PAINT ? P2_PAINT_ALT : P2_PAINT);
+    c.model = buildVehicle(save.sel, paint); scene.add(c.model.g); c.stats = vstats(save.sel);
+    resetRide(c);
+  }
+  run = { duo, area: save.area, score: 0, cash: 0, tips: 0, delivered: 0, bonks: 0, combo: 0, comboT: 0, strikes: 0, level: 0, orderCount: 0, orderT: 0, airTime: 0, driveBys: 0, perfect: 0, vips: 0, booms: 0, cheeseBombs: 0, lost: 0, eaten: 0, thrown: 0, coinsGot: 0, fought: 0, punches: 0, shieldT: 0, magnetT: 0, freezeT: 0, time: 0, missionCash: 0, missionsDone: [], endReason: '' };
   for (const m of save.missions) m.doneThisRun = false;
   shopBeacon = makeBeacon(0xff3030); shopBeacon.position.set(shop.x, 0, shop.z);
   spawnAround(zombieTarget(), 25, 90);
   newOrder(); newOrder();
   setState('countdown'); countdown = 3.4; run.lastC = 4;
   Music.on = save.settings.music; Music.hype = 0.4; timeScale = 1;
-  $('hint').hidden = IS_TOUCH; setTimeout(() => { $('hint').hidden = true; }, 8000);
+  $('hint').hidden = IS_TOUCH || duo; setTimeout(() => { $('hint').hidden = true; }, 8000);
+}
+function resetRide(c) {
+  Object.assign(c, { x: shop.x - 6, z: shop.z - 2 + (c.n === 2 ? 5 : 0), y: 0, vy: 0, grounded: true, th: Math.PI / 2, vx: 0, vz: 0, steer: 0, hp: 100, boost: 100, boosting: false, pizzas: [], grabbers: [], dead: false, respawnT: 0, fightCD: 0, punchT: 0, prevVx: 0, prevVz: 0, af: 0, ar: 0, vf: 0, vl: 0, airT: 0, camH: Math.PI / 2, roll: 0, pitch: 0 });
+  c.model.g.rotation.set(0, 0, 0); c.model.body.rotation.set(0, 0, 0);
+  as(c, loadPizzas);
 }
 function endRun() {
   if (state === 'over') return;
@@ -1485,15 +1529,22 @@ function endRun() {
 // =====================================================================
 function updateRun(dt, t) {
   run.time += dt;
-  stepCar(dt); updatePizzas(dt);
-  updateZombies(dt, t); updateOrders(dt); updateFlyers(dt);
-  spawnPickups(); updatePickups(dt, t);
-  run.comboT -= dt; if (run.comboT <= 0) run.combo = 0; fightCD = Math.max(0, fightCD - dt); car.punchT = Math.max(0, (car.punchT || 0) - dt);
+  for (const c of riders) as(c, () => {
+    if (c.dead) { if (run.duo && (c.respawnT -= dt) <= 0) { resetRide(c); pop(`🛵 Player ${c.n} is back!`, '#4cc9f0'); } return; }
+    stepCar(dt); updatePizzas(dt);
+  });
+  updateZombies(dt, t); updateOrders(dt); for (const c of riders) if (!c.dead) as(c, () => shopStop(dt)); updateFlyers(dt);
+  spawnPickups(); for (const c of riders) if (!c.dead) as(c, () => updatePickups(dt, t));
+  run.comboT -= dt; if (run.comboT <= 0) run.combo = 0;
   run.shieldT = Math.max(0, run.shieldT - dt); run.magnetT = Math.max(0, run.magnetT - dt);
-  car.model.shieldGlow.material.opacity = run.shieldT > 0 ? 0.6 + Math.sin(t * 10) * 0.2 : 0;
-  if (car.boosting) for (const s of [-0.3, 0.3]) { const b = -car.stats.hl; FX.add.spawn({ x: car.x + Math.sin(car.th) * b - Math.cos(car.th) * s, y: car.y + 0.5, z: car.z + Math.cos(car.th) * b + Math.sin(car.th) * s, vx: -Math.sin(car.th) * 6 + car.vx, vy: rand(-.3, .5), vz: -Math.cos(car.th) * 6 + car.vz, life: .25, size: .6, size1: .1, c0: C.boost, c1: C.boost2 }); }
-  if (car.hp < 40 && Math.random() < 0.4) FX.norm.spawn({ x: car.x, y: car.y + 1.2, z: car.z, vx: car.vx * 0.8, vy: 1.5, vz: car.vz * 0.8, life: 1.2, size: .4, size1: 1.6, c0: car.hp < 20 ? [.15, .14, .14] : C.smoke, a: .45 });
-  if (car.drift > 0 && car.grounded && Math.random() < 0.5) FX.norm.spawn({ x: car.x - Math.sin(car.th) * car.stats.hl, y: 0.3, z: car.z - Math.cos(car.th) * car.stats.hl, vy: 1, life: 1, size: .5, size1: 2, c0: C.smoke, a: .35 });
+  for (const car of riders) {
+    car.fightCD = Math.max(0, (car.fightCD || 0) - dt); car.punchT = Math.max(0, (car.punchT || 0) - dt);
+    car.model.shieldGlow.material.opacity = run.shieldT > 0 ? 0.6 + Math.sin(t * 10) * 0.2 : 0;
+    if (car.dead) continue;
+    if (car.boosting) for (const s of [-0.3, 0.3]) { const b = -car.stats.hl; FX.add.spawn({ x: car.x + Math.sin(car.th) * b - Math.cos(car.th) * s, y: car.y + 0.5, z: car.z + Math.cos(car.th) * b + Math.sin(car.th) * s, vx: -Math.sin(car.th) * 6 + car.vx, vy: rand(-.3, .5), vz: -Math.cos(car.th) * 6 + car.vz, life: .25, size: .6, size1: .1, c0: C.boost, c1: C.boost2 }); }
+    if (car.hp < 40 && Math.random() < 0.4) FX.norm.spawn({ x: car.x, y: car.y + 1.2, z: car.z, vx: car.vx * 0.8, vy: 1.5, vz: car.vz * 0.8, life: 1.2, size: .4, size1: 1.6, c0: car.hp < 20 ? [.15, .14, .14] : C.smoke, a: .45 });
+    if (car.drift > 0 && car.grounded && Math.random() < 0.5) FX.norm.spawn({ x: car.x - Math.sin(car.th) * car.stats.hl, y: 0.3, z: car.z - Math.cos(car.th) * car.stats.hl, vy: 1, life: 1, size: .5, size1: 2, c0: C.smoke, a: .35 });
+  }
   checkMissions();
   Music.hype = clamp(Math.hypot(car.vx, car.vz) / 25 + car.grabbers.length * 0.3, 0.3, 1);
 }
@@ -1513,23 +1564,23 @@ function updateCarVisual(dt) {
   for (const w of m.wheels) { w.g.rotation.x += car.vf * dt / w.r; if (w.front) w.g.rotation.y = car.steer * 0.4; }
   if (m.rider) { const p = car.punchT > 0 ? Math.sin((1 - car.punchT / 0.22) * Math.PI) : 0; m.rider.rotation.y = p * (car.punchSide === 0 ? Math.PI * 0.8 : -car.punchSide * 1.1); m.rider.rotation.z = p * 0.25 * (car.punchSide || 1); }
   const fx = Math.sin(car.th), fz = Math.cos(car.th);
-  headL.position.set(car.x + fx * 2, car.y + 1.2, car.z + fz * 2); headL.target.position.set(car.x + fx * 25, 0, car.z + fz * 25);
+  if (car === car1) { headL.position.set(car.x + fx * 2, car.y + 1.2, car.z + fz * 2); headL.target.position.set(car.x + fx * 25, 0, car.z + fz * 25); }
 }
 const camPos = new V3(), camLook = new V3();
-function updateCamera(dt) {
+function updateCamera(dt, cam) {
   const sp = Math.hypot(car.vx, car.vz);
-  if (car.dead) { const a = performance.now() / 2500; camPos.set(car.x + Math.cos(a) * 11, 5, car.z + Math.sin(a) * 11); camera.position.lerp(camPos, 1 - Math.exp(-3 * dt)); camera.lookAt(car.x, car.y + 0.5, car.z); return; }
+  if (car.dead) { const a = performance.now() / 2500; camPos.set(car.x + Math.cos(a) * 11, 5, car.z + Math.sin(a) * 11); cam.position.lerp(camPos, 1 - Math.exp(-3 * dt)); cam.lookAt(car.x, car.y + 0.5, car.z); return; }
   car.camH = (car.camH == null ? car.th : car.camH) + wrapAng(car.th - car.camH) * (1 - Math.exp(-5 * dt));
   const fx = Math.sin(car.camH), fz = Math.cos(car.camH), big = car.stats.hl > 1.5;
   const dist = (big ? 9 : 6.5) + sp * 0.08, h = (big ? 4.6 : 3.6) + sp * 0.03;
   camPos.set(car.x - fx * dist, car.y * 0.6 + h, car.z - fz * dist);
-  camera.position.lerp(camPos, 1 - Math.exp(-10 * dt));
-  camLook.set(car.x + fx * 4, car.y * 0.7 + 1.2, car.z + fz * 4); camera.lookAt(camLook);
-  if (shakeK > 0) { camera.position.x += rand(-1, 1) * shakeK * 0.25; camera.position.y += rand(-1, 1) * shakeK * 0.25; shakeK = Math.max(0, shakeK - dt * 2); }
-  camera.fov = damp(camera.fov, 64 + Math.min(14, sp * 0.4) + (car.boosting ? 8 : 0), 4, dt); camera.updateProjectionMatrix();
+  cam.position.lerp(camPos, 1 - Math.exp(-10 * dt));
+  camLook.set(car.x + fx * 4, car.y * 0.7 + 1.2, car.z + fz * 4); cam.lookAt(camLook);
+  if (shakeK > 0) { cam.position.x += rand(-1, 1) * shakeK * 0.25; cam.position.y += rand(-1, 1) * shakeK * 0.25; shakeK = Math.max(0, shakeK - dt * 2); }
+  cam.fov = damp(cam.fov, 64 + Math.min(14, sp * 0.4) + (car.boosting ? 8 : 0), 4, dt); cam.updateProjectionMatrix();
 }
 function updateArrow(t) {
-  if (!arrow) return;
+  const arrow = car.arrow; if (!arrow) return;
   let tx, tz, col;
   const [o] = nearestOrder();
   if (!car.pizzas.length || !o) { tx = shop.x; tz = shop.z; col = 0xff3030; } else { tx = o.house.x; tz = o.house.z; col = o.special === 'vip' ? 0xffc93c : o.special === 'mega' ? 0xff5040 : 0x8ac926; }
@@ -1557,6 +1608,11 @@ function updateHUD() {
   const grabbed = car.grabbers.some((z) => z.state === 'grab');
   $('prompt').hidden = !can && !grabbed; if (grabbed) $('prompt').textContent = IS_TOUCH ? '👊 TAP FIGHT TO KNOCK THEM OFF!' : '👊 PRESS F TO FIGHT THEM OFF!'; else if (can) $('prompt').textContent = IS_TOUCH ? 'THROW PIZZA NOW!' : 'PRESS E TO DELIVER!';
   $('tFight').hidden = !grabbed;
+  if (run.duo) for (const c of riders) as(c, () => {
+    const [o2, d2] = nearestOrder(), can2 = o2 && d2 < 16 && c.pizzas.length >= o2.need, grab2 = c.grabbers.some((z) => z.state === 'grab');
+    const el = $('duo' + c.n), keysTxt = c.n === 1 ? ['E', 'F'] : ['ENTER', '/'];
+    el.innerHTML = `<b>${c.n === 1 ? '🟥 PLAYER 1' : '🟦 PLAYER 2'}</b><div class="db hp"><i style="width:${c.hp}%"></i></div><div class="db bo"><i style="width:${c.boost}%"></i></div><div>${c.dead ? '💥 Respawning…' : c.pizzas.length ? '🍕'.repeat(c.pizzas.length) : 'No pizzas! 🏪'}</div><div class="dp">${c.dead ? '' : grab2 ? `👊 PRESS ${keysTxt[1]} TO FIGHT!` : can2 ? `PRESS ${keysTxt[0]} TO DELIVER!` : ''}</div>`;
+  });
   $('tThrow').classList.toggle('ready', !!can);
   renderOrders(false);
 }
@@ -1582,7 +1638,7 @@ function drawMinimap() {
   x.fillStyle = '#ff3030'; x.beginPath(); x.arc(T(shop.x), T(shop.z), 7, 0, 7); x.fill();
   for (const o of orders) { x.fillStyle = o.special === 'vip' ? '#ffc93c' : o.special === 'mega' ? '#ff5040' : '#8ac926'; x.beginPath(); x.arc(T(o.house.x), T(o.house.z), 7, 0, 7); x.fill(); x.strokeStyle = '#000'; x.lineWidth = 2; x.stroke(); }
   x.fillStyle = '#9ccc65'; for (const z of zombies) if (z.state !== 'fly') x.fillRect(T(z.x) - 1, T(z.z) - 1, 2.5, 2.5);
-  x.save(); x.translate(T(car.x), T(car.z)); x.rotate(-car.th + Math.PI); x.fillStyle = '#fff'; x.strokeStyle = '#000'; x.lineWidth = 2; x.beginPath(); x.moveTo(0, 9); x.lineTo(6, -6); x.lineTo(-6, -6); x.closePath(); x.fill(); x.stroke(); x.restore();
+  for (const c of riders) { x.save(); x.translate(T(c.x), T(c.z)); x.rotate(-c.th + Math.PI); x.fillStyle = run && run.duo ? (c.n === 1 ? '#ff5a5a' : '#4cc9f0') : '#fff'; x.strokeStyle = '#000'; x.lineWidth = 2; x.beginPath(); x.moveTo(0, 9); x.lineTo(6, -6); x.lineTo(-6, -6); x.closePath(); x.fill(); x.stroke(); x.restore(); }
 }
 
 let last = performance.now(), showVeh = null, garageIdx = 0;
@@ -1595,20 +1651,33 @@ function frame(now) {
   if (state === 'countdown') {
     countdown -= rdt; const c = Math.ceil(countdown - 0.4);
     if (c !== run.lastC) { run.lastC = c; if (c > 0) { bigMsg(String(c), '#fff', 700); A.tone({ f: 660, type: 'square', v: 0.08, r: 0.12 }); } else { bigMsg('DELIVER!', '#ffc93c', 800); A.tone({ f: 1320, type: 'square', v: 0.08, r: 0.4 }); } }
-    updateEnvironment(rdt); updateCarVisual(rdt); updateCamera(rdt); updateZombies(0.0001, t); drawZombies(t); updateHUD(); updateAudio(); updateArrow(t);
+    updateEnvironment(rdt); eachRide(() => { updateCarVisual(rdt); updateArrow(t); }); updateCameras(rdt); updateZombies(0.0001, t); drawZombies(t); updateHUD(); updateAudio();
     if (countdown <= 0) setState('playing');
   } else if (state === 'playing' || state === 'ending' || state === 'crashing') {
     const sub = dt > 0.025 ? 2 : 1;
     for (let i = 0; i < sub; i++) { if (state === 'playing' || state === 'ending') updateRun(dt / sub, t); else { updateZombies(dt / sub, t); updateFlyers(dt / sub); } }
     if (state === 'crashing') { run.crashT += rdt; if (run.crashT > 3) endRun(); }
-    updateEnvironment(dt); updateCarVisual(dt); updateCamera(rdt); drawZombies(t); if (state !== 'crashing') updateHUD(); updateAudio(); updateArrow(t);
+    updateEnvironment(dt); eachRide(() => { updateCarVisual(dt); updateArrow(t); }); updateCameras(rdt); drawZombies(t); if (state !== 'crashing') updateHUD(); updateAudio();
     if (now % 3 < 1 || true) drawMinimap();
-  } else if (state === 'paused' || state === 'over') { if (world) { updateCamera(rdt); drawZombies(t); } }
+  } else if (state === 'paused' || state === 'over') { if (world) { updateCameras(rdt); drawZombies(t); } }
   if (state !== 'paused') { FX.add.update(dt); FX.norm.update(dt); }
   boomLight.intensity = Math.max(0, boomLight.intensity - rdt * 12);
   const sc = renderer.domElement.height / (2 * Math.tan(camera.fov * Math.PI / 360)); FX.add.mat.uniforms.scale.value = sc; FX.norm.mat.uniforms.scale.value = sc;
-  renderer.render(scene, camera);
+  if (run && run.duo && !inMenu()) {
+    const w = window.innerWidth, h = window.innerHeight;
+    renderer.setScissorTest(true);
+    for (const [cam, x0] of [[camera, 0], [camera2, w / 2]]) {
+      cam.aspect = (w / 2) / h; cam.updateProjectionMatrix();
+      renderer.setViewport(x0, 0, w / 2, h); renderer.setScissor(x0, 0, w / 2, h); renderer.render(scene, cam);
+    }
+    renderer.setScissorTest(false); renderer.setViewport(0, 0, w, h);
+  } else {
+    if (camera.aspect !== window.innerWidth / window.innerHeight) { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); }
+    renderer.render(scene, camera);
+  }
 }
+function eachRide(fn) { for (const c of riders) as(c, fn); }
+function updateCameras(rdt) { as(car1, () => updateCamera(rdt, camera)); if (run && run.duo) as(car2, () => updateCamera(rdt, camera2)); }
 
 // =====================================================================
 //  MENUS + SHOWROOM
@@ -1655,6 +1724,8 @@ function setBody() {
   $('hud').hidden = !(inGame && state !== 'paused');
   $('touch').hidden = !(IS_TOUCH && (state === 'playing' || state === 'countdown' || state === 'ending'));
   document.body.classList.toggle('playing', inGame);
+  const duoOn = inGame && !!(run && run.duo); document.body.classList.toggle('duoOn', duoOn);
+  $('split').hidden = $('duo1').hidden = $('duo2').hidden = !duoOn;
   document.body.classList.toggle('autogas', !!save.settings.autoGas);
 }
 function bankTxt() { document.querySelectorAll('.bankTxt').forEach((e) => { e.textContent = save.coins.toLocaleString(); }); }
@@ -1662,8 +1733,9 @@ function areaOpen(k) { return !!save.areas[k]; }
 function renderTitle() {
   bankTxt();
   $('areas').innerHTML = Object.entries(AREAS).map(([k, a]) => { const open = areaOpen(k); return `<button class="opt ${open ? '' : 'locked'}" data-area="${k}" aria-pressed="${save.area === k}"><div class="em">${open ? a.em : '🔒'}</div><b>${a.name}</b><div class="sub">${open ? a.sub : `Unlock for $${a.unlock}`}</div></button>`; }).join('');
+  $('players').innerHTML = [[false, '👤 1 PLAYER'], [true, '👥 2 PLAYERS']].map(([v, l]) => `<button class="ghost" data-duo="${v}" aria-pressed="${!!save.duo === v}" style="${!!save.duo === v ? 'background:var(--cheese);color:#1a0f08' : ''}">${l}</button>`).join('');
   const b = save.best[save.area];
-  $('titleNote').textContent = b ? `Best score here: ${b.toLocaleString()}` : 'Hot pizza. Cold zombies. Go!';
+  $('titleNote').textContent = save.duo ? (IS_TOUCH ? '2 players needs a keyboard: P1 uses W A S D, P2 uses the arrows.' : 'Split screen! P1: W A S D, Left Shift, E, F · P2: arrows, Right Shift, Enter, /') : b ? `Best score here: ${b.toLocaleString()}` : 'Hot pizza. Cold zombies. Go!';
   if (!showVeh || showVeh.id !== save.sel + paintOf(save.sel)) { showroomVehicle(save.sel); showVeh.id = save.sel + paintOf(save.sel); }
 }
 function renderGarage() {
@@ -1693,8 +1765,12 @@ function renderSettings() {
 // ---------- input ----------
 window.addEventListener('keydown', (e) => {
   keys.add(e.code);
-  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code) || (state === 'playing' && ['Enter', 'NumpadEnter', 'Slash'].includes(e.code))) e.preventDefault();
   if (e.repeat) return;
+  if (state === 'playing' && run && run.duo) {
+    if (e.code === 'KeyE' || e.code === 'KeyQ') { as(car1, throwAction); return; } if (e.code === 'KeyF' || e.code === 'KeyR') { as(car1, fight); return; }
+    if (e.code === 'Enter' || e.code === 'NumpadEnter') { as(car2, throwAction); return; } if (e.code === 'Slash' || e.code === 'Numpad0') { as(car2, fight); return; }
+  }
   if (e.code === 'KeyM') { A.init(); save.settings.sound = !save.settings.sound; persist(); A.apply(); }
   if (state === 'playing') { if (e.code === 'KeyE' || e.code === 'KeyQ') throwAction(); if (e.code === 'KeyF' || e.code === 'KeyR') fight(); if (e.code === 'KeyH') A.horn(); if (e.code === 'Escape' || e.code === 'KeyP') pause(); }
   else if (state === 'paused' && (e.code === 'Escape' || e.code === 'KeyP')) resume();
@@ -1724,6 +1800,7 @@ $('areas').addEventListener('click', (e) => {
   if (!areaOpen(k)) { if (save.coins >= a.unlock) { save.coins -= a.unlock; save.areas[k] = true; A.cash(); } else { A.sad(); $('titleNote').textContent = `🔒 Earn $${a.unlock} to unlock ${a.name}. You have $${save.coins}.`; return; } }
   save.area = k; persist(); A.coin(); renderTitle();
 });
+$('players').addEventListener('click', (e) => { const b = e.target.closest('[data-duo]'); if (!b) return; A.init(); save.duo = b.dataset.duo === 'true'; persist(); A.coin(); renderTitle(); });
 $('bGarage').addEventListener('click', () => { A.init(); garageIdx = Math.max(0, VEH.findIndex((v) => v.id === save.sel)); setState('garage'); });
 $('bMissions').addEventListener('click', () => { A.init(); setState('missions'); });
 $('bSettings').addEventListener('click', () => { A.init(); setState('settings'); });
@@ -1766,14 +1843,14 @@ function boot() {
   floorDisc.material.map = TEX.floor; floorDisc.material.needsUpdate = true;
   setupShowroomEnv(); buildZombieMeshes();
   menuZombie(-3.2, -1.5, 0.6); menuZombie(3.4, -1.2, -0.6, true); menuZombie(-1.5, -3.5, 0.2); menuZombie(2, -3.8, -0.3, true);
-  arrow = new THREE.Group(); const sh = new THREE.Shape(); sh.moveTo(0, 0.9); sh.lineTo(0.6, 0.1); sh.lineTo(0.22, 0.1); sh.lineTo(0.22, -0.6); sh.lineTo(-0.22, -0.6); sh.lineTo(-0.22, 0.1); sh.lineTo(-0.6, 0.1); sh.closePath();
-  const ah = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.15, bevelEnabled: false }).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x8ac926 })); arrow.add(ah); scene.add(arrow); arrow.visible = false;
+  for (const c of [car1, car2]) { const arrow = new THREE.Group(); const sh = new THREE.Shape(); sh.moveTo(0, 0.9); sh.lineTo(0.6, 0.1); sh.lineTo(0.22, 0.1); sh.lineTo(0.22, -0.6); sh.lineTo(-0.22, -0.6); sh.lineTo(-0.22, 0.1); sh.lineTo(-0.6, 0.1); sh.closePath();
+  const ah = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.15, bevelEnabled: false }).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x8ac926 })); arrow.add(ah); scene.add(arrow); arrow.visible = false; c.arrow = arrow; }
   syncMute();
   $('loading').hidden = true;
   setState('title');
   requestAnimationFrame(frame);
 }
-window.__pzp = { get state() { return state; }, car, zombies, orders, get run() { return run; }, save, startRun, endRun, throwAction, fight, spawnZombie, hopOn, keys, input, houses, get shop() { return shop; }, usePower, damage, statics, ramps, groundH,
+window.__pzp = { get state() { return state; }, car, car2, get riders() { return riders; }, zombies, orders, get run() { return run; }, save, startRun, endRun, throwAction, fight, spawnZombie, hopOn, keys, input, houses, get shop() { return shop; }, usePower, damage, statics, ramps, groundH,
   fast(sec) { if (state === 'countdown') { countdown = 0; setState('playing'); } const n = Math.round(sec * 60); for (let i = 0; i < n && (state === 'playing' || state === 'ending'); i++) updateRun(1 / 60, i / 60); } };
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot, boot); else boot();
 })();
