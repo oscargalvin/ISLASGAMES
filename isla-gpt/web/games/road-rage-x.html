@@ -40,6 +40,11 @@ button:focus-visible { outline: 3px solid var(--nitro); outline-offset: 3px; }
 #modeBig { font-family: var(--display); font-size: 28px; line-height: 1; }
 #modeSmall { font-size: 15px; color: var(--dim); white-space: nowrap; }
 #bust { width: 160px; height: 8px; border-radius: 4px; background: rgba(0, 0, 0, .5); overflow: hidden; border: 1px solid rgba(255, 255, 255, .25); }
+#nav { display: flex; align-items: center; gap: 10px; }
+#navArrow { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%; background: rgba(5, 35, 15, .75); border: 2px solid #4ade80; color: #4ade80; font-size: 32px; line-height: 1; transition: transform .1s linear; }
+#navBar { position: relative; width: 170px; height: 12px; border-radius: 6px; background: rgba(0, 0, 0, .5); border: 1px solid rgba(255, 255, 255, .25); }
+#navBar i { display: block; height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, #ff7a1a, #4ade80); }
+#navBar span { position: absolute; right: -10px; top: -9px; font-size: 22px; }
 #bust i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #3b82f6, #ef4444); }
 .tr { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); right: calc(10px + env(safe-area-inset-right, 0px)); display: flex; gap: 6px; align-items: center; pointer-events: auto; }
 .chip { padding: 6px 12px; border-radius: 999px; background: rgba(0, 0, 0, .5); border: 1px solid var(--line); font-size: 17px; white-space: nowrap; }
@@ -161,7 +166,7 @@ h3 { margin: 4px 0 0; font-family: var(--display); font-weight: 400; font-size: 
 
 <div id="hud" hidden>
   <div class="tl"><div id="scoreTxt">0</div><div id="distTxt">0.0 km</div><div id="comboTxt"></div></div>
-  <div class="tc"><div id="modeBig"></div><div id="modeSmall"></div><div id="bust" hidden><i></i></div></div>
+  <div class="tc"><div id="modeBig"></div><div id="modeSmall"></div><div id="bust" hidden><i></i></div><div id="nav" hidden><b id="navArrow">⬆</b><div id="navBar"><i></i><span>🔧</span></div></div></div>
   <div class="tr">
     <span class="chip" id="coinChip">🪙 0</span>
     <button class="icon" id="hCam" aria-label="Change camera">🎥</button>
@@ -1044,7 +1049,7 @@ function stepCar(dt) {
 function damage(amount, what) {
   if (car.wreck || state !== 'playing') return;
   const dmg = amount / car.stats.armor;
-  car.hp -= dmg; run.hits++;
+  car.hp -= run.mode === 'escape' ? dmg * 0.6 : dmg; run.hits++;
   $('dmgFlash').style.opacity = Math.min(1, dmg / 25); setTimeout(() => { $('dmgFlash').style.opacity = 0; }, 160);
   run.combo = 0; run.comboT = 0;
   if (car.hp <= 0) { car.hp = 0; wreck(what); }
@@ -1328,7 +1333,7 @@ function startRun() {
   roadToWorld(20, 1.8, TMP); car.pos.set(TMP.x, 0, TMP.z); car.th = TMP.h; car.camH = TMP.h; car.idx = 10;
   car.model.group.quaternion.identity();
   run = { mode: save.mode, map: save.map, score: 0, coins: 0, nearMiss: 0, combo: 0, comboT: 0, topSpeed: 0, driftTime: 0, driftChain: 0, distKm: 0, escapes: 0, copsDown: 0, nitroTime: 0, checkpoints: 0, raceWin: 0, hits: 0, time: 0, bust: 0, heat: 0, wanted: false, nextWave: save.mode === 'police' ? 3 : 60, nextPick: 120, missionCoins: 0, missionsDone: [], endReason: '', finish: 4000, finishers: [], timeLeft: 35, nextCp: 900, startS: 20, nextFix: 600 };
-  if (run.mode === 'escape') { run.finish = 1800; makeGate(run.finish, 'shop'); }
+  if (run.mode === 'escape') { run.finish = 1300; makeGate(run.finish, 'shop'); }
   for (const m of save.missions) m.doneThisRun = false;
   if (run.mode === 'race') {
     const rivals = [['Blaze', 'super', '#f97316'], ['Nova', 'coupe', '#ec4899'], ['Ghost', 'muscle', '#e5e7eb']];
@@ -1402,7 +1407,7 @@ function updateRun(dt, rdt, t) {
   // mode logic
   if (run.mode === 'escape') {
     if (!run.fireMsg) { run.fireMsg = true; bigMsg('🔥 ON FIRE!', '#ff7a1a', 1800); }
-    if (!run.done) car.hp -= 1.9 / Math.sqrt(car.stats.armor) * dt;
+    if (!run.done) car.hp -= 1.1 / Math.sqrt(car.stats.armor) * dt;
     if (Math.random() < 0.9) { const fx = car.pos.x + Math.sin(car.th) * car.model.len * 0.6, fz = car.pos.z + Math.cos(car.th) * car.model.len * 0.6; FX.add.spawn({ x: fx + rand(-.4, .4), y: 1, z: fz + rand(-.4, .4), vx: car.vx * 0.9, vy: rand(1.5, 3), vz: car.vz * 0.9, life: rand(.25, .45), size: rand(.5, .8), size1: .1, c0: C.fire, c1: C.fire2 }); }
     if (car.hp <= 0) { car.hp = 0; wreck('fire'); return; }
     if (car.s >= run.finish && !run.done) { run.done = true; run.endReason = 'escape'; car.hp = 100; bigMsg('🔧 FIRE OUT!', '#4ade80', 1500); A.ding(); setTimeout(() => { if (state === 'playing') endRun(); }, 1500); }
@@ -1491,6 +1496,7 @@ function updateAudio() {
   A.set(A.nos.g, playing && car.nitroOn ? 0.12 : 0, 0.05);
   A.set(A.scrape.g, playing && car.scrapeT > 0 && car.vf > 6 ? 0.18 : 0, 0.03);
 }
+const NAV = {};
 function updateHUD() {
   const kmh = Math.max(0, Math.round(car.vf * KMH));
   $('spdNum').textContent = kmh; $('gearTxt').textContent = car.vf < -0.5 ? 'R' : 'G' + car.gear;
@@ -1505,6 +1511,13 @@ function updateHUD() {
   else if (run.mode === 'police' || run.wanted) { big = run.wanted ? '🚨'.repeat(Math.max(1, run.heat)) : '😎'; small = run.wanted ? 'Lose the cops! Escapes: ' + run.escapes : 'Next wave incoming…'; }
   else { big = ''; small = MAPS[run.map].name; }
   $('modeBig').textContent = big; $('modeSmall').textContent = small;
+  $('nav').hidden = run.mode !== 'escape';
+  if (run.mode === 'escape') {
+    roadToWorld(run.finish, 0, NAV); const want = Math.atan2(NAV.x - car.pos.x, NAV.z - car.pos.z);
+    let rel = want - car.th; rel = Math.atan2(Math.sin(rel), Math.cos(rel));
+    $('navArrow').style.transform = `rotate(${-rel}rad)`;
+    $('navBar').firstElementChild.style.width = clamp((car.s - run.startS) / (run.finish - run.startS), 0, 1) * 100 + '%';
+  }
   $('bust').hidden = !run.wanted; $('bust').firstElementChild.style.width = (run.bust / 2.2 * 100) + '%';
 }
 
