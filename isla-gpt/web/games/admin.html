@@ -96,10 +96,14 @@ textarea { min-height: 90px; resize: vertical; }
 .ver.now { background: #e9fff4; border-color: var(--mint); }
 #toast { position: fixed; z-index: 50; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); padding: 12px 20px; border-radius: 999px; background: #000; color: #fff; font-weight: 800; max-width: calc(100% - 24px); text-align: center; }
 #toast.bad { background: var(--hot); }
+#player { position: fixed; inset: 0; z-index: 100; background: #000; }
+#player iframe { width: 100%; height: 100%; border: 0; display: block; }
+#closeBtn { position: absolute; z-index: 2; left: 50%; top: calc(8px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); padding: 6px 14px; border-radius: 999px; border: 2px solid rgba(255,255,255,.5); background: rgba(0, 0, 0, .6); color: #fff; font: 900 13px var(--body); cursor: pointer; }
 dialog { border: 4px solid #000; border-radius: 22px; padding: 18px; background: var(--paper); color: var(--ink); width: min(520px, calc(100% - 24px)); box-shadow: 0 8px 0 #000; }
 dialog::backdrop { background: rgba(0, 0, 0, .6); }
 dialog h2 { margin-top: 0; }
 .steps { padding-left: 22px; line-height: 1.6; }
+#setup .card + .card { margin-top: 18px; }
 @media (max-width: 520px) {
   .item { flex-wrap: wrap; }
   .item .acts { width: 100%; justify-content: flex-start; }
@@ -123,22 +127,17 @@ dialog h2 { margin-top: 0; }
   <section id="setup" hidden>
     <h1>Admin 🔓</h1>
     <div class="card">
-      <p><b>The code is right!</b> To change the site, just tell Claude in the Isla &amp; Oscar's Games chat what you want, and it goes live for everyone in about 2 minutes. For example:</p>
-      <ul class="steps">
-        <li>📣 "Send everyone a message: We are doing an update!"</li>
-        <li>🎃 "Turn on the Halloween theme" (or Christmas, Easter, Summer, Valentine's, Bonfire Night)</li>
-        <li>✨ "Add a What's new card: Space Yeet is here!"</li>
-        <li>📦 "Put away the Halloween theme" or "Bring it back"</li>
-        <li>🔧 "Close Pizza Panic while it's being fixed" or "Give Yeet the Human an Updated badge"</li>
-        <li>📦 "Archive Teddy.exe" or "Put Teddy.exe back out"</li>
-        <li>🕘 "Go back to how the site was yesterday"</li>
-      </ul>
-      <details><summary>For a grown-up: make this panel work by itself</summary>
+      <h2>📦 Archived games <small>Only you can see these. Play them here while you fix them.</small></h2>
+      <div class="list" id="setupArch"><div class="empty">Loading…</div></div>
+    </div>
+    <div class="card">
+      <h2>🎛️ Buttons for everyone</h2>
+      <p>To have buttons here that change the site for everyone (messages, themes, archiving), the site needs somewhere to save your choices. That has to be switched on once in Vercel. It's free and takes a grown-up about 2 minutes:</p>
       <ol class="steps">
         <li>Open the <b>islasgames-isla-gpt</b> project on <a href="https://vercel.com/dashboard" target="_blank" rel="noopener">vercel.com</a>.</li>
         <li><b>Storage</b> → <b>Create Database</b> → <b>Upstash for Redis</b> (free) → connect it to this project, then redeploy.</li>
       </ol>
-      </details>
+      <p>After that, this page turns into the full panel with all the buttons. Until then, just tell Claude in the chat what you want (like "turn on the Halloween theme") and it goes live in about 2 minutes.</p>
       <p><a class="btn sun" href="index.html">← Back to the games</a></p>
       <button class="btn" id="setupRetry" hidden>Try again</button>
     </div>
@@ -205,7 +204,7 @@ dialog h2 { margin-top: 0; }
     <div data-pane="games" hidden>
       <h2>Games <small>Close a game while you fix it, give it a badge, or archive it.</small></h2>
       <div class="list" id="gameList"></div>
-      <h2>📦 Archived games <small>Nobody can see these. Fix them here, then put them back out.</small></h2>
+      <h2>📦 Archived games <small>Only you can see these. Play them here, fix them, then put them back out.</small></h2>
       <div class="drawer"><div class="list" id="archList"></div></div>
     </div>
 
@@ -228,6 +227,7 @@ dialog h2 { margin-top: 0; }
 </dialog>
 
 <div id="toast" hidden role="status"></div>
+<div id="player" hidden><button id="closeBtn" type="button">✕ Back to admin</button><iframe id="frame" title="Archived game" allow="autoplay; fullscreen"></iframe></div>
 
 <script>
 (() => {
@@ -296,8 +296,9 @@ dialog h2 { margin-top: 0; }
     code = c;
     try {
       const { status, data } = await call({ action: 'login' });
-      if (status === 200) { got(data); show('panel'); }
-      else if (status === 503 && data.needsStore) { code = ''; show('setup'); }
+      if (status === 200 && data.noStore) { show('setup'); drawSetupArchive(); }
+      else if (status === 200) { got(data); show('panel'); }
+      else if (status === 503 && data.needsStore) { code = ''; show('setup'); drawSetupArchive(); }
       else {
         code = '';
         $('#lockMsg').textContent = data.error || 'Something went wrong. Try again.';
@@ -310,7 +311,21 @@ dialog h2 { margin-top: 0; }
     }
     typed = ''; drawDots(); busy = false;
   }
-  function lock() { code = ''; state = null; typed = ''; drawDots(); show('lock'); }
+  function lock() { code = ''; state = null; typed = ''; drawDots(); closeGame(); show('lock'); }
+  // ---------- playing archived games ----------
+  function playGame(slug) { $('#frame').src = slug + '.html'; $('#player').hidden = false; }
+  function closeGame() { $('#player').hidden = true; $('#frame').src = 'about:blank'; }
+  $('#closeBtn').addEventListener('click', closeGame);
+  const playBtn = (slug) => { const b = el('button', 'btn small sun', '▶️ Play'); b.addEventListener('click', () => playGame(slug)); return b; };
+  async function drawSetupArchive() {
+    let games = {};
+    try { games = (await (await fetch('settings.json', { cache: 'no-store' })).json()).games || {}; } catch (e) {}
+    const arch = GAMES.filter(([slug]) => (games[slug] || {}).status === 'archived');
+    $('#setupArch').replaceChildren(...(arch.length ? arch.map(([slug, name, emoji]) => {
+      const c = el('div', 'game archived'); c.append(el('b', '', `${emoji} ${name}`));
+      const r = el('div', 'row'); r.append(playBtn(slug)); c.append(r); return c;
+    }) : [el('div', 'empty', 'No archived games right now.')]));
+  }
   $('#setupRetry').addEventListener('click', lock);
   $('#logout').addEventListener('click', lock);
   // Coming back with the Back button, or after the page was put away for a
@@ -469,7 +484,7 @@ dialog h2 { margin-top: 0; }
         back.addEventListener('click', () => save((s) => { s.games[slug].status = 'live'; }, `${name}: put back out`, `${emoji} ${name} is back!`));
         const fix = el('button', 'btn small', '🔧 Put back as "Fixing"');
         fix.addEventListener('click', () => save((s) => { s.games[slug].status = 'fixing'; }, `${name}: put back, still fixing`, `${emoji} Back, marked as fixing`));
-        r.append(back, fix);
+        r.append(playBtn(slug), back, fix);
         c.append(r);
         return c;
       }
