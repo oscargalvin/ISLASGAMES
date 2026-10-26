@@ -56,6 +56,18 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 #achToast.on { opacity: 1; transform: translateX(-50%) translateY(-6px); }
 #stam { position: absolute; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: 150px; height: 6px; border-radius: 3px; background: rgba(0, 0, 0, .5); overflow: hidden; transition: opacity .3s; }
 #stam i { display: block; height: 100%; background: var(--gold); }
+#split { position: fixed; top: 0; bottom: 0; left: 50%; width: 4px; margin-left: -2px; background: #000; z-index: 4; display: none; pointer-events: none; }
+body.duoOn #split { display: block; }
+#duoHud { display: none; }
+body.duoOn #duoHud { display: block; }
+body.duoOn #stam, body.duoOn #powers, body.duoOn #hint { display: none !important; }
+.dp { position: absolute; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); width: min(240px, 40vw); padding: 6px 12px; border-radius: 12px; background: rgba(0, 0, 0, .55); font-size: 14px; text-align: center; transform: translateX(-50%); }
+#d1 { left: 25%; } #d2 { left: 75%; }
+.dp b { font-size: 16px; } .dp.p1 b { color: #ffd23f; } .dp.p2 b { color: #5ce1ff; }
+.dp .bar { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .15); overflow: hidden; margin-top: 4px; }
+.dp .bar i { display: block; height: 100%; background: var(--gold); }
+.dp.out { opacity: .7; } .dp.hot { background: rgba(200, 0, 0, .7); }
+#playersSeg { grid-template-columns: repeat(2, 1fr); }
 #hint { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); font-size: 13px; color: var(--dim); background: rgba(0, 0, 0, .4); padding: 5px 12px; border-radius: 10px; white-space: nowrap; }
 
 /* touch */
@@ -179,7 +191,9 @@ h2.bad { color: var(--bad); } h2.good { color: var(--gold); }
   <div id="stoolWarn"><div id="swText">GET OFF OR YOU WILL DIE!</div><div id="swCount">5</div></div>
   <div id="hint" hidden>Click to aim the camera with your mouse</div>
   <div id="stam"><i></i></div>
+  <div id="duoHud"><div class="dp p1" id="d1"></div><div class="dp p2" id="d2"></div></div>
 </div>
+<div id="split"></div>
 
 <div id="touch" hidden>
   <div id="lookZone"></div>
@@ -197,6 +211,9 @@ h2.bad { color: var(--bad); } h2.good { color: var(--gold); }
     <div class="tagline" id="arenaNote"></div>
     <div class="seg" id="diffSeg" role="group" aria-label="Difficulty">
       <button data-d="easy">Easy</button><button data-d="normal">Normal</button><button data-d="hard">Hard</button>
+    </div>
+    <div class="seg" id="playersSeg" role="group" aria-label="Players">
+      <button data-duo="0">1 Player</button><button data-duo="1">2 Players</button>
     </div>
     <button class="big" id="bPlay">PLAY</button>
     <div class="row">
@@ -243,7 +260,7 @@ h2.bad { color: var(--bad); } h2.good { color: var(--gold); }
       <div><h3>SURVIVE THE FLOOR</h3><p>Every round the floor changes. Watch the warning and the flashing tiles, then get to safety before the countdown hits zero. Lava burns, vanishing and crumbling tiles drop you into the pit, ice is slippery, slime makes you slow. Meteors smash tiles, lasers sweep the floor (jump them!), earthquakes shake you around and sometimes the lava RISES, so climb the tall pillars or ride the floating platforms (they crumble if you stand on them too long).</p></div>
       <div><h3>🎡 DOOM WHEEL</h3><p>Every 20 seconds the Doom Wheel spins and picks a disaster: lava, ice, earthquake, meteors, vanishing floor or something special to the arena. The 🪑 spinning stool in the middle is a safe spot, but stay too long and it shouts GET OFF OR YOU WILL DIE! with a 5 second countdown. Jumping on it does not reset the timer.</p></div>
       <div><h3>WIN</h3><p>Be the last runner standing against 10 computer players. Bump them with a sprint to knock them around. Grab coins to buy characters and upgrades, and grab power-ups: 🛡 shield, 👟 double jump, ⚡ speed and 🧲 magnet.</p></div>
-      <div><h3>CONTROLS</h3><p><b>Computer:</b> <kbd>WASD</kbd> move, mouse to look (click first), <kbd>Space</kbd> jump, <kbd>Shift</kbd> sprint, <kbd>Esc</kbd> pause, <kbd>M</kbd> mute.<br><b>Phone or tablet:</b> turn it sideways. Joystick on the left, swipe on the right to look, big JUMP and SPRINT buttons.</p></div>
+      <div><h3>CONTROLS</h3><p><b>2 Players (one keyboard):</b> Player 1 uses <kbd>WASD</kbd>, <kbd>Space</kbd> jump, <kbd>Left Shift</kbd> sprint, <kbd>Q</kbd> <kbd>E</kbd> or the mouse to turn. Player 2 uses the <kbd>arrow keys</kbd>, <kbd>Enter</kbd> jump, <kbd>Right Shift</kbd> sprint, <kbd>,</kbd> <kbd>.</kbd> to turn. Last one standing wins!<br><b>Computer:</b> <kbd>WASD</kbd> move, mouse to look (click first), <kbd>Space</kbd> jump, <kbd>Shift</kbd> sprint, <kbd>Esc</kbd> pause, <kbd>M</kbd> mute.<br><b>Phone or tablet:</b> turn it sideways. Joystick on the left, swipe on the right to look, big JUMP and SPRINT buttons.</p></div>
     </div>
     <button class="big" data-back>GOT IT</button>
   </div>
@@ -1760,7 +1777,10 @@ function groundAt(x, z, maxY) {
 //  RUNNERS (player + bots)
 // =====================================================================
 const GRAV = 26, JUMP_V = 9.8, RADIUS = 0.38;
-let runners = [], player = null;
+let runners = [], player = null, player2 = null, champ = null;
+let duo = false; // 2 players split screen on one keyboard
+const humanAlive = () => (player && player.alive) || (duo && player2 && player2.alive);
+const pName = (r) => r === player2 ? 'Player 2' : 'Player 1';
 class Runner {
   constructor(def, isPlayer, name) {
     this.def = def; this.isPlayer = isPlayer; this.name = name;
@@ -1777,7 +1797,7 @@ class Runner {
     const sh = new THREE.Mesh(new THREE.SphereGeometry(0.95, 20, 14), new THREE.MeshBasicMaterial({ color: 0x66ccff, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false }));
     sh.position.y = 0.85; sh.visible = false; this.model.group.add(sh); this.shieldMesh = sh;
     if (!isPlayer) { this.tag = nameTag(name, '#ffffff'); this.model.group.add(this.tag); }
-    else { this.tag = nameTag('YOU', '#ffd23f'); this.tag.scale.set(1.2, 0.3, 1); this.model.group.add(this.tag); }
+    else { this.tag = nameTag(name === 'P2' ? 'P2' : duo ? 'P1' : 'YOU', name === 'P2' ? '#5ce1ff' : '#ffd23f'); this.tag.scale.set(1.2, 0.3, 1); this.model.group.add(this.tag); }
   }
   dispose() { scene.remove(this.model.group); scene.remove(this.model.shadow); }
 }
@@ -1787,14 +1807,20 @@ function spawnRunners() {
   const def = CHARS.find((c) => c.id === save.sel) || CHARS[0];
   player = new Runner(def, true, 'You'); runners.push(player);
   player.shield = save.up.shield > 0;
+  player2 = null;
+  if (duo) {
+    const d2 = CHARS.find((c) => c.id !== def.id && save.chars.includes(c.id)) || CHARS.find((c) => c.id !== def.id);
+    player2 = new Runner(d2, true, 'P2'); player2.shield = player.shield; runners.push(player2);
+  }
   const names = shuffle(BOT_NAMES.slice()), others = shuffle(CHARS.filter((c) => c.id !== def.id));
   const D = DIFF[save.diff];
-  for (let k = 0; k < BOTS; k++) { const b = new Runner(others[k % others.length], false, names[k % names.length]); b.ai = { react: rand(D.react[0], D.react[1]), mistake: D.mistake + rand(-0.03, 0.03), think: rand(0, 0.3), target: null, wander: rand(1, 3), jumpSkill: rand(0.6, 1) }; rollLeave(b); runners.push(b); }
+  for (let k = 0; k < BOTS - (duo ? 1 : 0); k++) { const b = new Runner(others[k % others.length], false, names[k % names.length]); b.ai = { react: rand(D.react[0], D.react[1]), mistake: D.mistake + rand(-0.03, 0.03), think: rand(0, 0.3), target: null, wander: rand(1, 3), jumpSkill: rand(0.6, 1) }; rollLeave(b); runners.push(b); }
   // ring start positions on solid normal tiles near the middle
   const cands = arena.tiles.filter((t) => !t.fixed && !t.bridge).sort((a, b) => (a.x * a.x + a.z * a.z) - (b.x * b.x + b.z * b.z));
   const ring = cands.slice(0, Math.min(cands.length, 24)); shuffle(ring);
   runners.forEach((r, k) => { const t = ring[k % ring.length]; r.pos.set(t.x + rand(-0.5, 0.5), 0, t.z + rand(-0.5, 0.5)); r.yaw = Math.atan2(-r.pos.x, -r.pos.z); r.vel.set(0, 0, 0); });
   camYaw = player.yaw + Math.PI;
+  if (player2) camYaw2 = player2.yaw + Math.PI;
 }
 
 function stepRunner(r, dt) {
@@ -2129,12 +2155,12 @@ function revertRound() {
   if (round.flood) round.flood.phase = 'fall';
   if (round.sweeper) round.sweeper.phase = 'off';
   round.wind = null; A.setWind(0);
-  if (round.quake) { round.quake = null; A.setRumble(0); if (player.alive) unlock('quake'); }
-  if (round.doom && player.alive) { matchStats.spins = (matchStats.spins || 0) + 1; if (matchStats.spins >= 3) unlock('wheel3'); }
+  if (round.quake) { round.quake = null; A.setRumble(0); if (humanAlive()) unlock('quake'); }
+  if (round.doom && humanAlive()) { matchStats.spins = (matchStats.spins || 0) + 1; if (matchStats.spins >= 3) unlock('wheel3'); }
   round.doom = false;
   // survivors get points
   for (const r of runners) if (r.alive && r.isPlayer) { matchStats.rounds = round.n; addScore(100); }
-  if (player.alive) { if (round.n >= 1) unlock('first'); if (round.n >= 5) unlock('r5'); if (round.n >= 10) unlock('r10'); if (round.n >= 15) unlock('r15'); }
+  if (humanAlive()) { if (round.n >= 1) unlock('first'); if (round.n >= 5) unlock('r5'); if (round.n >= 10) unlock('r10'); if (round.n >= 15) unlock('r15'); }
 }
 function updateRound(dt) {
   round.t += dt;
@@ -2330,7 +2356,7 @@ function updateStool(dt) {
       if (r.stoolT >= STOOL_SAFE + STOOL_WARN) { stoolZap(r); continue; }
       if (!r.isPlayer && Math.random() < 0.05) FX.add.spawn({ x: r.pos.x + rand(-.3, .3), y: r.pos.y + rand(0, 1.6), z: r.pos.z + rand(-.3, .3), vy: rand(0, 2), life: .25, size: .25, size1: .02, c0: [1, .2, .2] });
     }
-    if (r.isPlayer) {
+    if (r === player && !duo) {
       const left = STOOL_SAFE + STOOL_WARN - r.stoolT;
       if (r.onStool && r.stoolT >= STOOL_SAFE) {
         const sec = Math.max(1, Math.ceil(left));
@@ -2557,7 +2583,16 @@ function kill(r, cause, impulse) {
   makeRagdoll(r, imp, burning);
   A.scream(r.isPlayer ? 1 : rand(0.8, 1.4), pan);
   const aliveN = runners.filter((q) => q.alive).length;
-  if (r.isPlayer) {
+  if (r.isPlayer && duo) {
+    r.place = aliveN + 1;
+    feed(`💀 ${pName(r)} ${CAUSE[cause][2]}!`); A.out();
+    const other = r === player ? player2 : player;
+    if (!other.alive) { // both humans are out: the floor wins
+      matchStats.place = Math.min(player.place || 99, player2.place || 99); matchStats.cause = cause; matchStats.time = gameTime;
+      state = 'dying'; deathT = 0; targetTS = 0.4; timeScale = 0.4; A.setMusicDull(true); setBodyState();
+    } else if (aliveN === 1) winMatch(other);
+    $('aliveChip').textContent = '👥 ' + aliveN;
+  } else if (r.isPlayer) {
     matchStats.place = aliveN + 1; matchStats.cause = cause; matchStats.time = gameTime;
     state = 'dying'; deathT = 0; targetTS = 0.22; timeScale = 0.22; A.setMusicDull(true); setBodyState();
     $('aliveChip').textContent = '👥 ' + aliveN;
@@ -2565,20 +2600,22 @@ function kill(r, cause, impulse) {
   } else {
     feed(`💀 ${r.name} ${CAUSE[cause][2]}!`); A.out();
     if (r.lastHit && r.lastHit.by === player && gameTime - r.lastHit.t < 3 && (cause === 'fall' || cause === 'pit' || cause === 'lava' || cause === 'flood')) unlock('push');
-    if (player.alive) addScore(50);
+    if (humanAlive()) addScore(50);
     $('aliveChip').textContent = '👥 ' + aliveN;
-    if (player.alive && aliveN === 1) winMatch();
+    const left = runners.filter((q) => q.alive);
+    if (left.length === 1 && left[0].isPlayer) winMatch(left[0]);
   }
 }
 function addScore(n) { matchStats.score += Math.round(n * DIFF[save.diff].mult); }
-function winMatch() {
-  state = 'celebrate'; celebrateT = 0; player.dance = true; player.move.set(0, 0, 0);
+function winMatch(w = player) {
+  champ = w; matchStats.winner = w;
+  state = 'celebrate'; celebrateT = 0; w.dance = true; w.move.set(0, 0, 0);
   addScore(1000); matchStats.place = 1; matchStats.time = gameTime;
   save.wins[arena.key] = (save.wins[arena.key] || 0) + 1;
   unlock('win'); if (save.diff === 'hard') unlock('winHard');
   if (ARENA_KEYS.every((k) => save.wins[k])) unlock('tour');
   hideWheel(); $('stoolWarn').classList.remove('on'); $('stoolChip').style.display = 'none';
-  showBanner('👑 WINNER! 👑', '#ffd23f'); $('bCount').textContent = '';
+  showBanner(duo ? `👑 ${pName(w).toUpperCase()} WINS! 👑` : '👑 WINNER! 👑', duo && w === player2 ? '#5ce1ff' : '#ffd23f'); $('bCount').textContent = '';
   setEdge(null); Music.set('win'); A.fanfare(); setBodyState();
   // calm the floor down
   for (const t of arena.tiles) { if (t.pend) { t.pend = null; t.mesh.material = t.base; } }
@@ -2604,7 +2641,13 @@ function finishMatch(win) {
   $('endTag').textContent = win ? 'VICTORY · ' + arena.def.name.toUpperCase() : 'GAME OVER · ' + arena.def.name.toUpperCase();
   $('endTitle').textContent = win ? 'LAST ONE STANDING!' : c[0]; $('endTitle').className = win ? 'good' : 'bad';
   const ord = (n) => n + (n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th');
-  $('endText').textContent = win ? `You beat all ${BOTS} runners and survived ${matchStats.rounds} round${matchStats.rounds === 1 ? '' : 's'}. The floor bows to you.` : `${c[1]} You came ${ord(matchStats.place)} out of ${BOTS + 1}.` + (isBest ? ' New best score!' : '');
+  if (duo) {
+    const wn = matchStats.winner ? pName(matchStats.winner) : null;
+    $('endTag').textContent = (win ? '2 PLAYERS · ' : 'GAME OVER · ') + arena.def.name.toUpperCase();
+    $('endTitle').textContent = win ? `🏆 ${wn.toUpperCase()} WINS!` : 'THE FLOOR WINS!';
+  }
+  if (duo) $('endText').textContent = win ? `${matchStats.winner === player ? 'Player 1' : 'Player 2'} was the last runner standing${matchStats.rounds ? ` after ${matchStats.rounds} round${matchStats.rounds === 1 ? '' : 's'}` : ''}!` : `${c[1]} Both players are out. The best place was ${['', '1st', '2nd', '3rd'][matchStats.place] || matchStats.place + 'th'}.`;
+  else $('endText').textContent = win ? `You beat all ${BOTS} runners and survived ${matchStats.rounds} round${matchStats.rounds === 1 ? '' : 's'}. The floor bows to you.` : `${c[1]} You came ${ord(matchStats.place)} out of ${BOTS + 1}.` + (isBest ? ' New best score!' : '');
   const mm = Math.floor(matchStats.time / 60), ss = Math.floor(matchStats.time % 60);
   $('endStats').innerHTML = [['Place', ord(matchStats.place)], ['Rounds', matchStats.rounds], ['Wheel spins', matchStats.spins || 0], ['Time', mm + ':' + String(ss).padStart(2, '0')], ['Coins', '+' + bankAdd], ['Score', matchStats.score], ['Best', save.best[bestKey].score]].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
   $('endAch').textContent = newAch.length ? 'New trophies: ' + newAch.map((a) => a.icon + ' ' + a.name).join(', ') : '';
@@ -2620,12 +2663,57 @@ function checkUnlocks() {
 // =====================================================================
 //  CAMERA + INPUT
 // =====================================================================
-let camYaw = 0, camPitch = 0.5, camDist = IS_TOUCH ? 7.5 : 7;
+let camYaw = 0, camPitch = 0.5, camDist = IS_TOUCH ? 7.5 : 7, camYaw2 = 0, camPitch2 = 0.45;
+const camera2 = new THREE.PerspectiveCamera(60, 1, 0.1, 400);
+const duoView = [{ cam: camera, pos: new V3(), tgt: new V3() }, { cam: camera2, pos: new V3(), tgt: new V3() }];
 const keys = new Set(), input = { jx: 0, jy: 0, lx: 0, ly: 0, sprint: false };
 const camTarget = new V3(), camPos = new V3();
+// split screen: each half follows its own runner (or their ragdoll once they are out)
+function duoCameras(rdt) {
+  camYaw -= input.lx * 0.0038; camPitch = clamp(camPitch + input.ly * 0.0032, -0.15, 1.2); input.lx = input.ly = 0;
+  if (keys.has('KeyQ')) camYaw += 2.4 * rdt; if (keys.has('KeyE')) camYaw -= 2.4 * rdt;
+  if (keys.has('Comma')) camYaw2 += 2.4 * rdt; if (keys.has('Period')) camYaw2 -= 2.4 * rdt;
+  [player, player2].forEach((r, i) => {
+    const v = duoView[i];
+    let yaw = i ? camYaw2 : camYaw, pitch = i ? camPitch2 : camPitch, dist = camDist;
+    if (r.alive) v.tgt.set(r.pos.x, r.pos.y + 1.3, r.pos.z);
+    else {
+      const rd = ragdolls.find((q) => q.runner === r), floorY = Math.max(arena.def.pit === 'abyss' ? -14 : arena.pitY, arena.floodY) + 1.2;
+      if (rd) v.tgt.lerp(new V3(rd.pts.pelvis.p.x, Math.max(floorY, rd.pts.pelvis.p.y + 0.6), rd.pts.pelvis.p.z), 1 - Math.exp(-6 * rdt));
+      else v.tgt.lerp(new V3(0, 0, 0), 1 - Math.exp(-1 * rdt));
+      yaw += rdt * 0.35; dist = 12; pitch = 0.7;
+    }
+    if (state === 'celebrate') { const c = champ || player; v.tgt.set(c.pos.x, c.pos.y + 1.1, c.pos.z); yaw += rdt * 0.6; dist = 5.5; pitch = 0.3; }
+    if (i) camYaw2 = yaw; else camYaw = yaw;
+    v.pos.set(v.tgt.x + Math.sin(yaw) * Math.cos(pitch) * dist, v.tgt.y + Math.sin(pitch) * dist, v.tgt.z + Math.cos(yaw) * Math.cos(pitch) * dist);
+    v.cam.position.lerp(v.pos, 1 - Math.exp(-14 * rdt)); v.cam.lookAt(v.tgt);
+    if (shake > 0) { v.cam.position.x += rand(-1, 1) * shake * 0.25; v.cam.position.y += rand(-1, 1) * shake * 0.25; }
+  });
+  shake = Math.max(0, shake - rdt * 1.6);
+}
+function updateDuoHud() {
+  [player, player2].forEach((r, i) => {
+    const el = $(i ? 'd2' : 'd1'), name = i ? 'P2' : 'P1';
+    const ord = (n) => n + (n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th');
+    let html, cls = 'dp ' + (i ? 'p2' : 'p1');
+    if (!r.alive) { html = `<b>${name}</b> 💀 OUT · ${ord(r.place || 2)}`; cls += ' out'; }
+    else if (state === 'celebrate' && champ === r) html = `<b>${name}</b> 👑 WINNER!`;
+    else {
+      const pw = [r.shield ? '🛡' : '', r.boots > 0 ? '👟' : '', r.speedT > 0 ? '⚡' : '', r.magnetT > 0 ? '🧲' : ''].join('');
+      let st = '';
+      if (r.onStool && r.stoolT >= STOOL_SAFE) { st = ' 🪑 GET OFF! ' + Math.max(1, Math.ceil(STOOL_SAFE + STOOL_WARN - r.stoolT)); cls += ' hot'; }
+      else if (r.onStool) st = ' 🪑 ' + Math.ceil(STOOL_SAFE - r.stoolT);
+      html = `<b>${name}</b> ${pw}${st}<div class="bar"><i style="width:${r.stamina | 0}%"></i></div>`;
+    }
+    if (el.innerHTML !== html) el.innerHTML = html;
+    if (el.className !== cls) el.className = cls;
+  });
+}
 function updateCamera(dt, rdt, t) {
+  if (duo && player2 && (state === 'playing' || state === 'paused' || state === 'dying' || state === 'celebrate' || state === 'countdown')) return duoCameras(rdt);
   camYaw -= input.lx * 0.0038; camPitch = clamp(camPitch + input.ly * 0.0032, -0.15, 1.2); input.lx = input.ly = 0;
   if (keys.has('ArrowLeft')) camYaw += 2.4 * rdt; if (keys.has('ArrowRight')) camYaw -= 2.4 * rdt;
+  if (keys.has('KeyQ')) camYaw += 2.4 * rdt; if (keys.has('KeyE')) camYaw -= 2.4 * rdt;
   if (state === 'playing' || state === 'paused') {
     camTarget.set(player.pos.x, player.pos.y + 1.3, player.pos.z);
   } else if (state === 'dying') {
@@ -2659,12 +2747,21 @@ function updateCamera(dt, rdt, t) {
 }
 function playerInput() {
   let f = -input.jy, s = input.jx;
-  if (keys.has('KeyW') || keys.has('ArrowUp')) f += 1; if (keys.has('KeyS') || keys.has('ArrowDown')) f -= 1;
+  if (keys.has('KeyW') || keys.has('ArrowUp') && !duo) f += 1; if (keys.has('KeyS') || keys.has('ArrowDown') && !duo) f -= 1;
   if (keys.has('KeyA')) s -= 1; if (keys.has('KeyD')) s += 1;
   const m = Math.hypot(f, s); if (m > 1) { f /= m; s /= m; }
   const fx = -Math.sin(camYaw), fz = -Math.cos(camYaw), rx = Math.cos(camYaw), rz = -Math.sin(camYaw);
   player.move.set(fx * f + rx * s, 0, fz * f + rz * s);
-  player.sprint = keys.has('ShiftLeft') || keys.has('ShiftRight') || input.sprint;
+  player.sprint = keys.has('ShiftLeft') || keys.has('ShiftRight') && !duo || input.sprint;
+}
+function player2Input() {
+  let f = 0, s = 0;
+  if (keys.has('ArrowUp')) f += 1; if (keys.has('ArrowDown')) f -= 1;
+  if (keys.has('ArrowLeft')) s -= 1; if (keys.has('ArrowRight')) s += 1;
+  const m = Math.hypot(f, s); if (m > 1) { f /= m; s /= m; }
+  const fx = -Math.sin(camYaw2), fz = -Math.cos(camYaw2), rx = Math.cos(camYaw2), rz = -Math.sin(camYaw2);
+  player2.move.set(fx * f + rx * s, 0, fz * f + rz * s);
+  player2.sprint = keys.has('ShiftRight');
 }
 
 // =====================================================================
@@ -2699,6 +2796,7 @@ function setBodyState() {
   $('hud').hidden = !inGame;
   $('touch').hidden = !(IS_TOUCH && (state === 'playing' || state === 'countdown'));
   document.body.classList.toggle('playing', inGame);
+  document.body.classList.toggle('duoOn', inGame && duo && !!player2);
   $('stam').style.opacity = state === 'playing' ? 1 : 0;
 }
 function renderTitle() {
@@ -2710,6 +2808,8 @@ function renderTitle() {
     return `<button class="arena ${open ? '' : 'locked'}" data-arena="${k}" aria-pressed="${save.arena === k}"><div class="em">${a.em}</div><b>${a.name}</b><div class="sub">${lock}</div></button>`;
   }).join('');
   document.querySelectorAll('#diffSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.d === save.diff)));
+  document.querySelectorAll('#playersSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.duo === (save.duo ? '1' : '0'))));
+  $('playersSeg').hidden = IS_TOUCH;
   const best = save.best[save.arena + ':' + save.diff];
   $('arenaNote').textContent = best ? `Best here: ${best.score} points, round ${best.round}` : 'Be the last runner standing!';
 }
@@ -2758,7 +2858,7 @@ function resetWorld() {
 function previewCharacter() {
   // menu scene: just your runner standing in the middle of the arena
   resetWorld();
-  for (const r of runners) r.dispose(); runners = [];
+  for (const r of runners) r.dispose(); runners = []; player2 = null; champ = null;
   const def = CHARS.find((c) => c.id === save.sel) || CHARS[0];
   player = new Runner(def, true, 'You'); player.tag.visible = false; runners.push(player);
   const t = arena.tiles.filter((q) => !q.fixed && q.state === 'normal').sort((a, b) => (a.x * a.x + a.z * a.z) - (b.x * b.x + b.z * b.z))[0];
@@ -2767,6 +2867,7 @@ function previewCharacter() {
 function startMatch() {
   A.init();
   if (!save.unlocked[save.arena]) save.arena = 'volcano';
+  duo = !!save.duo && !IS_TOUCH; champ = null;
   resetWorld(); spawnRunners();
   matchStats = { rounds: 0, coins: 0, score: 0, place: BOTS + 1, cause: '', time: 0, spins: 0 }; newAch = [];
   gameTime = 0; coinT = 0.5; powerT = 6; timeScale = targetTS = 1;
@@ -2776,6 +2877,7 @@ function startMatch() {
   showBanner('GET READY!', '#ffd23f');
   Music.set('game'); Music.hype = 0; A.setMusicDull(false);
   camPitch = 0.5; camYaw = Math.atan2(player.pos.x, player.pos.z);
+  if (player2) { camYaw2 = Math.atan2(player2.pos.x, player2.pos.z); camPitch2 = 0.5; duoView.forEach((v, i) => { const r = i ? player2 : player; v.tgt.set(r.pos.x, r.pos.y + 1.3, r.pos.z); }); }
   $('hint').hidden = IS_TOUCH;
 }
 function simulate(dt, rdt, t) {
@@ -2785,7 +2887,7 @@ function simulate(dt, rdt, t) {
     if (state === 'playing' || state === 'dying') { updateRound(h); updateStool(h); }
     updateTiles(h, t);
     updatePlatforms(h, t);
-    for (const r of runners) { if (!r.alive) continue; if (r === player) { if (state === 'playing') playerInput(); else player.move.set(0, 0, 0); } else if (state !== 'celebrate') botThink(r, h); else { r.move.set(0, 0, 0); } stepRunner(r, h); }
+    for (const r of runners) { if (!r.alive) continue; if (r === player || r === player2) { if (state === 'playing') (r === player ? playerInput : player2Input)(); else r.move.set(0, 0, 0); } else if (state !== 'celebrate') botThink(r, h); else { r.move.set(0, 0, 0); } stepRunner(r, h); }
     runnerCollisions();
     updateMeteors(h);
     for (const rd of ragdolls.slice()) stepRagdoll(rd, h);
@@ -2840,9 +2942,9 @@ function updateAmbient(dt, t) {
 }
 function celebrate(dt, t) {
   celebrateT += dt;
-  if (Math.random() < 0.5) { const a = rand(0, 6.28); FX.norm.spawn({ x: player.pos.x + Math.cos(a) * rand(0, 4), y: player.pos.y + 6, z: player.pos.z + Math.sin(a) * rand(0, 4), vx: rand(-1, 1), vy: -rand(1, 2), vz: rand(-1, 1), life: 3, size: .16, c0: pick([[1, .3, .4], [1, .85, .2], [.3, .8, 1], [.4, 1, .5], [1, .5, 1]]), drag: 1 }); }
+  if (Math.random() < 0.5) { const a = rand(0, 6.28); FX.norm.spawn({ x: champ.pos.x + Math.cos(a) * rand(0, 4), y: champ.pos.y + 6, z: champ.pos.z + Math.sin(a) * rand(0, 4), vx: rand(-1, 1), vy: -rand(1, 2), vz: rand(-1, 1), life: 3, size: .16, c0: pick([[1, .3, .4], [1, .85, .2], [.3, .8, 1], [.4, 1, .5], [1, .5, 1]]), drag: 1 }); }
   if (Math.random() < 0.035) { const x = rand(-15, 15), y = rand(10, 18), z = rand(-15, 15), col = pick([[1, .3, .3], [1, .85, .2], [.3, .8, 1], [.6, 1, .4], [1, .4, 1]]); FX.add.burst(50, () => { const a = rand(0, 6.28), b = rand(-1.5, 1.5), s = rand(5, 8); return { x, y, z, vx: Math.cos(a) * Math.cos(b) * s, vy: Math.sin(b) * s, vz: Math.sin(a) * Math.cos(b) * s, life: rand(1, 1.6), size: .3, size1: .05, c0: col, c1: [1, 1, 1], g: 4, drag: 1.2 }; }); A.pop(); }
-  if (player.onGround && Math.random() < 0.03) player.wantJump = true;
+  if (champ.onGround && Math.random() < 0.03) champ.wantJump = true;
   if (celebrateT > 5.5) finishMatch(true);
 }
 
@@ -2863,6 +2965,7 @@ function frame(now) {
   } else if (state === 'playing' || state === 'dying' || state === 'celebrate') {
     simulate(dt, rdt, t);
     if (state === 'playing') { const m = Math.floor(gameTime / 60), s = Math.floor(gameTime % 60); $('timeChip').textContent = `⏱ ${m}:${String(s).padStart(2, '0')}`; const wt = wheel.phase === 'idle' ? '🎡 ' + Math.max(0, Math.ceil(wheel.t)) : '🎡 SPIN!'; if ($('wheelChip').textContent !== wt) $('wheelChip').textContent = wt; $('stam').firstElementChild.style.width = player.stamina + '%'; renderPowers(); }
+    if (duo && player2) updateDuoHud();
     if (state === 'dying') { deathT += rdt; if (deathT > 1.5) targetTS = 1; if (deathT > 3.2) { A.sad(); finishMatch(false); } }
     if (state === 'celebrate') celebrate(dt, t);
   } else if (['title', 'chars', 'up', 'troph', 'how'].includes(state)) {
@@ -2874,7 +2977,18 @@ function frame(now) {
   if (arena && player) updateCamera(dt, rdt, t);
   const sc = renderer.domElement.height / (2 * Math.tan(camera.fov * Math.PI / 360));
   FX.add.mat.uniforms.scale.value = sc; FX.norm.mat.uniforms.scale.value = sc;
-  if (composer) composer.render(); else renderer.render(scene, camera);
+  const W = window.innerWidth, H = window.innerHeight, split = duo && player2 && document.body.classList.contains('duoOn');
+  const asp = split ? (W / 2) / H : W / H;
+  if (Math.abs(camera.aspect - asp) > 1e-4) { camera.aspect = asp; camera.updateProjectionMatrix(); }
+  if (split) {
+    if (Math.abs(camera2.aspect - asp) > 1e-4) { camera2.aspect = asp; camera2.updateProjectionMatrix(); }
+    // two halves, drawn straight to the screen (the glow effect is skipped in 2 player mode to keep it fast)
+    const hw = Math.floor(W / 2);
+    renderer.setScissorTest(true);
+    renderer.setViewport(0, 0, hw, H); renderer.setScissor(0, 0, hw, H); renderer.render(scene, camera);
+    renderer.setViewport(hw, 0, W - hw, H); renderer.setScissor(hw, 0, W - hw, H); renderer.render(scene, camera2);
+    renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H);
+  } else if (composer) composer.render(); else renderer.render(scene, camera);
 }
 
 // ---------- input wiring ----------
@@ -2885,6 +2999,7 @@ window.addEventListener('keydown', (e) => {
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
   if (e.repeat) return;
   if (e.code === 'KeyM') { A.init(); A.setMuted(!save.muted); }
+  if (state === 'playing' && duo && player2 && ['Enter', 'NumpadEnter', 'Slash', 'Numpad0'].includes(e.code)) player2.wantJump = true;
   if (state === 'playing') { if (e.code === 'Space') player.wantJump = true; if (e.code === 'Escape' || e.code === 'KeyP') pause(); }
   else if (state === 'paused' && (e.code === 'Escape' || e.code === 'KeyP')) resume();
 });
@@ -2930,6 +3045,7 @@ $('arenas').addEventListener('click', (e) => {
   }
   save.arena = k; persist(); previewCharacter(); renderTitle(); A.coin();
 });
+document.querySelectorAll('#playersSeg button').forEach((b) => b.addEventListener('click', () => { save.duo = b.dataset.duo === '1'; persist(); renderTitle(); A.init(); A.beep(false); }));
 document.querySelectorAll('#diffSeg button').forEach((b) => b.addEventListener('click', () => { save.diff = b.dataset.d; persist(); renderTitle(); A.init(); A.beep(false); }));
 $('bChars').addEventListener('click', () => { A.init(); setState('chars'); });
 $('bUp').addEventListener('click', () => { A.init(); setState('up'); });
@@ -2952,7 +3068,7 @@ $('bRestart').addEventListener('click', startMatch);
 $('bMenuP').addEventListener('click', toTitle);
 $('bAgain').addEventListener('click', startMatch);
 $('bMenuE').addEventListener('click', toTitle);
-window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); if (composer) composer.setSize(window.innerWidth, window.innerHeight); });
+window.addEventListener('resize', () => { camera.aspect = (duo && player2 ? window.innerWidth / 2 : window.innerWidth) / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); if (composer) composer.setSize(window.innerWidth, window.innerHeight); });
 
 // =====================================================================
 //  BOOT
@@ -2967,7 +3083,7 @@ function boot() {
   setState('title');
   requestAnimationFrame(frame);
 }
-window.__fid = { get state() { return state; }, get player() { return player; }, get runners() { return runners; }, get round() { return round; }, get arena() { return arena; }, get stats() { return matchStats; }, save, startMatch, startRound, kill, setState, get gameTime() { return gameTime; }, tileAt, launchMeteor, get wheel() { return wheel; }, spinWheel, updateStool, BOTS, STOOL_SAFE, STOOL_WARN, get composer() { return composer; }, fast(sec) { if (state === 'countdown') { state = 'playing'; round.phase = 'calm'; round.t = 0; round.dur = 2.5; } const n = Math.round(sec * 60); for (let i = 0; i < n; i++) simulate(1 / 60, 1 / 60, gameTime); } };
+window.__fid = { get state() { return state; }, get player() { return player; }, get player2() { return player2; }, get duo() { return duo; }, get champ() { return champ; }, get runners() { return runners; }, get round() { return round; }, get arena() { return arena; }, get stats() { return matchStats; }, save, startMatch, startRound, kill, setState, get gameTime() { return gameTime; }, tileAt, launchMeteor, get wheel() { return wheel; }, spinWheel, updateStool, BOTS, STOOL_SAFE, STOOL_WARN, get composer() { return composer; }, fast(sec) { if (state === 'countdown') { state = 'playing'; round.phase = 'calm'; round.t = 0; round.dur = 2.5; } const n = Math.round(sec * 60); for (let i = 0; i < n; i++) simulate(1 / 60, 1 / 60, gameTime); } };
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot, boot); else boot();
 })();
 </script>
