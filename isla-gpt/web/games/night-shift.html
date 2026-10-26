@@ -822,6 +822,25 @@ const WHY_MONSTER_LOUD = ['I HEARD YOU WERE ALONE.', 'Let me in. Let me in. Let 
 const WHY_MONSTER_QUIET = ['I need milk for the morning. For the morning. For the morning.', 'I am a normal customer. I eat the food with my mouth.', 'Batteries. For my... heart.', 'The coffee. I must drink the coffee through my face.', 'Same as every night. I watch you. I mean, I shop.', 'Snacks. Normal snacks. Like a person.'];
 const HANDS_HUMAN = ['Uh, sure. Here.', 'Okay... weird, but fine.', 'There you go.'];
 
+const LOOKALIKE = { Maya: 'Mia', Liam: 'Leon', Priya: 'Pria', Tom: 'Tim', Zara: 'Sara', Ben: 'Ken', Chloe: 'Cleo', Omar: 'Omari', Ruby: 'Rudy', Jack: 'Jake', Ella: 'Ellie', Sam: 'Pam', Aisha: 'Asha', Leo: 'Theo', Grace: 'Gracie', Noah: 'Nora', Ivy: 'Izzy', Kai: 'Kay', Nina: 'Nita', Theo: 'Leo', Hana: 'Hannah', Owen: 'Ewan', Lucy: 'Lacey', Max: 'Mac' };
+const otherOf = (list, not) => { let v = pick(list); while (v === not) v = pick(list); return v; };
+function wrongName(first, last, loud) {
+  if (loud) return Math.random() < 0.5 ? otherOf(FIRST, first) + ' ' + last : otherOf(FIRST, first) + ' ' + otherOf(LAST, last);
+  return Math.random() < 0.5 ? LOOKALIKE[first] + ' ' + last : first + ' ' + otherOf(LAST, last);
+}
+function wrongAge(age, loud) {
+  const off = loud ? randi(12, 35) : randi(2, 6);
+  const up = age + off, down = age - off;
+  return down >= 18 && (Math.random() < 0.5 || up > 95) ? down : up;
+}
+function wrongBday(bd, bm, loud) {
+  if (loud) return sayBday(bd > 14 ? bd - randi(5, 13) : bd + randi(5, 13), (bm + randi(3, 9)) % 12);
+  const r = Math.random();
+  if (r < 0.3 && bd <= 12 && bd - 1 !== bm) return sayBday(bm + 1, bd - 1);   // day and month mixed up
+  if (r < 0.65) return sayBday(bd, (bm + pick([1, 11])) % 12);                 // one month out
+  return sayBday(bd > 3 ? bd - randi(1, 3) : bd + randi(1, 3), bm);           // a few days out
+}
+
 let custSeq = 0;
 function tellsFor(hourIdx) { return DIFF[diffKey].tells[clamp(hourIdx + NT().tellShift, 0, 5)]; }
 function genCustomer(hourIdx, force) {
@@ -848,13 +867,10 @@ function genCustomer(hourIdx, force) {
       if (loud || Math.random() < 0.5) c.photo.hair = pick(other); else c.photo.glasses = !look.glasses;
       if (loud && Math.random() < 0.5) c.photo.glasses = !look.glasses;
     }
-    if (c.tells.has('name')) { let f2 = pick(FIRST); while (f2 === first) f2 = pick(FIRST); c.spokenName = loud ? pick(['Not ' + first, 'The One Who Waits', 'Me', 'Mr Skin']) : f2 + ' ' + last; }
-    if (c.tells.has('age')) c.spokenAge = loud ? pick(['400', 'Older than this town', 'Zero. I was born tonight', 'All of the ages']) : String(age + pick([-1, 1]) * randi(4, 12));
-    if (c.tells.has('birthday')) {
-      if (loud) c.spokenBday = pick(['My birthday is EVERY DAY.', 'My birthday is tonight. It is always tonight.', 'My birthday is the 31st of February.', 'Birthday? I was not born. I was made.']);
-      else if (Math.random() < 0.5) { let m2 = randi(0, 11); while (m2 === bm) m2 = randi(0, 11); c.spokenBday = sayBday(bd, m2); }
-      else c.spokenBday = sayBday(bd > 14 ? bd - randi(3, 12) : bd + randi(3, 12), bm);
-    }
+    // Wrong details sound like a real person's answer: early on they're way off, later only a little.
+    if (c.tells.has('name')) c.spokenName = wrongName(first, last, loud);
+    if (c.tells.has('age')) c.spokenAge = String(wrongAge(age, loud));
+    if (c.tells.has('birthday')) c.spokenBday = wrongBday(bd, bm, loud);
     if (c.tells.has('fingers')) c.fingers = loud ? 7 : 6;
     if (c.tells.has('answer')) c.why = loud ? pick(WHY_MONSTER_LOUD) : pick(WHY_MONSTER_QUIET);
   }
@@ -1122,7 +1138,7 @@ function spawnCustomer(force) {
   const c = genCustomer(hourIdx, dave ? 'monster' : force);
   if (dave) {
     c.first = 'Dave'; c.last = 'Fraser'; c.idName = 'Dave Fraser';
-    if (!c.tells.has('name')) c.spokenName = 'Dave Fraser';
+    c.spokenName = c.tells.has('name') ? pick(['David Frazer', 'Dan Fraser', 'Dave Fraiser']) : 'Dave Fraser';
     c.tells.add('answer'); c.why = "I left my keys inside. I work here. I've always worked here.";
   }
   buildPerson(c);
