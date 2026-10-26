@@ -141,6 +141,16 @@ h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
 .how p { padding-left: 0; }
 .how kbd { font-family: var(--mono); border: 1px solid var(--dim); border-radius: 4px; padding: 0 5px; font-size: 11px; }
 .how .wide { grid-column: 1 / -1; }
+.nights { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 460px; }
+.nights button { padding: 8px 2px 7px; border: 1px solid var(--line); border-radius: 10px; background: rgba(0, 0, 0, .3); font-weight: 800; font-size: 11px; color: var(--dim); display: flex; flex-direction: column; align-items: center; gap: 2px; line-height: 1.15; }
+.nights button b { font-family: var(--display); font-size: 20px; font-weight: 400; color: var(--ink); }
+.nights button[aria-pressed="true"] { background: rgba(125, 255, 176, .18); border-color: var(--neon); color: var(--ink); }
+.nights button.done b { color: var(--neon); }
+.nights button:disabled { opacity: .4; cursor: not-allowed; }
+.note { background: #f1e9cc; color: #2a2418; padding: 14px 18px; border-radius: 4px; transform: rotate(-1deg); text-align: left; font-family: var(--mono); font-size: 14px; line-height: 1.55; max-width: 48ch; box-shadow: 0 8px 26px rgba(0, 0, 0, .55); }
+.note .sig { display: block; text-align: right; margin-top: 6px; font-style: italic; }
+.jobs { text-align: left; font-size: 14px; line-height: 1.7; color: #b9c9c0; }
+.jobs b { color: var(--neon); font-family: var(--display); font-weight: 400; letter-spacing: .05em; }
 #rotate { position: fixed; inset: 0; z-index: 50; background: #000; display: none; place-items: center; padding: 24px; text-align: center; font-weight: 800; font-size: 20px; }
 @media (orientation: portrait) { body.touch.playing #rotate { display: grid; } }
 #loading { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: var(--night); font-family: var(--display); color: var(--neon); font-size: 20px; }
@@ -150,7 +160,9 @@ h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
   #say { min-height: 0; font-size: 12.5px; padding: 6px 10px; }
   .qs button { padding: 6px 8px; font-size: 12px; }
   .how { grid-template-columns: 1fr; }
-  #tasks { display: none; }
+  #tasks > div:not(.next):not(.urgent) { display: none; }
+  .note { font-size: 12.5px; padding: 10px 14px; }
+  .jobs { font-size: 12.5px; line-height: 1.5; }
   .tbtn { height: 54px; } .tbtn.big { height: 58px; }
   .card { gap: 10px; }
   .logo { font-size: 44px; }
@@ -226,7 +238,7 @@ h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
   <div id="rulesPop" hidden>
     <h3>HOW TO SPOT THEM</h3>
     <ol>
-      <li>The ID must not be expired. Tonight is <b>31 OCT 2026</b>.</li>
+      <li>The ID must not be expired. Tonight is <b class="tonight">31 OCT 2026</b>.</li>
       <li>The ID photo must match: same hair colour, same glasses.</li>
       <li>The name they say must match the ID.</li>
       <li>The age <b>and birthday</b> they say must match the ID's date of birth.</li>
@@ -247,11 +259,12 @@ h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
   <div class="card">
     <h1 class="logo">NIGHT<br>SHIFT</h1>
     <div class="byline">by <b>Isla &amp; Oscar's</b> Games</div>
-    <p class="small">Midnight at the Midnight Mart. You're working alone. Strange customers keep knocking, and some of them aren't human. Check them carefully, then let them in or keep them out. Survive until 6 AM.</p>
+    <p class="small">Five nights at the Midnight Mart, ending on Halloween. You're working alone. Strange customers keep knocking, and some of them aren't human. Each night brings new jobs and creepier things. Survive until 6 AM to unlock the next night.</p>
     <div class="seg" role="group" aria-label="Difficulty">
       <button data-d="easy">Easy</button><button data-d="normal">Normal</button><button data-d="nightmare">Nightmare</button>
     </div>
     <div class="small" id="diffNote" style="font-size:12.5px"></div>
+    <div class="nights" id="nightPick" role="group" aria-label="Pick a night"></div>
     <button class="big" id="bPlay">PLAY</button>
     <div class="row" style="justify-content:center">
       <button class="ghost" id="bHow">How to play</button>
@@ -267,11 +280,22 @@ h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
     <div class="how">
       <div class="wide"><h3>THE JOB</h3><p>When someone knocks, inspect them through the window by the door desk, or from anywhere with the CCTV. Check their ID, ask questions, then press <b>LET IN</b> or <b>DENY</b>. Letting in a monster or turning away a real person is a mistake. Too many mistakes and it's over. Monsters you let in will hunt you, so run, hide in the staff locker or the storeroom boxes, and close doors behind you. Monsters can't open closed doors.</p></div>
       <div><h3>SPOT THE MONSTERS</h3><ol>
-        <li>ID not expired (tonight is 31 Oct 2026)</li><li>Photo matches: hair colour and glasses</li><li>Spoken name matches the ID</li><li>Spoken age and birthday match the ID</li><li>5 fingers on each hand</li><li>They blink</li><li>No glowing eyes on CCTV</li><li>No twitching</li><li>Normal smile, sensible answers</li></ol></div>
+        <li>ID not expired (check tonight's date at the top of the rules)</li><li>Photo matches: hair colour and glasses</li><li>Spoken name matches the ID</li><li>Spoken age and birthday match the ID</li><li>5 fingers on each hand</li><li>They blink</li><li>No glowing eyes on CCTV</li><li>No twitching</li><li>Normal smile, sensible answers</li></ol></div>
       <div><h3>CONTROLS</h3><p><b>Computer:</b> <kbd>WASD</kbd> move, mouse look, <kbd>Shift</kbd> run, <kbd>E</kbd> use, <kbd>C</kbd> CCTV, <kbd>Q</kbd> inspect the door, <kbd>F</kbd> torch, <kbd>Esc</kbd> back or pause, <kbd>M</kbd> mute. Click the buttons to decide.<br><b>Phone:</b> turn sideways. Joystick to walk, swipe to look, and big USE, CCTV, RUN and LIGHT buttons.</p>
-      <h3 style="margin-top:10px">JOBS</h3><p>Lock the back door, mop the spill, restock aisle 3 and reset the breaker when the power cuts out.</p></div>
+      <h3 style="margin-top:10px">JOBS</h3><p>Every night has different jobs: lock the back door, mop spills, restock, check the freezer, take out the rubbish, count the till, check the cameras, fix lights and answer the phone. Reset the breaker when the power cuts out. Beat a night to unlock the next one.</p></div>
     </div>
     <button class="big" id="bHowBack">Got it</button>
+  </div>
+</div>
+
+<div class="sheet dim" id="mBrief" hidden>
+  <div class="card">
+    <div class="tag" id="briefTag">NIGHT 1 OF 5</div>
+    <h2 class="good" id="briefTitle">FIRST SHIFT</h2>
+    <div class="note" id="briefNote"></div>
+    <div class="jobs" id="briefJobs"></div>
+    <button class="big" id="bClockIn">CLOCK IN</button>
+    <button class="ghost" id="bBriefBack">Back</button>
   </div>
 </div>
 
@@ -327,6 +351,28 @@ const DIFF = {
   nightmare: { label: 'Nightmare', strikes: 2, hourLen: 80, tells: [2, 2, 1, 1, 1, 1], monster: [0.4, 0.6], gap: [7, 12], patience: 60, huntSpeed: 3.5, huntTime: 50, mult: 2.5, note: 'Usually just one clue. Fast hunters. Only 2 mistakes.' },
 };
 let diffKey = store.get('ns-diff', 'normal'); if (!DIFF[diffKey]) diffKey = 'normal';
+
+// Five nights, ending on Halloween. Each night has its own jobs and gets creepier.
+const NIGHTS = [
+  { n: 1, day: 27, dow: 'TUE', name: 'First Shift', short: 'First Shift', tasks: ['backdoor', 'spill', 'restock'], monsterAdd: 0, tellShift: 0, cuts: 1,
+    note: "Welcome to the Midnight Mart! Easy job. Check every customer's ID before you let them in. Some of the people out there... aren't people. Lock the back door. See you at 6.",
+    teaser: 'Tomorrow night a late delivery is coming in.' },
+  { n: 2, day: 28, dow: 'WED', name: 'The Late Delivery', short: 'Delivery', tasks: ['backdoor', 'freezer', 'trash', 'till'], monsterAdd: 0.03, tellShift: 0, cuts: 1,
+    note: "A delivery came in late, so the store's a mess. Check the freezer, take the rubbish out and count the till. Oh, and the last night worker, Dave, never handed his keys back. If he turns up, DON'T let him in.",
+    teaser: 'Tomorrow night, listen out for the phone.' },
+  { n: 3, day: 29, dow: 'THU', name: 'The Phone Call', short: 'Phone Call', tasks: ['backdoor', 'cctv', 'lights', 'phone'], monsterAdd: 0.05, tellShift: 1, cuts: 1,
+    note: "If the phone in the staff room rings, answer it. Watch the cameras too. Last night the tapes showed someone standing in Aisle 4 after we closed. And fix that flickering light.",
+    teaser: 'Tomorrow night a big storm is coming. Keep your torch handy.' },
+  { n: 4, day: 30, dow: 'FRI', name: 'Blackout', short: 'Blackout', tasks: ['backdoor', 'spill', 'restock', 'freezer', 'trash'], monsterAdd: 0.07, tellShift: 1, cuts: 3,
+    note: "Big storm tonight. The power will keep cutting out, so keep your torch on. If you hear footsteps when you're alone... just keep working. Don't turn around.",
+    teaser: 'Tomorrow is Halloween. They will ALL come.' },
+  { n: 5, day: 31, dow: 'SAT', name: 'Halloween', short: 'Halloween', tasks: ['backdoor', 'pumpkins', 'cctv', 'till', 'phone'], monsterAdd: 0.1, tellShift: 2, cuts: 2,
+    note: "It's Halloween. They'll ALL come tonight. Light the pumpkins so they think we're celebrating. Survive until 6 AM and you never have to work here again. I'll come in at 5 to check on you.",
+    teaser: '' },
+];
+let unlocked = clamp(store.get('ns-unlocked', 1) | 0, 1, 6);
+let night = clamp(store.get('ns-night', 1) | 0, 1, Math.min(5, unlocked));
+const NT = () => NIGHTS[night - 1];
 let muted = store.get('ns-muted', false);
 
 // =====================================================================
@@ -597,7 +643,10 @@ function instanced(geo, mat, list, setup) {
 const doors = []; const entrance = { open: 0, target: 0, left: null, right: null };
 const interactables = [];  // {x,z,r,label,act,show}
 const tasksState = {};
-let spillMesh = null, restockMesh = null, backDoorLight = null, breakerLight = null;
+let spillMesh = null, restockMesh = null, backDoorLight = null, breakerLight = null, neonMesh = null;
+const props = { bag: null, ladder: null, lightPanel: null, pumpkins: [] };
+// The window sign. RUN is drawn mirrored so it reads the right way from inside the store.
+function neonTex(word, mirror) { return canvasTex(256, 96, (x, w, h) => { x.fillStyle = '#000'; x.fillRect(0, 0, w, h); if (mirror) { x.translate(w, 0); x.scale(-1, 1); } x.font = '800 64px Inter, Arial'; x.textAlign = 'center'; x.fillStyle = '#ff3b6b'; x.shadowColor = '#ff3b6b'; x.shadowBlur = 16; x.fillText(word, w / 2, 72); }); }
 const camLEDs = [];
 const CCTV_CAMS = [
   { name: 'CAM 1 · ENTRANCE', pos: new THREE.Vector3(14.9, 2.75, 29.5), look: null, fov: 36 },
@@ -645,8 +694,8 @@ function buildWorld() {
   for (const p of [entrance.left, entrance.right]) { const fr = new THREE.Mesh(new THREE.BoxGeometry(1.02, 2.57, 0.03), new THREE.MeshBasicMaterial({ color: 0x3a403e, wireframe: true })); p.add(fr); world.add(p); }
   entrance.left.position.set(12.5, 1.33, 30.38); entrance.right.position.set(13.5, 1.33, 30.38);
   // "OPEN" neon in the window (seen backwards from inside)
-  const neon = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.6), new THREE.MeshBasicMaterial({ map: canvasTex(256, 96, (x, w, h) => { x.fillStyle = '#000'; x.fillRect(0, 0, w, h); x.font = '800 64px Inter, Arial'; x.textAlign = 'center'; x.fillStyle = '#ff3b6b'; x.shadowColor = '#ff3b6b'; x.shadowBlur = 16; x.fillText('OPEN', w / 2, 72); }), side: THREE.DoubleSide, transparent: true, blending: THREE.AdditiveBlending }));
-  neon.position.set(6, 2.1, 30.42); world.add(neon);
+  const neon = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.6), new THREE.MeshBasicMaterial({ map: (TEX.neonOpen = neonTex('OPEN')), side: THREE.DoubleSide, transparent: true, blending: THREE.AdditiveBlending }));
+  neon.position.set(6, 2.1, 30.42); world.add(neon); neonMesh = neon; TEX.neonRun = neonTex('RUN', true);
   // back door
   const bdoor = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.3, 1.1), lam({ color: 0x8a2a24 })); bdoor.position.set(24.98, 1.15, 12.5); world.add(bdoor);
   const exitS = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.3), new THREE.MeshBasicMaterial({ map: signTex('STAFF EXIT', null, '#7a0d0d') })); exitS.position.set(24.9, 2.6, 12.5); exitS.rotation.y = -Math.PI / 2; world.add(exitS);
@@ -694,6 +743,20 @@ function buildWorld() {
   spillMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.4), new THREE.MeshPhongMaterial({ map: TEX.spill, transparent: true, shininess: 120, depthWrite: false })); spillMesh.rotation.x = -Math.PI / 2; spillMesh.position.set(9.5, 0.012, 9.5); world.add(spillMesh);
   const cone = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.55, 8), lam({ color: 0xffc400 })); cone.position.set(9.0, 0.28, 10.4); spillMesh.userData.cone = cone; world.add(cone);
   restockMesh = new THREE.Group(); for (let i = 0; i < 3; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.4, 0.45), lam({ map: TEX.box })); b.position.set(i % 2 * 0.1, 0.2 + i * 0.4, 0); restockMesh.add(b); } restockMesh.position.set(13.5, 0, 8.5); world.add(restockMesh);
+  // props for the other nights' jobs: rubbish bag, storeroom bin, ladder, staff phone, pumpkins
+  const bag = new THREE.Mesh(new THREE.SphereGeometry(0.32, 10, 8), phong({ color: 0x111418, shininess: 90 })); bag.scale.set(1, 1.15, 1); bag.position.set(9.6, 0.34, 27.2); world.add(bag); props.bag = bag;
+  const bin = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.28, 0.9, 12), lam({ color: 0x2d5a3a })); bin.position.set(2.5, 0.45, 25.2); world.add(bin);
+  const ladder = new THREE.Group();
+  for (const sx of [-0.25, 0.25]) { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.05, 2.2, 0.05), lam({ color: 0xc9c9c9 })); leg.position.set(sx, 1.1, 0); ladder.add(leg); }
+  for (let i = 0; i < 5; i++) { const r = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.04, 0.08), lam({ color: 0xc9c9c9 })); r.position.set(0, 0.35 + i * 0.4, 0); ladder.add(r); }
+  ladder.position.set(16.5, 0, 15.4); ladder.rotation.x = -0.12; world.add(ladder); props.ladder = ladder;
+  const phoneMesh = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.16), lam({ color: 0xb02020 })); phoneMesh.position.set(22.3, 0.79, 3.4); world.add(phoneMesh);
+  for (const [x, y, z] of [[6.0, 0.97, 25.5], [20.3, 0.95, 28.5], [5.5, 0, 2.6]]) {
+    const pm = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), lam({ color: 0xff7a1a })); pm.scale.set(1.15, 0.85, 1.15); pm.position.set(x, y + 0.19, z);
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.1, 6), lam({ color: 0x3a6a2a })); stem.position.y = 0.24; pm.add(stem);
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.glow, color: 0xffa040, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false })); glow.scale.set(1.1, 1.1, 1); glow.position.y = 0.05; glow.visible = false; pm.add(glow);
+    pm.visible = false; world.add(pm); props.pumpkins.push({ x, z, mesh: pm, glow, lit: false });
+  }
   // ceiling lights
   const panelGeo = new THREE.BoxGeometry(1.4, 0.06, 0.35);
   for (let x = 2.5; x <= 23.5; x += 3.5) for (let z = 3; z <= 28; z += 4) {
@@ -716,6 +779,8 @@ function buildWorld() {
     const d = { x, z, pivot, open: 1, target: 1, dir: x < 10 ? -1 : 1, name: x < 10 ? 'storeroom' : 'staff room' };
     doors.push(d); doorAt.set(x + ',' + z, d);
   }
+  props.lightPanel = panels.reduce((b, p) => (Math.hypot(p.x - 16.5, p.z - 15) < Math.hypot(b.x - 16.5, b.z - 15) ? p : b), panels[0]);
+  props.lightPanel.wasBroken = props.lightPanel.broken;
   // rain
   const N = IS_TOUCH ? 500 : 1100; rainPos = new Float32Array(N * 6);
   for (let i = 0; i < N; i++) resetDrop(i, true);
@@ -758,11 +823,11 @@ const WHY_MONSTER_QUIET = ['I need milk for the morning. For the morning. For th
 const HANDS_HUMAN = ['Uh, sure. Here.', 'Okay... weird, but fine.', 'There you go.'];
 
 let custSeq = 0;
-function tellsFor(hourIdx) { return DIFF[diffKey].tells[clamp(hourIdx, 0, 5)]; }
+function tellsFor(hourIdx) { return DIFF[diffKey].tells[clamp(hourIdx + NT().tellShift, 0, 5)]; }
 function genCustomer(hourIdx, force) {
-  const monster = force ? force === 'monster' : Math.random() < lerp(DIFF[diffKey].monster[0], DIFF[diffKey].monster[1], hourIdx / 5);
+  const monster = force ? force === 'monster' : Math.random() < lerp(DIFF[diffKey].monster[0], DIFF[diffKey].monster[1], hourIdx / 5) + NT().monsterAdd;
   const first = pick(FIRST), last = pick(LAST);
-  const bd = randi(1, 28), bm = randi(0, 11), by = randi(1952, 2006), age = 2026 - by - (bm > 9 || (bm === 9 && bd > 31) ? 1 : 0);
+  const bd = randi(1, 28), bm = randi(0, 11), by = randi(1952, 2006), age = 2026 - by - (bm > 9 || (bm === 9 && bd > NT().day) ? 1 : 0);
   const look = {
     skin: pick(SKIN), hair: pick(HAIR_NAMES), style: pick(['short', 'long', 'bun', 'curly', 'short']), glasses: Math.random() < 0.3,
     jacket: pick(JACKETS), pants: pick(['#2a2f3a', '#3a3428', '#1f1f22', '#4a4f5a']), height: rand(1.58, 1.92), eye: pick(['#3a6ad8', '#5a3a1e', '#2d7a4a', '#4a4a4a']),
@@ -777,7 +842,7 @@ function genCustomer(hourIdx, force) {
     const n = force === 'monster' ? 3 : tellsFor(hourIdx);
     shuffle([...MONSTER_TYPES[typeKey].pool]).slice(0, n).forEach((t) => c.tells.add(t));
     const loud = hourIdx < 3;
-    if (c.tells.has('expired')) c.expires = loud ? fmtDate(randi(1, 28), randi(0, 11), randi(2016, 2023)) : fmtDate(randi(1, 29), 9, 2026).replace(/^(\d+)/, (m) => String(Math.min(30, +m)).padStart(2, '0'));
+    if (c.tells.has('expired')) c.expires = loud ? fmtDate(randi(1, 28), randi(0, 11), randi(2016, 2023)) : fmtDate(randi(Math.max(1, NT().day - 10), NT().day - 1), 9, 2026);
     if (c.tells.has('photo')) {
       const other = HAIR_NAMES.filter((h) => h !== look.hair && !(look.hair === 'black' && h === 'brown') && !(look.hair === 'brown' && h === 'black'));
       if (loud || Math.random() < 0.5) c.photo.hair = pick(other); else c.photo.glasses = !look.glasses;
@@ -904,12 +969,36 @@ const stats = { served: 0, caught: 0, mistakes: 0, hunts: 0 };
 let endingPending = null;
 const keys = new Set();
 const input = { jx: 0, jy: 0, lx: 0, ly: 0, run: false };
-const TASKS = [
-  { id: 'backdoor', label: 'Lock the back door', urgent: true },
-  { id: 'spill', label: 'Mop the spill in Aisle 2' },
-  { id: 'restock', label: 'Restock Aisle 3' },
-];
+const TASK_DEFS = {
+  backdoor: { label: 'Lock the back door', urgent: true },
+  spill: { label: 'Mop the spill in Aisle 2' },
+  restock: { label: 'Restock Aisle 3' },
+  freezer: { label: 'Check the freezer temperature' },
+  trash: { label: 'Take the rubbish to the storeroom bin' },
+  till: { label: 'Count the money in the till' },
+  cctv: { label: 'Check all 3 CCTV cameras', need: 3 },
+  lights: { label: 'Fix the flickering light in Aisle 4' },
+  phone: { label: 'Answer the phone in the staff room', urgent: true },
+  pumpkins: { label: 'Light the 3 pumpkins', need: 3 },
+};
+let activeTasks = [];
+const taskProg = {};
+const camsSeen = new Set();
+let carrying = false, phone = { ringing: false, rang: false, ringT: 0 }, phoneAt = Infinity, finalEvent = false;
+let creepT = 30, neonT = 0, lightsOffT = 0, camGhost = null, camGhostT = 0;
+const isTask = (id) => activeTasks.includes(id) && !tasksState[id];
+function taskLabel(id) {
+  const d = TASK_DEFS[id];
+  let s = id === 'spill' && night === 4 ? 'Mop the red spill in Aisle 2' : id === 'trash' && carrying ? 'Put the rubbish in the storeroom bin' : d.label;
+  if (d.need && !tasksState[id]) s += ` (${Math.min(taskProg[id] || 0, d.need)}/${d.need})`;
+  return s;
+}
+const PHONE_LINES = {
+  3: ['*crackle* ...Hello? Is this the new night worker?', 'This is Dave. I had your job before you.', "Listen. If their birthday is wrong, they are NOT human. Don't let them in.", "And don't stare at Aisle 4 on the cameras. It stares back.", '*click*'],
+  5: ['*static* ...It\'s me. Dave. Again.', "I'm not calling from home tonight.", "I'm calling from inside the store.", 'Turn around.'],
+};
 
+function pts(n) { return '+' + Math.round(n * DIFF[diffKey].mult); }
 function hourName() { const h = Math.floor(elapsed / DIFF[diffKey].hourLen); const m = Math.floor((elapsed % DIFF[diffKey].hourLen) / DIFF[diffKey].hourLen * 60); return (h === 0 ? 12 : h) + ':' + String(m).padStart(2, '0') + ' AM'; }
 
 function newGame() {
@@ -918,25 +1007,45 @@ function newGame() {
   Object.assign(player, { yaw: Math.PI, pitch: 0, stamina: 100, tired: false, torch: false, hidden: null });
   player.pos.set(20.5, 0, 26.5);
   elapsed = 0; hourIdx = 0; score = 0; strikes = 0; decisionCount = 0; backDoorEvent = false;
+  $('score').textContent = '0';
   Object.assign(stats, { served: 0, caught: 0, mistakes: 0, hunts: 0 });
-  nextArrival = 3; musicT = 4; whisperT = rand(12, 20); thunderT = rand(10, 20); phantomT = rand(35, 60); powerCutT = DIFF[diffKey].hourLen * rand(1.2, 1.8);
-  for (const k of Object.keys(tasksState)) delete tasksState[k];
-  for (const t of TASKS) tasksState[t.id] = false;
-  spillMesh.visible = true; spillMesh.userData.cone.visible = true; restockMesh.visible = true;
+  nextArrival = 3; musicT = 4; whisperT = rand(12, 20); thunderT = rand(10, 20); phantomT = rand(35, 60); powerCutT = DIFF[diffKey].hourLen * rand(1.2, 1.8) / NT().cuts;
+  setupNight();
   for (const d of doors) { d.open = 1; d.target = 1; }
   entrance.open = 0; entrance.target = 0;
   setPower(true, true);
   $('slits').classList.remove('on'); $('redflash').style.opacity = 0; $('whiteflash').style.opacity = 0;
   renderStrikes(); renderTasks();
   setState('playing'); setView('fp');
-  toast('Your shift starts now. Survive until 6 AM.', 'warn', 3.5);
+  toast(`Night ${night}: ${NT().name}. Survive until 6 AM.`, 'warn', 3.5);
   Sfx.init(); Sfx.setRain(0.12); Sfx.setDrone(0.4);
+}
+
+function setupNight() {
+  activeTasks = NT().tasks.slice();
+  for (const k of Object.keys(tasksState)) delete tasksState[k];
+  for (const k of Object.keys(taskProg)) delete taskProg[k];
+  for (const id of activeTasks) tasksState[id] = false;
+  carrying = false; camsSeen.clear(); finalEvent = false;
+  phone = { ringing: false, rang: false, ringT: 0 };
+  phoneAt = night === 3 ? DIFF[diffKey].hourLen * 2.2 : night === 5 ? DIFF[diffKey].hourLen * 4.1 : Infinity;
+  creepT = rand(25, 40); neonT = 0; lightsOffT = 0; clearCamGhost();
+  if (neonMesh) { neonMesh.material.map = TEX.neonOpen; neonMesh.material.needsUpdate = true; }
+  const has = (id) => activeTasks.includes(id);
+  spillMesh.visible = has('spill'); spillMesh.userData.cone.visible = has('spill');
+  spillMesh.material.color.setHex(night === 4 ? 0xff4040 : 0xffffff);
+  restockMesh.visible = has('restock');
+  props.bag.visible = has('trash'); props.ladder.visible = has('lights');
+  if (props.lightPanel) props.lightPanel.broken = has('lights') ? true : props.lightPanel.wasBroken;
+  for (const pk of props.pumpkins) { pk.lit = false; pk.mesh.visible = has('pumpkins'); pk.glow.visible = false; }
+  backDoorLight.material.color.setHex(0xff3030);
+  document.querySelectorAll('.tonight').forEach((e) => { e.textContent = fmtDate(NT().day, 9, 2026); });
 }
 
 function setState(s) {
   state = s;
   document.body.classList.toggle('playing', s === 'playing' || s === 'inspect');
-  $('mTitle').hidden = s !== 'title'; $('mPause').hidden = s !== 'paused'; $('mEnd').hidden = s !== 'end'; if (s !== 'title') $('mHow').hidden = true;
+  $('mTitle').hidden = s !== 'title'; $('mBrief').hidden = s !== 'brief'; $('mPause').hidden = s !== 'paused'; $('mEnd').hidden = s !== 'end'; if (s !== 'title') $('mHow').hidden = true;
   $('hud').hidden = !(s === 'playing' || s === 'scare' || s === 'inspect' || s === 'paused');
   $('touch').hidden = !(IS_TOUCH && s === 'playing');
   $('inspect').hidden = s !== 'inspect';
@@ -948,6 +1057,10 @@ function setState(s) {
 }
 function setView(v, cam) {
   view = v; if (cam !== undefined) camIdx = cam;
+  if (v === 'cctv') {
+    if (isTask('cctv')) { camsSeen.add(camIdx); taskProg.cctv = camsSeen.size; if (camsSeen.size >= 3) doTask('cctv'); else renderTasks(); }
+    clearCamGhost(); maybeCamGhost();
+  } else clearCamGhost();
   $('stage').classList.toggle('cctv', v === 'cctv'); $('scan').classList.toggle('on', v === 'cctv');
   $('vWindow').setAttribute('aria-pressed', String(v === 'window'));
   document.querySelectorAll('[data-cam]').forEach((b) => b.setAttribute('aria-pressed', String(v === 'cctv' && +b.dataset.cam === camIdx)));
@@ -965,9 +1078,15 @@ function nearDesk() { return Math.hypot(player.pos.x - 21.5, player.pos.z - 27.6
 // ---------- HUD ----------
 function renderStrikes() { const D = DIFF[diffKey]; $('strikes').innerHTML = Array.from({ length: D.strikes }, (_, i) => `<i class="${i < strikes ? 'x' : ''}">✕</i>`).join(''); }
 function renderTasks() {
-  const list = TASKS.map((t) => `<div class="${tasksState[t.id] ? 'done' : t.urgent && hourIdx >= 1 ? 'urgent' : ''}">☐ ${t.label}</div>`);
+  let next = false;
+  const list = activeTasks.filter((id) => id !== 'phone' || phone.rang).map((id) => {
+    const done = tasksState[id];
+    let cls = done ? 'done' : TASK_DEFS[id].urgent && (id === 'phone' || hourIdx >= 1) ? 'urgent' : '';
+    if (!done && !next) { next = true; cls += ' next'; }
+    return `<div class="${cls}">☐ ${taskLabel(id)}</div>`;
+  });
   if (!power) list.unshift('<div class="urgent">⚡ Reset the breaker (staff room)</div>');
-  list.unshift('<div>☾ Survive until 6:00 AM</div>');
+  list.unshift(`<div>☾ Night ${night}: survive until 6:00 AM</div>`);
   $('tasks').innerHTML = list.join('');
 }
 function toast(msg, cls = '', secs = 2.8) { const t = $('toast'); t.textContent = msg; t.className = 'on ' + cls; toastT = secs; }
@@ -977,6 +1096,11 @@ function renderBest() {
   const parts = Object.keys(DIFF).filter((k) => b[k]).map((k) => `${DIFF[k].label} ${b[k]}`);
   $('best').textContent = parts.length ? 'Best shifts: ' + parts.join(' · ') : '';
   $('diffNote').textContent = DIFF[diffKey].note;
+  $('nightPick').innerHTML = NIGHTS.map((N) => {
+    const locked = N.n > unlocked, done = N.n < unlocked;
+    return `<button data-n="${N.n}" aria-pressed="${N.n === night}" class="${done ? 'done' : ''}" ${locked ? 'disabled' : ''} aria-label="Night ${N.n}${locked ? ' (locked)' : ''}"><b>${locked ? '🔒' : N.n}</b>${done ? '✔ ' : ''}${N.short}</button>`;
+  }).join('');
+  $('bPlay').textContent = `PLAY NIGHT ${night}`;
   document.querySelectorAll('.seg button').forEach((b2) => b2.setAttribute('aria-pressed', String(b2.dataset.d === diffKey)));
 }
 
@@ -994,7 +1118,13 @@ function setPower(on, quiet) {
 
 // ---------- customers lifecycle ----------
 function spawnCustomer(force) {
-  const c = genCustomer(hourIdx, force);
+  const dave = night === 2 && custSeq === 3 && !force;
+  const c = genCustomer(hourIdx, dave ? 'monster' : force);
+  if (dave) {
+    c.first = 'Dave'; c.last = 'Fraser'; c.idName = 'Dave Fraser';
+    if (!c.tells.has('name')) c.spokenName = 'Dave Fraser';
+    c.tells.add('answer'); c.why = "I left my keys inside. I work here. I've always worked here.";
+  }
   buildPerson(c);
   c.pos = new THREE.Vector3(rand(4, 22), 0, 35.5);
   c.state = 'arriving'; c.waitT = 0; c.blinkT = rand(1, 3); c.blinking = 0; c.anim = 0; c.twitchT = rand(1.5, 3); c.twitch = 0; c.knockT = 0; c.hands = 0; c.handsT = 0; c.reveal = 0; c.seed = Math.random() * 100; c.stepD = 0;
@@ -1160,11 +1290,11 @@ function addStrike() {
 }
 
 // ---------- the hunt ----------
-function startHunt(c, fromBack) {
+function startHunt(c, fromBack, msg) {
   c.state = 'hunt'; c.reveal = 0.01; c.path = null; c.final = null; c.repath = 0; c.huntLeft = DIFF[diffKey].huntTime; c.speed = DIFF[diffKey].huntSpeed; c.lastSeen = null; c.bangT = 0;
   stats.hunts++;
   if (!fromBack) { addStrike(); toast(`${c.first} WASN'T HUMAN! RUN AND HIDE!`, 'bad', 3.5); }
-  else toast('THE BACK DOOR WAS OPEN. SOMETHING GOT IN. HIDE!', 'bad', 3.5);
+  else toast(msg || 'THE BACK DOOR WAS OPEN. SOMETHING GOT IN. HIDE!', 'bad', 3.5);
   if (state === 'inspect') setView('fp');
   setPower(false);
   Sfx.screech(); shake = 0.5; Sfx.setDrone(0.9);
@@ -1235,22 +1365,32 @@ function loseStrikes() {
 function winShift() {
   if (view !== 'fp') setView('fp');
   setState('end'); // placeholder so updates stop; screen rendered below
-  const allTasks = TASKS.every((t) => tasksState[t.id]);
+  const allTasks = activeTasks.every((id) => tasksState[id]);
   let e;
   if (stats.mistakes === 0 && allTasks) e = { tag: '6:00 AM · YOU SURVIVED', title: 'EMPLOYEE OF THE MONTH', text: 'Zero mistakes and every job done. The morning manager finds a spotless store and a very tired hero. Something outside watches you leave... and nods.', bonus: 1500 };
   else if (stats.mistakes === 0) e = { tag: '6:00 AM · YOU SURVIVED', title: 'PERFECT SHIFT', text: 'Not one monster got past you. The sun comes up and the rain finally stops.', bonus: 1000 };
   else e = { tag: '6:00 AM · YOU SURVIVED', title: 'DAWN BREAKS', text: `You made it to sunrise with ${stats.mistakes} mistake${stats.mistakes === 1 ? '' : 's'}. You're never working nights again.`, bonus: 500 };
+  if (night < 5) {
+    e.tag = `6:00 AM · NIGHT ${night} SURVIVED`;
+    e.text += ' ' + NT().teaser;
+  } else {
+    e = { tag: '6:00 AM · 1 NOVEMBER · ALL 5 NIGHTS SURVIVED', title: 'YOU BEAT THE MIDNIGHT MART', text: `The sun comes up on the 1st of November and the rain finally stops. The manager never came back. Neither did Dave. As you lock up for the last time, the phone rings one more time... "Same time next year?"`, bonus: stats.mistakes === 0 ? 4000 : 3000 };
+  }
+  unlocked = Math.max(unlocked, night + 1); store.set('ns-unlocked', unlocked);
   addScore(e.bonus);
   Sfx.dawn(); Sfx.setDrone(0); Sfx.setBreath(0, 0);
   showEnd({ ...e, good: true });
 }
+let endGood = false;
 function showEnd(e) {
   const best = store.get('ns-best', {});
   const newBest = !best[diffKey] || score > best[diffKey];
   if (newBest && e.good) { best[diffKey] = score; store.set('ns-best', best); }
   $('endTag').textContent = e.tag; $('endTitle').textContent = e.title; $('endTitle').className = e.good ? 'good' : 'bad';
   $('endText').textContent = e.text + (newBest && e.good ? ' New best score!' : '');
-  $('endStats').innerHTML = [['Time', hourName()], ['Score', score], ['Mistakes', stats.mistakes], ['Monsters caught', stats.caught], ['Customers served', stats.served], ['Jobs done', TASKS.filter((t) => tasksState[t.id]).length + '/' + TASKS.length]].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
+  endGood = !!e.good;
+  $('bAgain').textContent = e.good ? (night < 5 ? `NIGHT ${night + 1} ▶` : 'PLAY AGAIN') : `TRY NIGHT ${night} AGAIN`;
+  $('endStats').innerHTML = [['Night', night + ' of 5'], ['Score', score], ['Mistakes', stats.mistakes], ['Monsters caught', stats.caught], ['Customers served', stats.served], ['Jobs done', activeTasks.filter((id) => tasksState[id]).length + '/' + activeTasks.length]].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
   setState('end');
 }
 
@@ -1266,10 +1406,16 @@ function findInteract() {
   consider(21.5, 28.3, 2.0, { label: doorCust && doorCust.state === 'waiting' ? 'Inspect the customer' : 'Look through the window', act: () => openInspect('window') });
   for (const d of doors) consider(d.x + 0.5, d.z + 0.5, 1.9, { label: d.target ? `Close the ${d.name} door` : `Open the ${d.name} door`, act: () => toggleDoor(d) });
   for (const h of HIDE_SPOTS) consider(h.x, h.z, 1.9, { label: `Hide in the ${h.name}`, act: () => hide(h) });
-  if (!tasksState.backdoor) consider(24.6, 12.5, 2.0, { label: 'Lock the back door', act: () => doTask('backdoor') });
-  if (!tasksState.spill) consider(9.5, 9.5, 1.8, { label: 'Mop the spill', act: () => doTask('spill') });
-  if (!tasksState.restock) consider(13.5, 8.5, 1.8, { label: 'Restock the shelves', act: () => doTask('restock') });
-  consider(18.5, 1.6, 1.9, { label: power ? 'Breaker (power is on)' : 'Reset the breaker', act: () => { if (!power) { Sfx.clunk(); setPower(true); addScore(75); toast('Power restored. +' + Math.round(75 * DIFF[diffKey].mult), 'good'); powerCutT = DIFF[diffKey].hourLen * rand(0.9, 1.6); } else Sfx.clunk(); } });
+  if (isTask('backdoor')) consider(24.6, 12.5, 2.0, { label: 'Lock the back door', act: () => doTask('backdoor') });
+  if (isTask('spill')) consider(9.5, 9.5, 1.8, { label: 'Mop the spill', act: () => doTask('spill') });
+  if (isTask('restock')) consider(13.5, 8.5, 1.8, { label: 'Restock the shelves', act: () => doTask('restock') });
+  if (isTask('freezer')) consider(12.5, 2.0, 1.9, { label: 'Check the freezer temperature', act: () => doTask('freezer') });
+  if (isTask('till')) consider(7.4, 25.6, 1.7, { label: 'Count the money in the till', act: () => doTask('till') });
+  if (isTask('trash')) { if (!carrying) consider(9.6, 27.2, 1.6, { label: 'Pick up the rubbish bag', act: pickUpTrash }); else consider(2.5, 25.2, 1.8, { label: 'Put the rubbish in the bin', act: () => doTask('trash') }); }
+  if (isTask('lights')) consider(16.5, 15, 1.9, { label: 'Fix the flickering light', act: () => doTask('lights') });
+  if (isTask('phone') && phone.ringing) consider(22.3, 3.4, 2.0, { label: 'Answer the phone', act: answerPhone });
+  if (isTask('pumpkins')) for (const pk of props.pumpkins) if (!pk.lit) consider(pk.x, pk.z, 1.8, { label: 'Light the pumpkin', act: () => lightPumpkin(pk) });
+  consider(18.5, 1.6, 1.9, { label: power ? 'Breaker (power is on)' : 'Reset the breaker', act: () => { if (!power) { Sfx.clunk(); setPower(true); addScore(75); toast('Power restored. +' + Math.round(75 * DIFF[diffKey].mult), 'good'); powerCutT = DIFF[diffKey].hourLen * rand(0.9, 1.6) / NT().cuts; } else Sfx.clunk(); } });
   return best;
 }
 function toggleDoor(d) {
@@ -1289,10 +1435,90 @@ function unhide() { const h = player.hidden.spot; player.hidden = null; player.p
 function doTask(id) {
   if (tasksState[id]) return;
   tasksState[id] = true; addScore(75); Sfx.good();
-  if (id === 'backdoor') { backDoorLight.material.color.setHex(0x30ff60); Sfx.clunk(); toast('Back door locked. +' + Math.round(75 * DIFF[diffKey].mult), 'good'); }
-  if (id === 'spill') { spillMesh.visible = false; spillMesh.userData.cone.visible = false; Sfx.nz({ freq: 1200, type: 'bandpass', vol: 0.15, a: 0.1, r: 0.6 }); toast('Spill mopped. +' + Math.round(75 * DIFF[diffKey].mult), 'good'); }
-  if (id === 'restock') { restockMesh.visible = false; toast('Aisle 3 restocked. +' + Math.round(75 * DIFF[diffKey].mult), 'good'); }
+  const p = pts(75);
+  if (id === 'backdoor') { backDoorLight.material.color.setHex(0x30ff60); Sfx.clunk(); toast('Back door locked. ' + p, 'good'); }
+  if (id === 'spill') { spillMesh.visible = false; spillMesh.userData.cone.visible = false; Sfx.nz({ freq: 1200, type: 'bandpass', vol: 0.15, a: 0.1, r: 0.6 }); toast(night === 4 ? `Spill mopped. It was just ketchup... probably. ${p}` : 'Spill mopped. ' + p, 'good', 3); }
+  if (id === 'restock') { restockMesh.visible = false; toast(night === 4 ? `Aisle 3 restocked. Every can is now facing the wall. You didn't do that. ${p}` : 'Aisle 3 restocked. ' + p, night === 4 ? 'warn' : 'good', 3.5); }
+  if (id === 'freezer') {
+    Sfx.clunk();
+    if (night >= 4) { toast(`Freezer: -18°C. Fine. ...Something inside just knocked three times. ${p}`, 'warn', 4); setTimeout(() => Sfx.knock(), 900); }
+    else toast(`Freezer: -18°C. Fine. Wait... is that a handprint in the frost? ${p}`, 'warn', 4);
+  }
+  if (id === 'till') { Sfx.chime(); toast(`Till counted: £${randi(180, 420)}.${randi(10, 99)}${night >= 5 ? '. And one old coin with DAVE scratched on it.' : '.'} ${p}`, night >= 5 ? 'warn' : 'good', 3.5); }
+  if (id === 'trash') { carrying = false; Sfx.slam(); toast(`Rubbish in the bin. ${p}`, 'good'); setTimeout(() => { if (state === 'playing' || state === 'inspect') { Sfx.knock(); toast('...Something inside the bin just knocked back.', 'warn', 3); } }, 1800); }
+  if (id === 'lights') { props.lightPanel.broken = false; Sfx.clunk(); toast(`Light fixed. ${p}`, 'good'); setTimeout(() => { if (state === 'playing' && !phantom) spawnPhantom(); }, 900); }
+  if (id === 'cctv') toast(`All 3 cameras checked. ${p}`, 'good');
+  if (id === 'pumpkins') toast(`All the pumpkins are lit. Happy Halloween... ${p}`, 'good', 3);
+  if (id === 'phone') addScore(25);
   renderTasks();
+}
+function pickUpTrash() { carrying = true; props.bag.visible = false; Sfx.nz({ freq: 900, type: 'bandpass', vol: 0.2, a: 0.02, r: 0.4 }); toast('Got the rubbish bag. Take it to the bin in the storeroom.', '', 3); renderTasks(); }
+function lightPumpkin(pk) {
+  pk.lit = true; pk.glow.visible = true; taskProg.pumpkins = (taskProg.pumpkins || 0) + 1;
+  Sfx.nz({ freq: 500, type: 'bandpass', vol: 0.18, a: 0.05, r: 0.5, to: 1500 });
+  if (taskProg.pumpkins >= 3) doTask('pumpkins'); else { toast(`Pumpkin lit (${taskProg.pumpkins}/3).`, 'good', 2); renderTasks(); }
+}
+function ringSound() {
+  const v = clamp(1 - Math.hypot(player.pos.x - 22, player.pos.z - 3.5) / 34, 0.12, 1);
+  for (const off of [0, 0.7]) for (let i = 0; i < 10; i++) Sfx.tone({ freq: i % 2 ? 1250 : 950, type: 'square', vol: 0.045 * v, a: 0.004, r: 0.035, delay: off + i * 0.05 });
+}
+function answerPhone() {
+  if (!phone.ringing) return;
+  phone.ringing = false; Sfx.clunk();
+  const lines = PHONE_LINES[night] || ['...*static*...'];
+  lines.forEach((line, i) => setTimeout(() => {
+    if (state !== 'playing' && state !== 'inspect') return;
+    toast('📞 ' + line, i === lines.length - 1 ? 'bad' : 'warn', 3.4); Sfx.talk(line, 95, true);
+    if (i === lines.length - 1) {
+      doTask('phone');
+      if (night === 5) setTimeout(() => spawnHunterAt(18.4, 5.4, 'SOMETHING IS IN THE STAFF ROOM WITH YOU. RUN!'), 900);
+    }
+  }, 300 + i * 3300));
+}
+function spawnHunterAt(x, z, msg) {
+  if (state !== 'playing' && state !== 'inspect') return;
+  if (customers.some((c) => c.state === 'hunt')) return;
+  const m = genCustomer(hourIdx, 'monster'); buildPerson(m);
+  Object.assign(m, { pos: new THREE.Vector3(x, 0, z), blinkT: 1, blinking: 0, anim: 0, twitchT: 2, twitch: 0, knockT: 0, knocking: 0, hands: 0, handsT: 0, reveal: 0, seed: Math.random() * 99, stepD: 0 });
+  customers.push(m); startHunt(m, true, msg);
+}
+function makeShadow(x, z, lookX, lookZ) {
+  const g = new THREE.Group();
+  const m = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.92 });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.3, 2.1, 8), m); body.position.y = 1.05; g.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), m); head.position.y = 2.25; g.add(head);
+  for (const s of [-1, 1]) { const e = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.glow, color: 0xff2a10, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, fog: false })); e.scale.set(0.12, 0.08, 1); e.position.set(s * 0.05, 2.27, 0.14); g.add(e); }
+  g.position.set(x, 0, z); g.rotation.y = Math.atan2(lookX - x, lookZ - z);
+  scene.add(g); return g;
+}
+// From night 3, the cameras sometimes catch a figure standing in the aisles.
+function maybeCamGhost() {
+  if (night < 3 || camIdx === 0 || customers.some((c) => c.state === 'hunt')) return;
+  if (Math.random() > (night >= 5 ? 0.45 : 0.3)) return;
+  const C = CCTV_CAMS[camIdx];
+  const cands = BROWSE.filter(([x, z]) => { const d = Math.hypot(x + 0.5 - C.look.x, z + 0.5 - C.look.z); return d > 1 && d < 7; });
+  if (!cands.length) return;
+  const [x, z] = pick(cands);
+  camGhost = makeShadow(x + 0.5, z + 0.5, C.pos.x, C.pos.z); camGhostT = rand(1.2, 2.4);
+  setTimeout(() => Sfx.sting(), 200);
+}
+function clearCamGhost() { if (camGhost) { scene.remove(camGhost); camGhost = null; } }
+// Creepy things that happen more as the nights go on.
+function creepEvent() {
+  const opts = [];
+  if (night >= 2) opts.push('crash', 'trolley');
+  if (night >= 3) opts.push('whisper', 'whisper');
+  if (night >= 4) opts.push('footsteps', 'lightsout');
+  if (night >= 5) opts.push('neon', 'backbang');
+  if (!opts.length) return;
+  const e = pick(opts);
+  if (e === 'crash') { Sfx.crack(); Sfx.bang(rand(-0.6, 0.6)); toast(`*CRASH* Something fell over in Aisle ${randi(1, 4)}.`, 'warn', 3); }
+  if (e === 'trolley') { Sfx.nz({ freq: 300, vol: 0.12, a: 0.3, r: 2.2 }); toast('A trolley just rolled across the store by itself.', 'warn', 3); }
+  if (e === 'whisper') { Sfx.whisper(); toast(pick(['Did something just whisper your name?', 'You hear someone humming in the freezer aisle.', '"Let us in..." Was that the wind?']), 'warn', 3); }
+  if (e === 'footsteps') { for (let i = 0; i < 6; i++) setTimeout(() => Sfx.heavyStep(0.35, 0), i * 480); setTimeout(() => toast("Footsteps right behind you... but nobody's there.", 'warn', 3), 3000); }
+  if (e === 'lightsout') { lightsOffT = 2.2; Sfx.powerDown(); setTimeout(() => toast('Every light went out for a second. Was that a shape by the door?', 'warn', 3), 1200); }
+  if (e === 'neon') { neonT = 5; neonMesh.material.map = TEX.neonRun; neonMesh.material.needsUpdate = true; toast('The OPEN sign in the window says... RUN?', 'warn', 3); Sfx.sting(); }
+  if (e === 'backbang') { for (let i = 0; i < 3; i++) setTimeout(() => Sfx.bang(clamp((24.6 - player.pos.x) / 10, -1, 1)), i * 600); toast('Someone is banging on the BACK door.', 'bad', 3); }
 }
 let currentInteract = null;
 function interact() { if (state !== 'playing') return; const it = currentInteract || findInteract(); if (it) it.act(); }
@@ -1403,7 +1629,8 @@ function updateWorld(dt, t) {
   for (const p of panels) {
     let lvl = power ? 1 : 0;
     if (power && p.broken) { const n = Math.sin(t * 13 + p.phase) + Math.sin(t * 31 + p.phase * 2) + Math.sin(t * 5 + p.phase * 3); lvl = n > 1.3 ? 1 : n > 0.7 ? 0.3 : 0.05; }
-    else if (power && Math.random() < 0.004 * (1 + hourIdx * 0.4)) lvl = 0.1;
+    else if (power && Math.random() < 0.004 * (1 + hourIdx * 0.4 + (night - 1) * 0.5)) lvl = 0.1;
+    if (lightsOffT > 0) lvl = 0.03;
     if (hunter && Math.hypot(p.x - hunter.pos.x, p.z - hunter.pos.z) < 5) lvl *= Math.random() < 0.5 ? 0.1 : 1;
     p.level = lerp(p.level, lvl, 0.5);
     p.mat.color.setHex(0xeafff2).multiplyScalar(0.06 + 0.94 * p.level);
@@ -1434,6 +1661,17 @@ function updateEvents(dt, t) {
     if (hourIdx === 1 && !tasksState.backdoor) setTimeout(() => toast("Don't forget: lock the back door!", 'warn', 3), 2200);
   }
   $('clock').textContent = hourName();
+  // phone call (night 3 and 5)
+  const hunting = customers.some((c) => c.state === 'hunt');
+  if (activeTasks.includes('phone') && !phone.rang && elapsed > phoneAt && !hunting) { phone.rang = phone.ringing = true; toast('📞 The phone in the staff room is ringing...', 'warn', 3.5); renderTasks(); }
+  if (phone.ringing) { phone.ringT -= dt; if (phone.ringT <= 0) { phone.ringT = 2.4; ringSound(); } }
+  // Halloween: the manager comes in at 5 AM
+  if (night === 5 && hourIdx === 5 && !finalEvent && !hunting) { finalEvent = true; lightsOffT = 2.5; Sfx.powerDown(); setTimeout(() => spawnHunterAt(2.5, 26.5, "5 AM. THE MANAGER IS HERE... AND HE WAS NEVER HUMAN. HIDE!"), 1500); }
+  // creepier things each night
+  if (state === 'playing') { creepT -= dt; if (creepT <= 0 && !hunting) { creepT = rand(32, 55) - night * 3; creepEvent(); } }
+  if (neonT > 0) { neonT -= dt; if (neonT <= 0) { neonMesh.material.map = TEX.neonOpen; neonMesh.material.needsUpdate = true; } }
+  if (lightsOffT > 0) lightsOffT -= dt;
+  if (camGhost) { camGhostT -= dt; if (camGhostT <= 0 || view !== 'cctv') clearCamGhost(); }
   // back door event
   if (!backDoorEvent && !tasksState.backdoor && elapsed > D.hourLen * 2.5 && !customers.some((c) => c.state === 'hunt')) {
     backDoorEvent = true;
@@ -1454,7 +1692,7 @@ function updateEvents(dt, t) {
   thunderT -= dt; if (thunderT <= 0) { lightning.intensity = 3; setTimeout(() => { lightning.intensity = 2; }, 120); setTimeout(() => Sfx.thunder(), rand(400, 1400)); thunderT = rand(18, 40); }
   // creepy phantom at the end of an aisle that vanishes when you look at it
   phantomT -= dt;
-  if (phantomT <= 0 && !phantom && !hunter && view === 'fp') { spawnPhantom(); phantomT = rand(35, 70); }
+  if (phantomT <= 0 && !phantom && !hunter && view === 'fp') { spawnPhantom(); phantomT = rand(35, 70) - (night - 1) * 5; }
   if (phantom) updatePhantom(dt);
   // hunter breathing + heartbeat
   if (hunter) {
@@ -1470,13 +1708,7 @@ function spawnPhantom() {
   const cands = BROWSE.filter(([x, z]) => { const dx = x + 0.5 - player.pos.x, dz = z + 0.5 - player.pos.z, d = Math.hypot(dx, dz); return d > 7 && d < 16 && (dx * fx + dz * fz) / d > 0.6 && lineOfSight(player.pos.x, player.pos.z, x + 0.5, z + 0.5); });
   if (!cands.length) return;
   const [x, z] = pick(cands);
-  const g = new THREE.Group();
-  const m = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.92 });
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.3, 2.1, 8), m); body.position.y = 1.05; g.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), m); head.position.y = 2.25; g.add(head);
-  for (const s of [-1, 1]) { const e = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.glow, color: 0xff2a10, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, fog: false })); e.scale.set(0.12, 0.08, 1); e.position.set(s * 0.05, 2.27, 0.14); g.add(e); }
-  g.position.set(x + 0.5, 0, z + 0.5); g.rotation.y = Math.atan2(player.pos.x - g.position.x, player.pos.z - g.position.z);
-  scene.add(g); phantom = g; phantomLife = 4;
+  phantom = makeShadow(x + 0.5, z + 0.5, player.pos.x, player.pos.z); phantomLife = 4;
 }
 function updatePhantom(dt) {
   phantomLife -= dt;
@@ -1559,11 +1791,11 @@ function frame(now) {
   } else if (state === 'scare') {
     for (const c of customers) if (c !== scareMonster) animatePerson(c, dt, t);
     updateScare(dt, t);
-  } else if (state === 'title') {
+  } else if (state === 'title' || state === 'brief') {
     titleCam(t);
   }
   if (state !== 'paused' && state !== 'loading') updateWorld(dt, t);
-  if (state !== 'title') placeCamera(dt, t);
+  if (state !== 'title' && state !== 'brief') placeCamera(dt, t);
   renderer.render(scene, camera);
 }
 function titleCam(t) {
@@ -1627,7 +1859,22 @@ if (!IS_TOUCH) {
 
 // menus + console buttons
 function resume() { setState('playing'); last = performance.now(); Sfx.init(); }
-$('bPlay').addEventListener('click', () => { Sfx.init(); newGame(); });
+function openBrief() {
+  const N = NT();
+  $('briefTag').textContent = `NIGHT ${N.n} OF 5 · ${N.dow} ${N.day} OCT 2026`;
+  $('briefTitle').textContent = N.name.toUpperCase();
+  $('briefNote').innerHTML = '';
+  $('briefNote').append(document.createTextNode(N.note));
+  const sig = document.createElement('span'); sig.className = 'sig'; sig.textContent = '— The Manager'; $('briefNote').append(sig);
+  const jobs = N.tasks.filter((id) => id !== 'phone').map((id) => TASK_DEFS[id].label);
+  if (N.tasks.includes('phone')) jobs.push('Answer the phone if it rings');
+  $('briefJobs').innerHTML = '<b>TONIGHT\'S JOBS</b><br>' + jobs.map((j) => '☐ ' + j).join('<br>');
+  setState('brief');
+}
+$('bPlay').addEventListener('click', () => { Sfx.init(); openBrief(); });
+$('bClockIn').addEventListener('click', () => { Sfx.init(); newGame(); });
+$('bBriefBack').addEventListener('click', () => setState('title'));
+$('nightPick').addEventListener('click', (e) => { const b = e.target.closest('button[data-n]'); if (!b || b.disabled) return; night = +b.dataset.n; store.set('ns-night', night); renderBest(); Sfx.init(); Sfx.clunk(); });
 $('bHow').addEventListener('click', () => { $('mHow').hidden = false; $('mTitle').hidden = true; });
 $('bHowBack').addEventListener('click', () => { $('mHow').hidden = true; $('mTitle').hidden = false; });
 $('bMuteT').addEventListener('click', () => { Sfx.init(); Sfx.setMuted(!muted); });
@@ -1637,7 +1884,11 @@ $('hPause').addEventListener('click', (e) => { e.stopPropagation(); if (state ==
 $('bResume').addEventListener('click', resume);
 $('bRestart').addEventListener('click', newGame);
 $('bMenuP').addEventListener('click', toTitle);
-$('bAgain').addEventListener('click', newGame);
+$('bAgain').addEventListener('click', () => {
+  if (endGood && night < 5) { night++; store.set('ns-night', night); openBrief(); }
+  else if (endGood) toTitle();
+  else newGame();
+});
 $('bMenuE').addEventListener('click', toTitle);
 $('bInspect').addEventListener('click', (e) => { e.stopPropagation(); Sfx.init(); openInspect(nearDesk() ? 'window' : 'cctv'); });
 $('vWindow').addEventListener('click', () => { if (nearDesk()) setView('window'); else toast('The window view only works from the DOOR CONTROL desk.', 'warn'); });
@@ -1652,6 +1903,7 @@ document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('clic
 function toTitle() {
   for (const c of customers) disposePerson(c); customers = []; doorCust = null;
   if (phantom) { scene.remove(phantom); phantom = null; }
+  clearCamGhost();
   setPower(true, true); setView('fp'); setState('title');
 }
 window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
@@ -1662,12 +1914,11 @@ window.addEventListener('resize', () => { camera.aspect = window.innerWidth / wi
 function boot() {
   buildWorld();
   syncMute();
-  for (const t of TASKS) tasksState[t.id] = false;
   $('loading').hidden = true;
   setState('title');
   requestAnimationFrame(frame);
 }
-window.__ns = { get state() { return state; }, get view() { return view; }, get customers() { return customers; }, get doorCust() { return doorCust; }, player, decide, ask, newGame, setView, startHunt, get strikes() { return strikes; }, get score() { return score; }, get elapsed() { return elapsed; }, set elapsed(v) { elapsed = v; }, spawnCustomer, tasksState, doTask, interact, Gd };
+window.__ns = { get state() { return state; }, get view() { return view; }, get customers() { return customers; }, get doorCust() { return doorCust; }, player, decide, ask, newGame, setView, startHunt, get strikes() { return strikes; }, get score() { return score; }, get elapsed() { return elapsed; }, set elapsed(v) { elapsed = v; }, spawnCustomer, tasksState, doTask, interact, Gd, get night() { return night; }, set night(v) { night = v; }, set unlocked(v) { unlocked = v; renderBest(); }, get activeTasks() { return activeTasks; }, get phone() { return phone; }, answerPhone, openBrief, creepEvent, spawnHunterAt, props, setHour(h) { elapsed = h * DIFF[diffKey].hourLen - 0.5; }, get camGhost() { return camGhost; } };
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot, boot); else boot();
 })();
 </script>
