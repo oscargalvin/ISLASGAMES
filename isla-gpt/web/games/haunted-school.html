@@ -1,0 +1,1646 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HAUNTED SCHOOL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Creepster&family=Gochi+Hand&display=swap">
+<style>
+/* A spooky-but-fun first-person school escape: ghostly blue title, chalkboard notes, a torch-lit HUD. */
+:root {
+  --ink: #eef2ff;
+  --dim: #8e96b4;
+  --night: #03040a;
+  --ghost: #9fe3ff;
+  --ghostHi: #d8f6ff;
+  --purple: #a874ff;
+  --chalk: #f4f1e6;
+  --board: #1f3b2e;
+  --glow: #ffd45a;
+  --good: #7ee08a;
+  --bad: #ff5a6a;
+  --line: rgba(255, 255, 255, 0.14);
+  --scary: "Creepster", "Chiller", Impact, system-ui, sans-serif;
+  --hand: "Gochi Hand", "Comic Sans MS", "Chalkboard SE", cursive;
+  --ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; overflow: hidden; background: var(--night); color: var(--ink); }
+body { font-family: var(--ui); -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; }
+#stage { position: fixed; inset: 0; }
+#stage canvas { display: block; width: 100%; height: 100%; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--glow); outline-offset: 3px; }
+
+/* screen effects */
+#vig { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 10, .78) 100%); }
+#redv { position: fixed; inset: 0; pointer-events: none; opacity: 0; box-shadow: inset 0 0 170px 60px rgba(60, 140, 255, .55); transition: opacity .3s; }
+#flash { position: fixed; inset: 0; pointer-events: none; opacity: 0; background: #fff; }
+#hideView { position: fixed; inset: 0; pointer-events: none; background:
+  repeating-linear-gradient(180deg, rgba(4,10,24,.97) 0 30px, rgba(0,0,0,.3) 30px 40px),
+  linear-gradient(90deg, #02050c 0 14%, transparent 26% 74%, #02050c 86%); }
+#hideView span { position: absolute; left: 50%; bottom: 22%; transform: translateX(-50%); background: rgba(0,0,0,.7); padding: 6px 14px; border-radius: 8px; font-size: 15px; color: var(--dim); white-space: nowrap; }
+#fade { position: fixed; inset: 0; background: #000; pointer-events: none; opacity: 0; transition: opacity .8s; display: grid; place-items: center; text-align: center; padding: 20px; z-index: 30; }
+#fade.on { opacity: 1; }
+#fade p { font-family: var(--hand); font-size: clamp(22px, 3.4vw, 34px); color: var(--ink); max-width: 760px; line-height: 1.35; }
+
+/* HUD */
+#hud { position: fixed; inset: 0; pointer-events: none; }
+.tl { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); left: calc(12px + env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 6px; max-width: min(470px, 62vw); }
+#objective { font-family: var(--hand); font-size: 20px; line-height: 1.2; background: rgba(0, 0, 0, .55); padding: 6px 10px; border-left: 3px solid var(--ghost); border-radius: 4px; text-shadow: 0 1px 2px #000; }
+#inv { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: rgba(0, 0, 0, .6); border: 1px solid var(--line); white-space: nowrap; }
+.tr { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); right: calc(10px + env(safe-area-inset-right, 0px)); display: flex; gap: 6px; pointer-events: auto; }
+.icon { width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--line); background: rgba(0, 0, 0, .55); display: grid; place-items: center; padding: 0; }
+.icon svg { width: 20px; height: 20px; }
+.bars { position: absolute; left: calc(12px + env(safe-area-inset-left, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 6px; }
+body.touch .bars { left: 50%; transform: translateX(-50%); bottom: auto; top: calc(10px + env(safe-area-inset-top, 0px)); flex-direction: row; }
+.bar { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--dim); letter-spacing: .08em; }
+.bar .track { width: 110px; height: 8px; border-radius: 4px; background: rgba(255, 255, 255, .12); overflow: hidden; }
+body.touch .bar .track { width: 70px; }
+.bar i { display: block; height: 100%; background: #8fb7ff; }
+#cross { position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: rgba(255, 255, 255, .55); }
+#cross.on { width: 10px; height: 10px; margin: -5px 0 0 -5px; background: transparent; border: 2px solid var(--glow); }
+#prompt { position: absolute; left: 50%; top: calc(50% + 34px); transform: translateX(-50%); font-weight: 700; font-size: 16px; background: rgba(0, 0, 0, .65); padding: 6px 14px; border-radius: 10px; white-space: nowrap; border: 1px solid var(--line); }
+#prompt kbd { font-family: ui-monospace, Menlo, monospace; border: 1px solid var(--dim); border-radius: 4px; padding: 0 5px; margin-right: 6px; font-size: 13px; }
+body.touch #prompt kbd { display: none; }
+#toast { position: absolute; left: 50%; top: 24%; transform: translateX(-50%); font-family: var(--hand); font-size: clamp(20px, 3vw, 28px); text-align: center; text-shadow: 0 2px 6px #000, 0 0 12px #000; opacity: 0; transition: opacity .3s; max-width: 90vw; }
+#toast.on { opacity: 1; }
+
+/* touch controls */
+#touch { position: fixed; inset: 0; pointer-events: none; }
+#joyZone { position: absolute; left: 0; top: 0; bottom: 0; width: 45%; pointer-events: auto; }
+#lookZone { position: absolute; right: 0; top: 0; bottom: 0; width: 55%; pointer-events: auto; }
+#joy { position: absolute; width: 120px; height: 120px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .3); background: rgba(0, 0, 0, .25); left: calc(30px + env(safe-area-inset-left, 0px)); bottom: calc(26px + env(safe-area-inset-bottom, 0px)); pointer-events: none; }
+#knob { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: rgba(255, 255, 255, .35); }
+.tb { position: absolute; pointer-events: auto; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .4); background: rgba(0, 0, 0, .4); font-weight: 800; font-size: 12px; letter-spacing: .04em; padding: 0; touch-action: none; display: grid; place-items: center; width: 70px; height: 70px; }
+.tb.on { background: rgba(255, 212, 90, .35); border-color: var(--glow); }
+.tb.held { background: rgba(255, 255, 255, .3); }
+#tUse { right: calc(20px + env(safe-area-inset-right, 0px)); bottom: calc(100px + env(safe-area-inset-bottom, 0px)); width: 84px; height: 84px; font-size: 14px; }
+#tUse.ready { background: rgba(255, 212, 90, .45); border-color: var(--glow); }
+#tRun { right: calc(116px + env(safe-area-inset-right, 0px)); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+#tCrouch { right: calc(20px + env(safe-area-inset-right, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+#tLight { right: calc(116px + env(safe-area-inset-right, 0px)); bottom: calc(108px + env(safe-area-inset-bottom, 0px)); }
+
+/* sheets */
+.sheet { position: fixed; inset: 0; display: grid; place-items: center; padding: calc(14px + env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px)); overflow-y: auto; z-index: 20; }
+.sheet.dim { background: rgba(0, 0, 8, .8); }
+.sheet.title { background: linear-gradient(90deg, rgba(0,0,8,.88) 0%, rgba(0,0,8,.55) 45%, transparent 75%); place-items: center start; }
+.card { width: min(640px, 100%); display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center; }
+.title .card { align-items: flex-start; text-align: left; width: min(540px, 100%); padding-left: 2vw; }
+.logo { margin: 0; font-family: var(--scary); font-weight: 400; font-size: clamp(54px, 10vw, 112px); line-height: .85; color: var(--ghost); text-shadow: 0 0 22px rgba(120, 210, 255, .65), 3px 3px 0 #000; letter-spacing: .02em; animation: float 4s ease-in-out infinite; }
+.logo span { color: var(--purple); text-shadow: 0 0 16px rgba(168, 116, 255, .6), 3px 3px 0 #000; }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.byline { font-size: 13px; letter-spacing: .3em; text-transform: uppercase; color: var(--dim); }
+.byline b { color: var(--glow); }
+.story { font-family: var(--hand); font-size: 20px; line-height: 1.3; color: #dfe4f6; margin: 0; }
+h2 { margin: 0; font-family: var(--scary); font-weight: 400; font-size: clamp(40px, 7vw, 72px); line-height: 1; color: var(--ghost); text-shadow: 0 0 16px rgba(120, 210, 255, .5), 2px 2px 0 #000; }
+h2.good { color: var(--good); text-shadow: 0 0 16px rgba(126, 224, 138, .4), 2px 2px 0 #000; }
+h2.bad { color: var(--bad); text-shadow: 0 0 16px rgba(255, 90, 106, .4), 2px 2px 0 #000; }
+.small { font-size: 15px; line-height: 1.4; color: #cfd4e8; }
+.big { min-width: 200px; padding: 12px 30px; border: 2px solid #b7ecff; border-radius: 8px; background: linear-gradient(180deg, #3a6fd8, #23307a); color: #fff; font-family: var(--scary); font-size: 30px; letter-spacing: .06em; box-shadow: 0 0 24px rgba(120, 200, 255, .45); }
+.big:active { transform: translateY(2px); }
+.ghostBtn { padding: 8px 14px; border: 1px solid var(--line); border-radius: 8px; background: rgba(0, 0, 0, .5); font-size: 15px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.card:not(.left) .row { justify-content: center; }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { padding: 8px 14px; border: 0; background: rgba(0, 0, 0, .5); font-size: 15px; color: var(--dim); }
+.seg button[aria-pressed="true"] { background: #3a6fd8; color: #fff; }
+.endings { display: flex; gap: 6px; flex-wrap: wrap; }
+.endings span { font-size: 12px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--dim); }
+.endings span.got { color: var(--glow); border-color: var(--glow); }
+.how { text-align: left; font-size: 15px; line-height: 1.45; display: grid; gap: 9px; }
+.how p { margin: 0; color: #d6dbee; }
+.how kbd { font-family: ui-monospace, Menlo, monospace; border: 1px solid var(--dim); border-radius: 4px; padding: 0 5px; font-size: 13px; }
+.stats { display: grid; grid-template-columns: repeat(3, auto); gap: 8px 26px; font-variant-numeric: tabular-nums; }
+.stats div { display: flex; flex-direction: column; }
+.stats span { font-size: 11px; letter-spacing: .14em; color: var(--dim); text-transform: uppercase; }
+.stats b { font-size: 22px; }
+
+/* note, chalkboard, keypad */
+#noteView { position: fixed; inset: 0; z-index: 25; display: grid; place-items: center; background: rgba(0, 0, 0, .6); padding: 16px; }
+.paper { width: min(460px, 92vw); background: #f3ecd6; color: #2a2016; font-family: var(--hand); padding: 24px 24px; transform: rotate(-1.2deg); box-shadow: 0 10px 40px #000; line-height: 1.35; font-size: 21px; background-image: repeating-linear-gradient(180deg, transparent 0 31px, rgba(80, 120, 200, .35) 31px 32px); }
+.paper.board { background: var(--board); color: var(--chalk); border: 12px solid #6b4423; transform: none; width: min(560px, 94vw); background-image: radial-gradient(circle at 30% 30%, rgba(255,255,255,.06), transparent 60%); text-shadow: 0 0 1px #fff; }
+.paper.poster { background: #fff7e0; border: 4px solid #2a2016; transform: rotate(1deg); }
+.paper .big2 { font-size: 34px; text-align: center; margin: 6px 0; letter-spacing: .08em; }
+.dots { display: flex; gap: 12px; justify-content: center; margin: 12px 0; flex-wrap: wrap; }
+.dots i { width: 46px; height: 46px; border-radius: 50%; border: 3px solid #2a2016; display: grid; place-items: center; font-style: normal; font-size: 16px; color: #fff; text-shadow: 0 1px 2px #000; }
+.paper button { margin-top: 12px; background: #2a2016; color: #f3ecd6; border: 0; padding: 8px 16px; border-radius: 4px; font-family: var(--ui); font-size: 15px; }
+.paper.board button { background: var(--chalk); color: var(--board); }
+#keypad { position: fixed; inset: 0; z-index: 25; display: grid; place-items: center; background: rgba(0, 0, 0, .55); padding: 12px; }
+.kp { background: linear-gradient(180deg, #2b2e33, #16181b); border: 2px solid #555; border-radius: 14px; padding: 14px; display: grid; gap: 8px; width: min(290px, 90vw); box-shadow: 0 10px 40px #000; }
+.kp .kpTitle { font-family: var(--hand); font-size: 20px; text-align: center; color: var(--ghostHi); }
+.kp .disp { font-family: ui-monospace, Menlo, monospace; font-size: 34px; letter-spacing: .35em; text-align: center; background: #0b1420; color: #8fd8ff; border-radius: 6px; padding: 6px; text-shadow: 0 0 8px #39f; min-height: 54px; }
+.kp .disp.bad { color: #ff4f4f; text-shadow: 0 0 8px #f33; background: #1a0b0b; }
+.kp .keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.kp .keys button { padding: 10px 0; font-size: 22px; font-weight: 800; border-radius: 8px; border: 1px solid #666; background: #3a3d42; }
+.kp .keys button:active { background: #555; }
+.kp .hint { font-size: 13px; color: var(--dim); text-align: center; }
+#rotate { position: fixed; inset: 0; z-index: 50; background: #000; display: none; place-items: center; padding: 24px; text-align: center; font-size: 24px; font-family: var(--hand); }
+@media (orientation: portrait) { body.touch.playing #rotate { display: grid; } }
+#loading { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: #000; font-family: var(--hand); color: var(--ghost); font-size: 26px; }
+@media (max-height: 500px) {
+  .card { gap: 7px; } .logo { font-size: 56px; } .story { font-size: 16px; } .big { font-size: 24px; padding: 8px 22px; }
+  .tb { width: 60px; height: 60px; } #tUse { width: 72px; height: 72px; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); }
+  #tRun, #tLight { right: calc(100px + env(safe-area-inset-right, 0px)); } #tLight { bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
+  #joy { width: 104px; height: 104px; }
+  #objective { font-size: 16px; }
+}
+@media (max-width: 640px) { .sheet.title { background: rgba(0, 0, 8, .72); place-items: center; } }
+</style>
+
+<div id="loading">the school bell is ringing…</div>
+<div id="stage"></div>
+<div id="vig"></div>
+<div id="redv"></div>
+<div id="hideView" hidden><span>Hiding in a locker… press E / USE to get out</span></div>
+<div id="flash"></div>
+
+<div id="hud" hidden>
+  <div class="tl"><div id="objective"></div><div id="inv"></div></div>
+  <div class="tr">
+    <button class="icon" id="hMute" aria-label="Mute"></button>
+    <button class="icon" id="hPause" aria-label="Pause"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+  </div>
+  <div class="bars">
+    <div class="bar" id="staBar">🏃<div class="track"><i></i></div></div>
+  </div>
+  <div id="cross"></div>
+  <div id="prompt" hidden></div>
+  <div id="toast"></div>
+</div>
+
+<div id="touch" hidden>
+  <div id="joyZone"></div><div id="lookZone"></div>
+  <div id="joy"><div id="knob"></div></div>
+  <button class="tb" id="tLight">LIGHT</button>
+  <button class="tb" id="tRun">RUN</button>
+  <button class="tb" id="tCrouch">SNEAK</button>
+  <button class="tb" id="tUse">USE</button>
+</div>
+
+<div class="sheet title" id="mTitle" hidden>
+  <div class="card left">
+    <h1 class="logo">HAUNTED<br><span>SCHOOL</span></h1>
+    <div class="byline">by <b>Isla &amp; Oscar's</b> Games</div>
+    <p class="story">You fell asleep in detention. Now it's midnight, the doors are locked, the power is out… and Miss Grimsby, the ghost hall monitor who never went home, is still doing her rounds. Solve the school's puzzles and escape before she catches you!</p>
+    <div class="row" style="align-items:center"><span class="small">Difficulty</span><div class="seg" id="diffSeg"></div></div>
+    <button class="big" id="bPlay">PLAY</button>
+    <div class="row"><button class="ghostBtn" id="bHow">❓ How to play</button><button class="ghostBtn" id="bSound">🔊 Sound on</button></div>
+    <div class="small">Endings found:</div>
+    <div class="endings" id="endList"></div>
+    <div class="small" id="bestTxt"></div>
+  </div>
+</div>
+
+<div class="sheet dim" id="mHow" hidden>
+  <div class="card" style="width:min(700px,100%)">
+    <h2>HOW TO ESCAPE</h2>
+    <div class="how">
+      <p><b>Get out of the school!</b> The front doors need <b>power</b> and the <b>front door key</b>. Find 3 fuses for the fuse box, then find the key. Each fuse is hidden behind a puzzle: a cupboard code, a song on the piano, and a secret bookshelf. Read every note and chalkboard for clues.</p>
+      <p><b>Miss Grimsby floats around the school.</b> She hears running and wrong piano notes, and she spots your flashlight from far away. Sneak to be quiet, turn your light off to hide in the dark, and jump into a blue locker in the hall to hide. But if she SEES you climb in… she will open it!</p>
+      <p><b>Computer:</b> <kbd>W A S D</kbd> move, mouse to look (click the game first), <kbd>Shift</kbd> run, <kbd>C</kbd> sneak, <kbd>F</kbd> flashlight, <kbd>E</kbd> use / hide, <kbd>Esc</kbd> pause.</p>
+      <p><b>Phone or tablet:</b> turn it sideways. Left thumb moves, swipe on the right to look. RUN, SNEAK, LIGHT and USE buttons are on the right.</p>
+      <p><b>4 endings</b> to find. Some say Miss Grimsby lost something precious a long time ago…</p>
+    </div>
+    <button class="big" data-back>GOT IT</button>
+  </div>
+</div>
+
+<div class="sheet dim" id="mPause" hidden>
+  <div class="card">
+    <h2>PAUSED</h2>
+    <p class="small">Miss Grimsby is waiting in the hall…</p>
+    <button class="big" id="bResume">RESUME</button>
+    <div class="row"><button class="ghostBtn" id="bRestart">Restart</button><button class="ghostBtn" id="bSoundP">🔊 Sound on</button><button class="ghostBtn" id="bMenuP">Main menu</button></div>
+  </div>
+</div>
+
+<div class="sheet dim" id="mEnd" hidden>
+  <div class="card">
+    <div class="byline" id="endTag">ENDING</div>
+    <h2 id="endTitle">GAME OVER</h2>
+    <p class="small" id="endText"></p>
+    <div class="stats" id="endStats"></div>
+    <div class="endings" id="endList2"></div>
+    <button class="big" id="bAgain">TRY AGAIN</button>
+    <div class="row"><button class="ghostBtn" id="bMenuE">Main menu</button></div>
+  </div>
+</div>
+
+<div id="noteView" hidden><div class="paper" id="paper"><div id="noteText"></div><button id="noteClose">Put it down</button></div></div>
+
+<div id="keypad" hidden><div class="kp"><div class="kpTitle" id="kpTitle">Lock</div><div class="disp" id="kpDisp">____</div><div class="keys" id="kpKeys"></div><div class="hint" id="kpHint">Type the code</div></div></div>
+
+<div id="fade"><p id="fadeText"></p></div>
+<div id="rotate">Turn your device sideways… if you dare ↻</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+'use strict';
+// =====================================================================
+//  BASICS + SAVE
+// =====================================================================
+const $ = (id) => document.getElementById(id);
+const IS_TOUCH = (window.matchMedia && matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window && navigator.maxTouchPoints > 0);
+if (IS_TOUCH) document.body.classList.add('touch');
+const rand = (a, b) => a + Math.random() * (b - a);
+const randi = (a, b) => Math.floor(rand(a, b + 1));
+const pick = (a) => a[(Math.random() * a.length) | 0];
+const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const damp = (a, b, k, dt) => lerp(a, b, 1 - Math.exp(-k * dt));
+const wrapAng = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+const V3 = THREE.Vector3;
+function seeded(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+const DIFF = {
+  easy:   { name: 'Easy',   chase: 3.3, patrol: 1.5, sight: 0.8,  wake: 35, hear: 0.8, lives: 3, giveUp: 10 },
+  normal: { name: 'Normal', chase: 3.9, patrol: 1.8, sight: 1.0,  wake: 20, hear: 1.0, lives: 2, giveUp: 16 },
+  hard:   { name: 'Hard',   chase: 4.6, patrol: 2.2, sight: 1.25, wake: 8,  hear: 1.3, lives: 1, giveUp: 99 },
+};
+const ENDINGS = {
+  caught: { name: 'Detention Forever', icon: '👻' },
+  escape: { name: 'Escaped', icon: '🚪' },
+  sneaky: { name: 'Sneaky', icon: '🤫' },
+  friend: { name: 'Ghost Friend', icon: '💛' },
+};
+const SAVE_KEY = 'haunted-school-v1';
+function loadSave() { const d = { diff: 'normal', sound: true, endings: {}, best: {} }; try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (s) Object.assign(d, s); } catch (e) {} if (!d.best || typeof d.best !== 'object') d.best = {}; return d; }
+const save = loadSave();
+function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
+
+// =====================================================================
+//  AUDIO (everything is synthesised)
+// =====================================================================
+const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+const A = {
+  ctx: null, nextBeat: 0, nextMus: 0, musStep: 0, chaseK: 0,
+  init() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    const c = this.ctx = new AC();
+    this.master = c.createGain(); this.master.gain.value = save.sound ? 0.9 : 0; this.master.connect(c.destination);
+    this.sfx = c.createGain(); this.sfx.connect(this.master);
+    this.mus = c.createGain(); this.mus.gain.value = 0.5; this.mus.connect(this.master);
+    // long echoey school hallway
+    const len = c.sampleRate * 2.2, ir = c.createBuffer(2, len, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.4); }
+    this.verb = c.createConvolver(); this.verb.buffer = ir; this.wet = c.createGain(); this.wet.gain.value = 0.4; this.verb.connect(this.wet).connect(this.master);
+    this.sfx.connect(this.verb); this.mus.connect(this.verb);
+    const nl = c.sampleRate * 2, nb = c.createBuffer(1, nl, c.sampleRate), nd = nb.getChannelData(0); for (let i = 0; i < nl; i++) nd[i] = Math.random() * 2 - 1; this.noise = nb;
+    this.dist = c.createWaveShaper(); const curve = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 512 - 1; curve[i] = Math.tanh(x * 4); } this.dist.curve = curve; this.dist.connect(this.sfx);
+    // ambience: a soft minor pad plus wind through the windows
+    this.drone = c.createGain(); this.drone.gain.value = 0.0; this.drone.connect(this.mus);
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 600; lp.Q.value = 2; lp.connect(this.drone);
+    const lfo = c.createOscillator(); lfo.frequency.value = 0.05; const lg = c.createGain(); lg.gain.value = 300; lfo.connect(lg).connect(lp.frequency); lfo.start();
+    for (const f of [110, 130.8, 164.8, 110.4]) { const o = c.createOscillator(); o.type = 'triangle'; o.frequency.value = f; const g = c.createGain(); g.gain.value = 0.06; o.connect(g).connect(lp); o.start(); }
+    const ws = c.createBufferSource(); ws.buffer = nb; ws.loop = true; const wf = c.createBiquadFilter(); wf.type = 'bandpass'; wf.frequency.value = 500; wf.Q.value = 0.7; const wl = c.createOscillator(); wl.frequency.value = 0.11; const wlg = c.createGain(); wlg.gain.value = 250; wl.connect(wlg).connect(wf.frequency); wl.start(); const wg = c.createGain(); wg.gain.value = 0.07; ws.connect(wf).connect(wg).connect(this.drone); ws.start();
+    this.hum = c.createGain(); this.hum.gain.value = 0; this.hum.connect(this.sfx);
+    const ho = c.createOscillator(); ho.type = 'sawtooth'; ho.frequency.value = 60; const hf = c.createBiquadFilter(); hf.type = 'lowpass'; hf.frequency.value = 380; ho.connect(hf).connect(this.hum); ho.start();
+    this.breath = c.createGain(); this.breath.gain.value = 0; this.breath.connect(this.sfx);
+    const bs = c.createBufferSource(); bs.buffer = nb; bs.loop = true; const bf = c.createBiquadFilter(); bf.type = 'bandpass'; bf.frequency.value = 900; bf.Q.value = 0.7; const bl = c.createOscillator(); bl.frequency.value = 0.35; const blg = c.createGain(); blg.gain.value = 0.5; const bmod = c.createGain(); bmod.gain.value = 0.5; bl.connect(blg).connect(bmod.gain); bs.connect(bf).connect(bmod).connect(this.breath); bs.start(); bl.start();
+    this.apply();
+  },
+  apply() { if (!this.ctx) return; this.master.gain.setTargetAtTime(save.sound ? 0.9 : 0, this.ctx.currentTime, 0.05); syncSound(); },
+  set(g, v, k = 0.1) { if (this.ctx && g) g.gain.setTargetAtTime(v, this.ctx.currentTime, k); },
+  env(g, t, a, peak, r) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + r); },
+  out(dest, pan) { if (pan == null || !this.ctx.createStereoPanner) return dest || this.sfx; const p = this.ctx.createStereoPanner(); p.pan.value = clamp(pan, -1, 1); p.connect(dest || this.sfx); return p; },
+  tone({ f = 440, to, type = 'sine', v = 0.2, a = 0.005, r = 0.2, at, dest, pan }) {
+    if (!this.ctx) return; const c = this.ctx, t = at || c.currentTime;
+    const o = c.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + a + r);
+    const g = c.createGain(); this.env(g, t, a, v, r); o.connect(g).connect(this.out(dest, pan)); o.start(t); o.stop(t + a + r + 0.05);
+  },
+  nz({ f = 1000, to, q = 1, type = 'lowpass', v = 0.3, a = 0.004, r = 0.2, at, dest, pan }) {
+    if (!this.ctx) return; const c = this.ctx, t = at || c.currentTime;
+    const s = c.createBufferSource(); s.buffer = this.noise;
+    const fl = c.createBiquadFilter(); fl.type = type; fl.frequency.setValueAtTime(f, t); fl.Q.value = q; if (to) fl.frequency.exponentialRampToValueAtTime(to, t + a + r);
+    const g = c.createGain(); this.env(g, t, a, v, r); s.connect(fl).connect(g).connect(this.out(dest, pan)); s.start(t, Math.random()); s.stop(t + a + r + 0.05);
+  },
+  step(kind) { const v = kind === 'run' ? 0.22 : kind === 'crouch' ? 0.04 : 0.1; this.nz({ f: rand(1200, 1800), type: 'bandpass', q: 2, v: v * 0.8, r: 0.05 }); this.nz({ f: 220, v, r: 0.06 }); },
+  // the ghost's moan: a wobbly sine sliding down, with breathy noise
+  moan(vol = 0.6, pan) {
+    if (!this.ctx || vol < 0.02) return; const c = this.ctx, t = c.currentTime, d = rand(1.4, 2.4), f0 = rand(330, 420);
+    const o = c.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f0 * 1.15, t + d * 0.3); o.frequency.linearRampToValueAtTime(f0 * 0.7, t + d);
+    const lfo = c.createOscillator(); lfo.frequency.value = rand(5, 7); const lg = c.createGain(); lg.gain.value = 12; lfo.connect(lg).connect(o.frequency);
+    const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.22 * vol, t + 0.35); g.gain.linearRampToValueAtTime(0.0001, t + d);
+    o.connect(g).connect(this.out(null, pan)); o.start(t); lfo.start(t); o.stop(t + d + 0.1); lfo.stop(t + d + 0.1);
+    this.nz({ f: 900, to: 500, type: 'bandpass', q: 3, v: 0.12 * vol, a: 0.3, r: d, pan });
+  },
+  whoosh(vol = 0.5, pan) { this.nz({ f: 300, to: 2200, type: 'bandpass', q: 1.5, v: 0.25 * vol, a: 0.25, r: 0.6, pan }); },
+  scream() { this.tone({ f: 520, to: 1300, type: 'sawtooth', v: 0.4, a: 0.02, r: 0.9, dest: this.dist }); this.tone({ f: 700, to: 1700, type: 'triangle', v: 0.3, a: 0.02, r: 0.9 }); this.nz({ f: 3000, to: 700, type: 'bandpass', q: 0.7, v: 0.7, a: 0.01, r: 1.1 }); this.tone({ f: 70, to: 35, v: 0.8, r: 0.7 }); },
+  sting() { this.tone({ f: 1568, to: 1500, type: 'sawtooth', v: 0.1, a: 0.01, r: 0.9, dest: this.dist }); this.tone({ f: 1661, to: 1600, type: 'square', v: 0.06, a: 0.01, r: 0.9 }); this.tone({ f: 60, to: 32, v: 0.45, r: 0.8 }); },
+  creak(vol = 1, pan) { this.nz({ f: 500, to: 1600, type: 'bandpass', q: 9, v: 0.22 * vol, a: 0.08, r: 0.7, pan }); this.tone({ f: 120, to: 95, type: 'square', v: 0.035 * vol, a: 0.05, r: 0.6, pan }); },
+  shut(vol = 1, pan) { this.nz({ f: 500, v: 0.45 * vol, r: 0.25, pan }); this.tone({ f: 90, to: 50, v: 0.4 * vol, r: 0.25, pan }); },
+  locker(vol = 1) { this.nz({ f: 2400, type: 'bandpass', q: 4, v: 0.25 * vol, r: 0.15 }); this.tone({ f: 220, to: 160, type: 'square', v: 0.08 * vol, r: 0.2 }); this.nz({ f: 700, v: 0.3 * vol, r: 0.2, at: this.ctx && this.ctx.currentTime + 0.12 }); },
+  locked() { for (let i = 0; i < 3; i++) this.nz({ f: 1500, type: 'bandpass', q: 3, v: 0.3, r: 0.06, at: this.ctx && this.ctx.currentTime + i * 0.09 }); },
+  pickup() { if (!this.ctx) return; const t = this.ctx.currentTime; [784, 988, 1319].forEach((f, i) => this.tone({ f, type: 'triangle', v: 0.12, r: 0.3, at: t + i * 0.08 })); },
+  click() { this.nz({ f: 3000, type: 'bandpass', q: 3, v: 0.12, r: 0.03 }); },
+  beep(hi) { this.tone({ f: hi ? 1400 : 900, type: 'square', v: 0.06, r: 0.08 }); },
+  buzz() { this.tone({ f: 110, type: 'square', v: 0.15, r: 0.5 }); this.tone({ f: 116, type: 'sawtooth', v: 0.1, r: 0.5 }); },
+  unlock() { this.nz({ f: 2600, type: 'bandpass', q: 5, v: 0.25, r: 0.08 }); this.tone({ f: 600, to: 900, type: 'triangle', v: 0.1, r: 0.2 }); },
+  fuse() { this.tone({ f: 70, to: 140, type: 'sawtooth', v: 0.2, a: 0.02, r: 0.6 }); this.nz({ f: 4000, type: 'highpass', v: 0.2, r: 0.2 }); this.nz({ f: 800, v: 0.4, r: 0.1 }); },
+  bell() { if (!this.ctx) return; const t = this.ctx.currentTime; for (let i = 0; i < 14; i++) { this.tone({ f: 1046, type: 'square', v: 0.05, r: 0.07, at: t + i * 0.09 }); this.tone({ f: 523, type: 'triangle', v: 0.06, r: 0.08, at: t + i * 0.09 }); } },
+  piano(m, vol = 0.18, at, pan) { this.tone({ f: mtof(m), type: 'triangle', v: vol, a: 0.004, r: 1.2, at, pan }); this.tone({ f: mtof(m) * 2, type: 'sine', v: vol * 0.35, a: 0.004, r: 0.6, at, pan }); this.tone({ f: mtof(m) * 3.01, type: 'sine', v: vol * 0.12, a: 0.004, r: 0.3, at, pan }); },
+  sour() { this.piano(49, 0.2); this.piano(50, 0.2); this.piano(56, 0.15); },
+  tada() { if (!this.ctx) return; const t = this.ctx.currentTime; [60, 64, 67, 72, 76].forEach((m, i) => this.piano(m, 0.16, t + i * 0.1)); },
+  giggle(pan) { if (!this.ctx) return; const t = this.ctx.currentTime; for (let i = 0; i < 6; i++) { const f = rand(800, 1100) * (1 - i * 0.04); this.tone({ f, to: f * 0.8, type: 'triangle', v: 0.07, a: 0.01, r: 0.1, at: t + i * 0.13, pan }); } },
+  whisper(pan) { if (!this.ctx) return; const t = this.ctx.currentTime; for (let i = 0; i < 5; i++) this.nz({ f: rand(1500, 3500), type: 'bandpass', q: 5, v: 0.12, a: 0.08, r: rand(.15, .35), at: t + i * 0.22, pan }); },
+  thud(vol = 1, pan) { this.tone({ f: 120, to: 60, v: 0.4 * vol, r: 0.2, pan }); this.nz({ f: 900, v: 0.3 * vol, r: 0.15, pan }); },
+  // a sad little lullaby for the ghost
+  lullaby(vol = 0.1, speed = 1) { if (!this.ctx) return; const t = this.ctx.currentTime; [72, 76, 79, 76, 74, 72, 71, 72, 0, 67, 72, 76, 74, 72].forEach((m, i) => { if (m) this.piano(m, vol, t + i * 0.42 / speed); }); },
+  tick(threat, chaseK, playing) {
+    if (!this.ctx) return; const c = this.ctx, now = c.currentTime;
+    this.set(this.drone, playing ? 0.24 : 0.14, 0.5);
+    if (playing && threat > 0.08) {
+      if (this.nextBeat < now) this.nextBeat = now + 0.05;
+      while (this.nextBeat < now + 0.1) { const bpm = 62 + threat * 95, v = 0.12 + threat * 0.4; this.tone({ f: 58, to: 38, v, r: 0.13, at: this.nextBeat, dest: this.mus }); this.tone({ f: 52, to: 34, v: v * 0.7, r: 0.15, at: this.nextBeat + 0.16, dest: this.mus }); this.nextBeat += 60 / bpm; }
+    }
+    if (playing && chaseK > 0.05) {
+      if (this.nextMus < now) this.nextMus = now + 0.05;
+      while (this.nextMus < now + 0.12) { const s = this.musStep++ % 16, at = this.nextMus, v = chaseK;
+        if (s % 4 === 0) this.tone({ f: 90, to: 45, v: 0.3 * v, r: 0.2, at, dest: this.mus });
+        if (s === 6 || s === 14) this.nz({ f: 2200, type: 'bandpass', v: 0.14 * v, r: 0.1, at, dest: this.mus });
+        this.tone({ f: mtof([69, 72, 76, 72, 68, 72, 76, 72][s % 8]), type: 'triangle', v: 0.05 * v, r: 0.12, at, dest: this.mus });
+        this.nextMus += 60 / 150 / 2; }
+    }
+  },
+};
+function say(text, pitch = 0.4) {
+  if (!save.sound || !window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') return;
+  try { const u = new SpeechSynthesisUtterance(text); u.pitch = pitch; u.rate = 0.85; u.volume = 0.85; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) {}
+}
+const ICON_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg>';
+const ICON_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none"/><path d="M16 9l6 6M22 9l-6 6"/></svg>';
+function syncSound() { $('hMute').innerHTML = save.sound ? ICON_ON : ICON_OFF; $('bSound').textContent = save.sound ? '🔊 Sound on' : '🔇 Sound off'; $('bSoundP').textContent = $('bSound').textContent; }
+function toggleSound() { A.init(); save.sound = !save.sound; persist(); A.apply(); if (!save.sound && window.speechSynthesis) try { speechSynthesis.cancel(); } catch (e) {} }
+
+// =====================================================================
+//  RENDERER + SCENE
+// =====================================================================
+const renderer = new THREE.WebGLRenderer({ antialias: !IS_TOUCH, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, IS_TOUCH ? 1.25 : 1.6));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.2;
+renderer.shadowMap.enabled = !IS_TOUCH; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+$('stage').appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x02030a);
+scene.fog = new THREE.FogExp2(0x03050c, 0.07);
+const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.04, 140);
+camera.rotation.order = 'YXZ'; scene.add(camera);
+const hemi = new THREE.HemisphereLight(0x46507a, 0x0b0a10, 0.34); scene.add(hemi);
+const torch = new THREE.SpotLight(0xfff3dc, 0, 24, 0.52, 0.45, 1.4);
+torch.position.set(0.18, -0.12, 0.1); camera.add(torch); torch.target.position.set(0.05, -0.05, -1); camera.add(torch.target);
+if (!IS_TOUCH) { torch.castShadow = true; torch.shadow.mapSize.set(512, 512); torch.shadow.camera.near = 0.2; torch.shadow.camera.far = 24; torch.shadow.bias = -0.002; }
+const fill = new THREE.PointLight(0xe8eeff, 0, 4.5, 2); camera.add(fill);
+const LIGHT_POOL = IS_TOUCH ? 3 : 5;
+const pool = []; for (let i = 0; i < LIGHT_POOL; i++) { const l = new THREE.PointLight(0xffe7b8, 0, 11, 1.7); scene.add(l); pool.push(l); }
+const ghostLight = new THREE.PointLight(0x9cc8ff, 0, 7, 1.6); scene.add(ghostLight);
+const outsideLight = new THREE.PointLight(0xbfd6ff, 0, 16, 1.4); scene.add(outsideLight);
+
+function canvasTex(w, h, draw, rx = 1, ry = 1, srgb = true) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.anisotropy = 4; if (srgb) t.encoding = THREE.sRGBEncoding; return t;
+}
+function grime(x, w, h, n, a = 0.25) { for (let i = 0; i < n; i++) { x.fillStyle = `rgba(${randi(10, 40)},${randi(10, 30)},${randi(10, 30)},${rand(0.02, a)})`; const r = rand(4, 30); x.beginPath(); x.arc(rand(0, w), rand(0, h), r, 0, 7); x.fill(); } }
+function speckle(x, w, h, n, base, spread, a = 0.3) { for (let i = 0; i < n; i++) { const v = randi(-spread, spread); x.fillStyle = `rgba(${base[0] + v},${base[1] + v},${base[2] + v},${a})`; x.fillRect(rand(0, w), rand(0, h), 2, 2); } }
+const TEX = {};
+function makeTextures() {
+  TEX.wall = canvasTex(256, 256, (x, w, h) => {
+    x.fillStyle = '#b9b08f'; x.fillRect(0, 0, w, h); speckle(x, w, h, 4000, [180, 172, 140], 18);
+    // tiled lower half like an old school corridor
+    x.fillStyle = '#2f6a6e'; x.fillRect(0, h * 0.6, w, h * 0.4);
+    x.strokeStyle = 'rgba(10,30,32,.55)'; x.lineWidth = 2; for (let i = 0; i <= 8; i++) { x.beginPath(); x.moveTo(i * 32, h * 0.6); x.lineTo(i * 32, h); x.stroke(); } for (let j = 0; j < 4; j++) { x.beginPath(); x.moveTo(0, h * 0.6 + j * 26); x.lineTo(w, h * 0.6 + j * 26); x.stroke(); }
+    x.fillStyle = '#7b2a33'; x.fillRect(0, h * 0.57, w, h * 0.035);
+    grime(x, w, h, 50, 0.16);
+    for (let i = 0; i < 8; i++) { const px = rand(0, w), g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(60,50,30,.35)'); g.addColorStop(1, 'rgba(60,50,30,0)'); x.fillStyle = g; x.fillRect(px, rand(0, h * 0.3), rand(2, 4), rand(30, 90)); }
+  });
+  const checker = (a, b, n = 4) => (x, w, h) => { const s = w / n; for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { x.fillStyle = (i + j) % 2 ? a : b; x.fillRect(i * s, j * s, s, s); } speckle(x, w, h, 5000, [100, 100, 100], 40, 0.12); grime(x, w, h, 40, 0.22); x.strokeStyle = 'rgba(0,0,0,.35)'; x.lineWidth = 2; for (let i = 0; i <= n; i++) { x.beginPath(); x.moveTo(i * s, 0); x.lineTo(i * s, h); x.moveTo(0, i * s); x.lineTo(w, i * s); x.stroke(); } };
+  TEX.hall = canvasTex(256, 256, checker('#d9d2bc', '#355546'));
+  TEX.caf = canvasTex(256, 256, checker('#e8e2d4', '#8c2f35'));
+  TEX.tile = canvasTex(256, 256, checker('#e6eef2', '#c9d8e0', 8));
+  TEX.wood = canvasTex(256, 256, (x, w, h) => { for (let j = 0; j < 8; j++) { x.fillStyle = `hsl(${28 + rand(-4, 4)},${40 + rand(-6, 6)}%,${30 + rand(-5, 5)}%)`; x.fillRect(0, j * 32, w, 32); x.fillStyle = 'rgba(0,0,0,.4)'; x.fillRect(0, j * 32, w, 2); x.fillRect(((j * 97) % w), j * 32, 2, 32); } for (let i = 0; i < 400; i++) { x.strokeStyle = 'rgba(40,20,8,.18)'; x.beginPath(); const y = rand(0, h); x.moveTo(0, y); x.lineTo(w, y + rand(-3, 3)); x.stroke(); } grime(x, w, h, 20, 0.2); });
+  TEX.carpet = canvasTex(256, 256, (x, w, h) => { x.fillStyle = '#5a1a24'; x.fillRect(0, 0, w, h); speckle(x, w, h, 9000, [90, 30, 40], 25, 0.4); x.strokeStyle = 'rgba(220,170,80,.35)'; x.lineWidth = 3; for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { x.beginPath(); x.moveTo(i * 64 + 32, j * 64 + 12); x.lineTo(i * 64 + 52, j * 64 + 32); x.lineTo(i * 64 + 32, j * 64 + 52); x.lineTo(i * 64 + 12, j * 64 + 32); x.closePath(); x.stroke(); } grime(x, w, h, 30, 0.2); });
+  TEX.ceil = canvasTex(128, 128, (x, w, h) => { x.fillStyle = '#cfcab8'; x.fillRect(0, 0, w, h); speckle(x, w, h, 2500, [140, 136, 120], 30, 0.5); x.strokeStyle = '#6f6b5e'; x.lineWidth = 4; x.strokeRect(2, 2, w - 4, h - 4); grime(x, w, h, 14, 0.3); });
+  TEX.locker = canvasTex(128, 256, (x, w, h) => { x.fillStyle = '#2f5fa0'; x.fillRect(0, 0, w, h); speckle(x, w, h, 1500, [50, 95, 160], 20, 0.4); x.strokeStyle = '#173058'; x.lineWidth = 6; x.strokeRect(3, 3, w - 6, h - 6); for (let i = 0; i < 5; i++) { x.fillStyle = '#132644'; x.fillRect(30, 20 + i * 12, w - 60, 5); } x.fillStyle = '#c9ced6'; x.fillRect(w - 26, h * 0.45, 8, 34); x.fillStyle = 'rgba(0,0,0,.2)'; x.fillRect(0, h - 30, w, 30); grime(x, w, h, 14, 0.3); });
+  TEX.hideLocker = canvasTex(128, 256, (x, w, h) => { x.fillStyle = '#2d7fbf'; x.fillRect(0, 0, w, h); speckle(x, w, h, 1500, [50, 130, 190], 20, 0.4); x.strokeStyle = '#ffd45a'; x.lineWidth = 6; x.strokeRect(3, 3, w - 6, h - 6); for (let i = 0; i < 5; i++) { x.fillStyle = '#0b2033'; x.fillRect(30, 20 + i * 12, w - 60, 5); } x.fillStyle = '#ffd45a'; x.font = 'bold 40px system-ui'; x.textAlign = 'center'; x.fillText('★', w / 2, h * 0.62); x.fillStyle = '#dfe4ea'; x.fillRect(w - 26, h * 0.45, 8, 34); });
+  TEX.metal = canvasTex(128, 128, (x, w, h) => { x.fillStyle = '#6d7277'; x.fillRect(0, 0, w, h); speckle(x, w, h, 2000, [110, 115, 120], 25, 0.4); grime(x, w, h, 20, 0.3); });
+  TEX.books = canvasTex(256, 256, (x, w, h) => {
+    x.fillStyle = '#3a2412'; x.fillRect(0, 0, w, h);
+    const cols = ['#2c4f8a', '#2f7a4a', '#c9a227', '#6b3f8f', '#2a7f8a', '#8a6a3c', '#3d3d6b', '#b7b7a8', '#4f6b2a', '#1d3a5c'];
+    for (let row = 0; row < 4; row++) { const y0 = row * 64; x.fillStyle = '#24160b'; x.fillRect(0, y0 + 58, w, 6); let px = 2; while (px < w - 4) { const bw = randi(7, 16), bh = randi(40, 56); x.fillStyle = pick(cols); x.fillRect(px, y0 + 58 - bh, bw, bh); x.fillStyle = 'rgba(255,255,255,.18)'; x.fillRect(px + 2, y0 + 58 - bh + 6, bw - 4, 2); x.fillRect(px + 2, y0 + 58 - 12, bw - 4, 2); px += bw + 1; } }
+    grime(x, w, h, 20, 0.25);
+  });
+  TEX.glow = canvasTex(64, 64, (x, w) => { const g = x.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,255,255,.6)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, w, w); }, 1, 1, false);
+  TEX.glass = canvasTex(128, 256, (x, w, h) => { x.fillStyle = '#3b2a1c'; x.fillRect(0, 0, w, h); x.fillStyle = '#5a7fb8'; x.fillRect(16, 16, w - 32, h * 0.55); x.fillStyle = 'rgba(255,255,255,.25)'; x.beginPath(); x.moveTo(20, 30); x.lineTo(50, 20); x.lineTo(25, 90); x.fill(); x.fillStyle = '#c9ced6'; x.fillRect(w - 22, h * 0.68, 10, 30); grime(x, w, h, 20, 0.3); });
+}
+function textTex(lines, opts = {}) {
+  const w = opts.w || 512, h = opts.h || 256;
+  return canvasTex(w, h, (x) => {
+    if (opts.bg) { x.fillStyle = opts.bg; x.fillRect(0, 0, w, h); if (opts.grime !== false) grime(x, w, h, 16, 0.2); }
+    if (opts.frame) { x.strokeStyle = opts.frame; x.lineWidth = opts.frameW || 10; x.strokeRect(0, 0, w, h); }
+    x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = opts.color || '#a00'; x.shadowColor = opts.shadow || 'transparent'; x.shadowBlur = opts.blur || 0;
+    lines.forEach((ln, i) => { x.font = (i === 0 ? opts.font0 : opts.font1) || `${opts.size || 70}px ${opts.family || 'Creepster, Impact'}`; x.save(); x.translate(w / 2, h / 2 + (i - (lines.length - 1) / 2) * (opts.gap || 80)); if (opts.tilt !== false) x.rotate(rand(-0.04, 0.04)); x.fillText(ln, 0, 0); x.restore(); });
+  }, 1, 1);
+}
+
+// =====================================================================
+//  THE MAP (each cell is 3 m). # wall, D door, O office door (locked),
+//  X front doors, L hiding locker, F fuse box, S start, G ghost start
+// =====================================================================
+const MAP = [
+  '#########################',
+  '#.....#.....#.......#...#',
+  '#.....#.....#.......#...#',
+  '#.....#.....#.......#...#',
+  '#..S..#.....#.......#...#',
+  '###D#####D#######D####O##',
+  '#F.....L......L.....L...#',
+  'X.......................#',
+  '#.....L........L..L.....#',
+  '###D#######D#########D###',
+  '#.........#.........#...#',
+  '#.........#.........#...#',
+  '#.........#....G....#...#',
+  '#.........#.........#...#',
+  '#########################',
+];
+const ROWS = MAP.length, COLS = MAP[0].length, CS = 3, WH = 3.2;
+const grid = MAP.map((r) => r.split(''));
+let START = { r: 4, c: 3 }, GHOST_START = { r: 12, c: 15 };
+for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+  const k = grid[r][c];
+  if (k === 'S') { START = { r, c }; grid[r][c] = '.'; }
+  else if (k === 'G') { GHOST_START = { r, c }; grid[r][c] = '.'; }
+}
+const ROOMS = {
+  math:     { name: 'MATHS',      c0: 1,  c1: 5,  r0: 1,  r1: 4,  floor: 'wood' },
+  science:  { name: 'SCIENCE LAB', c0: 7,  c1: 11, r0: 1,  r1: 4,  floor: 'tile' },
+  library:  { name: 'LIBRARY',    c0: 13, c1: 19, r0: 1,  r1: 4,  floor: 'carpet' },
+  office:   { name: 'PRINCIPAL',  c0: 21, c1: 23, r0: 1,  r1: 4,  floor: 'carpet' },
+  music:    { name: 'MUSIC',      c0: 1,  c1: 9,  r0: 10, r1: 13, floor: 'wood' },
+  caf:      { name: 'CAFETERIA',  c0: 11, c1: 19, r0: 10, r1: 13, floor: 'caf' },
+  bath:     { name: 'BATHROOM',   c0: 21, c1: 23, r0: 10, r1: 13, floor: 'tile' },
+};
+const cx = (c) => c * CS + CS / 2, cz = (r) => r * CS + CS / 2;
+const cellAt = (x, z) => [Math.floor(z / CS), Math.floor(x / CS)];
+const ch = (r, c) => (r < 0 || c < 0 || r >= ROWS || c >= COLS ? '#' : grid[r][c]);
+const DIRS4 = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+const isOpenFloor = (r, c) => '.LF'.includes(ch(r, c));
+const doors = {};
+const dkey = (r, c) => r + ',' + c;
+const doorAt = (r, c) => doors[dkey(r, c)];
+function sightBlock(r, c) { const k = ch(r, c); if ('.LF'.includes(k)) return false; if ('DOX'.includes(k)) return !doorAt(r, c).open; return true; }
+function ghostPass(r, c) { const k = ch(r, c); return '.LFDO'.includes(k); } // she floats right through doors
+
+// =====================================================================
+//  GEOMETRY HELPERS
+// =====================================================================
+class GB {
+  constructor() { this.p = []; this.n = []; this.u = []; }
+  geo(g, m) {
+    const ng = g.index ? g.toNonIndexed() : g.clone(); if (m) ng.applyMatrix4(m);
+    const P = ng.attributes.position.array, N = ng.attributes.normal.array, U = ng.attributes.uv ? ng.attributes.uv.array : null;
+    for (let i = 0; i < P.length; i++) { this.p.push(P[i]); this.n.push(N[i]); }
+    for (let i = 0; i < P.length / 3; i++) this.u.push(U ? U[i * 2] : 0, U ? U[i * 2 + 1] : 0);
+    ng.dispose();
+  }
+  box(x, y, z, sx, sy, sz, ry = 0, uvScale) {
+    const g = new THREE.BoxGeometry(sx, sy, sz);
+    if (uvScale) { const uv = g.attributes.uv, sc = [[sz, sy], [sz, sy], [sx, sz], [sx, sz], [sx, sy], [sx, sy]]; for (let f = 0; f < 6; f++) for (let k = 0; k < 4; k++) { const i = f * 4 + k; uv.setXY(i, uv.getX(i) * sc[f][0] * uvScale, uv.getY(i) * sc[f][1] * uvScale); } }
+    this.geo(g, new THREE.Matrix4().makeRotationY(ry).setPosition(x, y, z)); g.dispose();
+  }
+  cyl(x, y, z, r0, r1, h, seg = 10) { const g = new THREE.CylinderGeometry(r0, r1, h, seg); this.geo(g, new THREE.Matrix4().setPosition(x, y, z)); g.dispose(); }
+  mesh(mat, shadow) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(this.u, 2));
+    g.computeBoundingSphere(); const m = new THREE.Mesh(g, mat); m.receiveShadow = true; m.castShadow = !!shadow; return m;
+  }
+}
+const MAT = {};
+function stdMat(o) { return new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.85, metalness: 0.05 }, o)); }
+function glowMat(col, k = 1) { return new THREE.MeshStandardMaterial({ color: 0x111111, emissive: col, emissiveIntensity: k }); }
+function glowSprite(col, size) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.glow, color: col, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); s.scale.setScalar(size); return s; }
+
+// =====================================================================
+//  LEVEL BUILD
+// =====================================================================
+const level = new THREE.Group(); scene.add(level);
+const cellBoxes = [];
+for (let r = 0; r < ROWS; r++) { cellBoxes.push([]); for (let c = 0; c < COLS; c++) cellBoxes[r].push([]); }
+const lamps = [], lockers = [], interact = [], wallFaces = [], items = [];
+let fuseBox = null, exitDoor = null;
+const G = {}; // build-time handles for puzzles: G.board, G.poster, G.photo, G.cabinet, G.safe, G.secret, G.bench, G.redBooks...
+function addBoxCol(r, c, x0, x1, z0, z1) { if (r >= 0 && c >= 0 && r < ROWS && c < COLS) cellBoxes[r][c].push([x0, x1, z0, z1]); }
+// furniture collision: register the box in every cell it overlaps
+function solid(x0, x1, z0, z1) { const [ra, ca] = cellAt(x0, z0), [rb, cb] = cellAt(x1 - 1e-3, z1 - 1e-3); for (let r = ra; r <= rb; r++) for (let c = ca; c <= cb; c++) addBoxCol(r, c, x0, x1, z0, z1); }
+function facing(r, c) {
+  for (const [dr, dc] of DIRS4) if (isOpenFloor(r + dr, c + dc) && ch(r - dr, c - dc) === '#') return [dr, dc];
+  return [1, 0];
+}
+function wallDecal(x, y, z, ry, tex, w, h, opts = {}) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: tex, transparent: !!opts.transparent, roughness: 0.9, depthWrite: !opts.transparent, polygonOffset: true, polygonOffsetFactor: -2, emissive: opts.emissive || 0x000000, emissiveIntensity: opts.ei || 1, emissiveMap: opts.emissive ? tex : null }));
+  m.position.set(x, y, z); m.rotation.y = ry; level.add(m); return m;
+}
+// rotation that makes a plane face along (nx, nz)
+const faceRot = (nx, nz) => Math.atan2(nx, nz);
+function buildLevel() {
+  MAT.wall = stdMat({ map: TEX.wall }); MAT.ceil = stdMat({ map: TEX.ceil });
+  MAT.metal = stdMat({ map: TEX.metal, metalness: 0.5, roughness: 0.5 }); MAT.dark = stdMat({ color: 0x1a1a1f, metalness: 0.3, roughness: 0.6 });
+  MAT.wood = stdMat({ map: TEX.wood }); MAT.locker = stdMat({ map: TEX.locker, metalness: 0.3, roughness: 0.55 });
+  MAT.books = stdMat({ map: TEX.books }); MAT.white = stdMat({ color: 0xe8e8e0 }); MAT.black = stdMat({ color: 0x0c0c0f, roughness: 0.3, metalness: 0.2 });
+  MAT.red = stdMat({ color: 0xb02a30 }); MAT.chair = stdMat({ color: 0x2b5c8f, roughness: 0.6 });
+  const walls = new GB();
+  const fw = COLS * CS, fd = ROWS * CS;
+  // base floor (hall lino) + a floor slab per room
+  const floorMats = {};
+  const floorOf = (kind, w, d) => { const t = TEX[kind].clone(); t.needsUpdate = true; t.repeat.set(w / 3, d / 3); return stdMat({ map: t, roughness: kind === 'tile' || kind === 'caf' ? 0.45 : 0.8 }); };
+  const base = new THREE.Mesh(new THREE.PlaneGeometry(fw, fd), floorOf('hall', fw, fd)); base.rotation.x = -Math.PI / 2; base.position.set(fw / 2, 0, fd / 2); base.receiveShadow = true; level.add(base);
+  for (const R of Object.values(ROOMS)) {
+    const w = (R.c1 - R.c0 + 1) * CS, d = (R.r1 - R.r0 + 1) * CS;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), floorOf(R.floor, w, d)); m.rotation.x = -Math.PI / 2; m.position.set(R.c0 * CS + w / 2, 0.005, R.r0 * CS + d / 2); m.receiveShadow = true; level.add(m);
+  }
+  TEX.ceil.repeat.set(COLS * 2, ROWS * 2);
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(fw, fd), MAT.ceil); ceil.rotation.x = Math.PI / 2; ceil.position.set(fw / 2, WH, fd / 2); level.add(ceil);
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const k = grid[r][c], x = cx(c), z = cz(r);
+    if (k === '#') {
+      addBoxCol(r, c, c * CS, c * CS + CS, r * CS, r * CS + CS);
+      if (DIRS4.some(([dr, dc]) => ch(r + dr, c + dc) !== '#')) walls.box(x, WH / 2, z, CS, WH, CS);
+      for (const [dr, dc] of DIRS4) if (isOpenFloor(r + dr, c + dc)) wallFaces.push({ r: r + dr, c: c + dc, x: x + dc * CS / 2, z: z + dr * CS / 2, nx: dc, nz: dr });
+    } else if (k === 'D' || k === 'O') buildDoor(r, c, k);
+    else if (k === 'X') buildExit(r, c);
+    else if (k === 'L') buildLocker(r, c);
+    else if (k === 'F') buildFuseBox(r, c);
+  }
+  level.add(walls.mesh(MAT.wall));
+  buildHallLockers(); buildRooms(); buildLamps(); buildSigns();
+}
+function buildDoor(r, c, k) {
+  const alongX = isOpenFloor(r, c - 1) || isOpenFloor(r, c + 1), x = cx(c), z = cz(r);
+  const g = new THREE.Group(); g.position.set(x, 0, z); if (alongX) g.rotation.y = Math.PI / 2; level.add(g);
+  const frame = new GB();
+  for (const s of [-1, 1]) frame.box(s * 1.075, WH / 2, 0, 0.85, WH, CS);
+  frame.box(0, WH - 0.4, 0, 1.3, 0.8, CS);
+  const fm = frame.mesh(MAT.wall); g.add(fm);
+  const trim = new THREE.Mesh(new THREE.BoxGeometry(1.42, 2.46, 0.12), MAT.dark); trim.position.set(0, 1.18, 0); trim.scale.set(1, 1, 1); g.add(trim); trim.visible = false;
+  const piv = new THREE.Group(); piv.position.set(-0.65, 0, 0); g.add(piv);
+  const panelMat = k === 'O' ? stdMat({ color: 0x5a3a22, map: TEX.wood }) : stdMat({ map: TEX.glass, roughness: 0.6 });
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(1.3, 2.4, 0.07), panelMat); panel.position.set(0.65, 1.2, 0); panel.castShadow = !IS_TOUCH; panel.receiveShadow = true; piv.add(panel);
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), stdMat({ color: 0xd4b04a, metalness: 0.8, roughness: 0.3 })); knob.position.set(1.15, 1.05, 0.06); piv.add(knob);
+  const k2 = knob.clone(); k2.position.z = -0.06; piv.add(k2);
+  // fillers block the sides of the doorway tunnel
+  if (alongX) { addBoxCol(r, c, c * CS, c * CS + CS, r * CS, z - 0.65); addBoxCol(r, c, c * CS, c * CS + CS, z + 0.65, r * CS + CS); }
+  else { addBoxCol(r, c, c * CS, x - 0.65, r * CS, r * CS + CS); addBoxCol(r, c, x + 0.65, c * CS + CS, r * CS, r * CS + CS); }
+  const d = { r, c, k, open: false, t: 0, piv, alongX, locked: k === 'O', rattle: 0 };
+  doors[dkey(r, c)] = d;
+  const lab = () => d.locked ? (P.officeKey ? 'Unlock the PRINCIPAL\'s office' : 'Locked! Needs the office key') : d.open ? 'Close the door' : 'Open the door';
+  for (const s of [-1, 1]) interact.push({ kind: 'door', door: d, x: x + (alongX ? s * 0.6 : 0), y: 1.3, z: z + (alongX ? 0 : s * 0.6), reach: 2.4, label: lab, act: () => useDoor(d) });
+}
+function buildExit(r, c) {
+  const x = cx(c), z = cz(r);
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = Math.PI / 2; level.add(g);
+  const frame = new GB(); frame.box(0, WH - 0.35, 0, 3, 0.7, CS); g.add(frame.mesh(MAT.wall));
+  const mat = stdMat({ map: TEX.glass, roughness: 0.5 });
+  const pivs = [];
+  for (const s of [-1, 1]) { const piv = new THREE.Group(); piv.position.set(s * 1.5, 0, 0); g.add(piv); const p = new THREE.Mesh(new THREE.BoxGeometry(1.48, 2.85, 0.1), mat); p.position.set(-s * 0.74, 1.425, 0); piv.add(p); const bar = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.07, 0.1), MAT.metal); bar.position.set(-s * 0.74, 1.1, 0.1); piv.add(bar); pivs.push({ piv, s }); }
+  const chain = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.04, 6, 14), MAT.metal); chain.position.set(0, 1.2, 0.18); g.add(chain);
+  const lock = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.26, 0.1), stdMat({ color: 0xc9a227, metalness: 0.8, roughness: 0.3 })); lock.position.set(0, 0.98, 0.2); g.add(lock);
+  const led = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.05), glowMat(0xff2020, 1.6)); led.position.set(1.2, 1.4, 0.2); g.add(led);
+  // moonlit playground outside
+  const outside = new THREE.Mesh(new THREE.PlaneGeometry(CS * 6, WH * 3), new THREE.MeshBasicMaterial({ color: 0x8eaee8, fog: false })); outside.position.set(-6, WH / 2, z); outside.rotation.y = Math.PI / 2; level.add(outside);
+  const grass = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), stdMat({ color: 0x1d3a24 })); grass.rotation.x = -Math.PI / 2; grass.position.set(-6, 0, z); level.add(grass);
+  outsideLight.position.set(-0.5, 2.2, z);
+  const d = { r, c, k: 'X', open: false, t: 0, pivs, led, chain, lock, alongX: true };
+  doors[dkey(r, c)] = d; exitDoor = d;
+  interact.push({ kind: 'exit', x: x + 0.7, y: 1.3, z, reach: 2.8, label: () => exitDoor.open ? null : !run.power ? 'Front doors: the electric lock has no power' : !P.frontKey ? 'Front doors: locked! Needs the front door key' : 'Unlock the front doors and ESCAPE!', act: useExit });
+}
+function buildLocker(r, c) {
+  const [dr, dc] = facing(r, c), x = cx(c), z = cz(r), back = CS / 2 - 0.36, wx = x - dc * back, wz = z - dr * back;
+  const g = new THREE.Group(); g.position.set(wx, 0, wz); g.rotation.y = Math.atan2(dc, dr); level.add(g);
+  const m = stdMat({ map: TEX.hideLocker, metalness: 0.3, roughness: 0.5 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.0, 2.2, 0.7), MAT.locker); body.position.y = 1.1; body.castShadow = !IS_TOUCH; body.receiveShadow = true; g.add(body);
+  const piv = new THREE.Group(); piv.position.set(-0.5, 1.1, 0.36); g.add(piv);
+  const door = new THREE.Mesh(new THREE.BoxGeometry(0.98, 2.15, 0.04), m); door.position.x = 0.49; piv.add(door);
+  const hw = Math.abs(dc) ? 0.36 : 0.52, hd = Math.abs(dc) ? 0.52 : 0.36;
+  addBoxCol(r, c, wx - hw, wx + hw, wz - hd, wz + hd);
+  const lk = { r, c, x: wx, z: wz, dr, dc, front: { x: wx + dc * 1.1, z: wz + dr * 1.1 }, piv, open: 0, yaw: Math.atan2(-dc, -dr) };
+  lockers.push(lk);
+  interact.push({ kind: 'locker', lk, x: wx + dc * 0.45, y: 1.3, z: wz + dr * 0.45, label: () => 'Hide in the locker', act: () => enterLocker(lk) });
+}
+function buildFuseBox(r, c) {
+  const [dr, dc] = facing(r, c), x = cx(c), z = cz(r), back = CS / 2 - 0.12, wx = x - dc * back, wz = z - dr * back;
+  const g = new THREE.Group(); g.position.set(wx, 0, wz); g.rotation.y = Math.atan2(dc, dr); level.add(g);
+  const box = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.4, 0.24), MAT.metal); box.position.y = 1.5; g.add(box);
+  const plate = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.3), new THREE.MeshStandardMaterial({ map: textTex(['⚡ FUSE BOX ⚡'], { w: 256, h: 80, size: 34, family: 'Impact', color: '#111', bg: '#f0c419', tilt: false }) })); plate.position.set(0, 2.05, 0.13); g.add(plate);
+  const slots = [];
+  for (let i = 0; i < 3; i++) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.4, 0.06), glowMat(0xff1010, 0.9)); m.position.set((i - 1) * 0.32, 1.45, 0.14); g.add(m); slots.push(m); }
+  fuseBox = { x: wx + dc * 0.3, z: wz + dr * 0.3, slots };
+  interact.push({ kind: 'fusebox', x: fuseBox.x, y: 1.4, z: fuseBox.z, reach: 2.4, label: fuseLabel, act: useFuseBox });
+  // the janitor's note pinned next to it
+  const nx = wx + (dr ? 1.1 : 0), nz = wz + (dc ? 1.1 : 0);
+  const note = wallDecal(nx + dc * 0.14, 1.55, nz + dr * 0.14, faceRot(dc, dr), textTex(['NOTE', 'read me!'], { w: 160, h: 200, bg: '#f3ecd6', color: '#333', font0: '40px "Gochi Hand"', font1: '26px "Gochi Hand"', gap: 50 }), 0.38, 0.48);
+  interact.push({ kind: 'note', x: nx + dc * 0.3, y: 1.5, z: nz + dr * 0.3, reach: 2.2, label: () => "Read the janitor's note", act: () => readNote('janitor') });
+}
+function buildHallLockers() {
+  // rows of blue lockers along the corridor walls (decoration + cover)
+  const gb = new GB();
+  for (const f of wallFaces) {
+    if (f.r < 6 || f.r > 8 || f.nx) continue; // only the long north/south corridor walls
+    if (ch(f.r, f.c) !== '.') continue;
+    if (f.c <= 1) continue;
+    gb.box(f.x, 1.05, f.z + f.nz * 0.22, 2.96, 2.1, 0.44, 0, 0);
+    const z0 = Math.min(f.z, f.z + f.nz * 0.44), z1 = Math.max(f.z, f.z + f.nz * 0.44);
+    addBoxCol(f.r, f.c, f.x - 1.5, f.x + 1.5, z0, z1);
+  }
+  // stretch the locker texture so each 3 m block shows 3 lockers
+  const m = gb.mesh(MAT.locker); const uv = m.geometry.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setX(i, uv.getX(i) * 3);
+  TEX.locker.wrapS = THREE.RepeatWrapping; level.add(m);
+}
+// hall wall faces: the face's (nx, nz) is the direction from the wall into the floor cell
+function buildSigns() {
+  const sign = (txt, x, z, nx, nz, col = '#ffffff', bg = '#1d3557') => wallDecal(x + nx * 0.02, 2.85, z + nz * 0.02, faceRot(nx, nz), textTex([txt], { w: 384, h: 96, size: 54, family: 'Impact', color: col, bg, tilt: false }), 1.7, 0.42);
+  const doorSigns = [[5, 3, 'MATHS'], [5, 9, 'SCIENCE LAB'], [5, 17, 'LIBRARY'], [5, 22, 'PRINCIPAL'], [9, 3, 'MUSIC'], [9, 11, 'CAFETERIA'], [9, 21, 'BATHROOM']];
+  for (const [r, c, t] of doorSigns) { const nz = r === 5 ? 1 : -1; sign(t, cx(c), r === 5 ? (r + 1) * CS : r * CS, 0, nz, t === 'PRINCIPAL' ? '#ffd45a' : '#ffffff', t === 'PRINCIPAL' ? '#5a1a24' : '#1d3557'); }
+  // EXIT sign above the front doors (glows green)
+  const ex = wallDecal(CS + 0.02, 2.75, cz(7), faceRot(1, 0), textTex(['EXIT'], { w: 256, h: 96, size: 76, family: 'Impact', color: '#5dff7a', bg: '#06200c', shadow: '#2f6', blur: 14, tilt: false }), 1.3, 0.48, { emissive: 0xffffff, ei: 1.3 });
+  void ex;
+  // hall posters + spooky scrawls
+  const R = seeded(31);
+  const posters = [['READING', 'IS MAGIC!'], ['NO RUNNING', 'IN THE HALLS'], ['SCHOOL', 'DISCO 1987'], ['BE KIND', ':)'], ['LOST CAT', 'ask office']];
+  let pi = 0;
+  for (const f of wallFaces) {
+    if (R() > 0.12) continue;
+    if (f.r >= 6 && f.r <= 8 && !f.nx) continue; // corridor long walls are covered by lockers
+    if (pi < posters.length) { const p = posters[pi++]; wallDecal(f.x + f.nx * 0.02, 1.75, f.z + f.nz * 0.02, faceRot(f.nx, f.nz), textTex(p, { w: 256, h: 340, bg: pick(['#f7d35a', '#8fd3ff', '#ff9fb2', '#b6f28f']), color: '#1a1a2a', font0: '56px Impact', font1: '40px "Gochi Hand"', gap: 90, tilt: false }), 0.8, 1.06); }
+  }
+  // hall end walls: big painted "DON'T LOOK BACK" style scrawl in ghostly blue
+  wallDecal(COLS * CS - CS + 0.02 - 0.02, 1.9, cz(7), faceRot(-1, 0), textTex(['SHHHH…', 'SHE IS LISTENING'], { size: 80, color: '#7fd0ff', gap: 90, shadow: '#39f', blur: 10 }), 2.6, 1.3, { transparent: true });
+}
+function buildLamps() {
+  const spots = [[7, 2, 'em'], [7, 6, 0], [7, 10, 0], [7, 14, 'em'], [7, 18, 0], [7, 22, 0], [2, 3, 0], [3, 9, 0], [2, 16, 0], [3, 22, 'em'], [11, 5, 0], [12, 15, 0], [11, 22, 0]];
+  const fixG = new GB();
+  for (const [r, c, em] of spots) {
+    const x = cx(c), z = cz(r);
+    fixG.box(x, WH - 0.04, z, 1.2, 0.08, 0.5);
+    const bm = new THREE.MeshStandardMaterial({ color: 0x222222, emissive: 0xfff0d0, emissiveIntensity: 0 });
+    const bulb = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.04, 0.4), bm); bulb.position.set(x, WH - 0.1, z); level.add(bulb);
+    lamps.push({ x, z, y: WH - 0.5, em: em === 'em', mat: bm, phase: rand(0, 100), level: 0 });
+  }
+  level.add(fixG.mesh(MAT.dark));
+}
+function lampLevel(L, t) {
+  if (!run) return L.em ? 0.5 : 0;
+  if (run.blackout > 0) return 0;
+  let v;
+  if (!run.power) { if (!L.em) return 0; const n = Math.sin(t * 11 + L.phase) + Math.sin(t * 27 + L.phase * 2); v = n > 1.3 ? 0.1 : 0.55; }
+  else v = 1;
+  // lights go crazy when the ghost floats under them
+  const gd = Math.hypot(L.x - ghost.x, L.z - ghost.z);
+  if (ghost.state !== 'dormant' && gd < 6) v *= Math.random() < 0.35 ? 0.05 : 0.8;
+  return v;
+}
+function itemMesh(kind) {
+  const g = new THREE.Group();
+  if (kind === 'fuse') {
+    const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.3, 12), new THREE.MeshStandardMaterial({ color: 0xffd080, emissive: 0xff8a00, emissiveIntensity: 1.2, transparent: true, opacity: 0.85 })); g.add(glass);
+    for (const s of [-1, 1]) { const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.06, 12), MAT.metal); cap.position.y = s * 0.17; g.add(cap); }
+    g.add(glowSprite(0xff9a20, 0.8));
+  } else if (kind === 'key' || kind === 'frontKey') {
+    const col = kind === 'key' ? 0xc0c8d0 : 0xffc83a, m = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.4, metalness: 0.8, roughness: 0.3 });
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.025, 8, 16), m); ring.position.y = 0.12; g.add(ring);
+    const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.26, 0.03), m); shaft.position.y = -0.07; g.add(shaft);
+    for (const y of [-0.14, -0.19]) { const t = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.025, 0.03), m); t.position.set(0.035, y, 0); g.add(t); }
+    g.add(glowSprite(col, 0.7));
+  } else if (kind === 'locket') {
+    const m = new THREE.MeshStandardMaterial({ color: 0xffd060, emissive: 0xffaa20, emissiveIntensity: 0.5, metalness: 0.9, roughness: 0.25 });
+    const heart = new THREE.Group(); for (const s of [-1, 1]) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), m); b.position.set(s * 0.04, 0.03, 0); heart.add(b); } const tip = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.1, 10), m); tip.rotation.z = Math.PI; tip.position.y = -0.03; heart.add(tip); g.add(heart);
+    const chain = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.006, 4, 20), m); chain.position.y = 0.12; g.add(chain);
+    g.add(glowSprite(0xffcc40, 0.6));
+  }
+  return g;
+}
+function addItem(kind, x, y, z, opts = {}) {
+  const g = itemMesh(kind); g.position.set(x, y, z); level.add(g);
+  const it = { kind, g, x, z, y, baseY: y, taken: false, avail: opts.avail !== false, label: opts.label, id: opts.id || kind, spin: opts.spin !== false };
+  g.visible = it.avail; items.push(it);
+  interact.push({ kind: 'item', it, get x() { return it.x; }, get z() { return it.z; }, get y() { return it.y; }, reach: 2.3, label: () => it.label, act: () => takeItem(it), active: () => it.avail && !it.taken });
+  return it;
+}
+
+// =====================================================================
+//  ROOMS + PUZZLE PROPS
+// =====================================================================
+function desk(gb, x, z, ry = 0) { gb.box(x, 0.72, z, 1.1, 0.06, 0.7, ry); for (const sx of [-0.5, 0.5]) for (const sz of [-0.3, 0.3]) gb.box(x + sx, 0.36, z + sz, 0.05, 0.72, 0.05); }
+function chair(gb, x, z) { gb.box(x, 0.45, z, 0.45, 0.05, 0.45); gb.box(x, 0.75, z + 0.22, 0.45, 0.55, 0.05); for (const sx of [-0.2, 0.2]) for (const sz of [-0.2, 0.2]) gb.box(x + sx, 0.22, z + sz, 0.04, 0.45, 0.04); }
+function buildRooms() {
+  const wood = new GB(), metal = new GB(), white = new GB(), dark = new GB(), books = new GB(), chairs = new GB(), red = new GB();
+  // ---------- MATHS (detention room, you start here) ----------
+  const board = wallDecal(10.5, 1.75, 3.07, 0, textTex(['?'], { bg: '#1f3b2e' }), 4.4, 1.7);
+  dark.box(10.5, 1.75, 3.03, 4.6, 1.9, 0.04); // board frame behind
+  wood.box(10.5, 0.83, 3.2, 4.4, 0.06, 0.3); // chalk ledge
+  G.board = board;
+  interact.push({ kind: 'note', x: 10.5, y: 1.5, z: 3.6, reach: 3.2, label: () => 'Read the chalkboard', act: () => readNote('board') });
+  wood.box(10.5, 0.4, 5.6, 2.0, 0.8, 0.9); solid(9.5, 11.5, 5.15, 6.05);
+  const apple = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 8), stdMat({ color: 0xc0202a, roughness: 0.4 })); apple.position.set(10.0, 0.88, 5.5); level.add(apple);
+  G.deskItem = interact.push({ kind: 'desk', x: 10.5, y: 0.8, z: 6.2, reach: 2.2, label: () => run.deskSearched ? null : "Search the teacher's desk", act: searchDesk });
+  for (const x of [6, 10.5, 15]) for (const z of [8.3, 11.3]) { desk(wood, x, z); chair(chairs, x, z + 0.65); solid(x - 0.55, x + 0.55, z - 0.35, z + 0.35); }
+  wallDecal(3.02, 1.8, 9, faceRot(1, 0), textTex(['MATHS', 'IS MAGIC', '2+2=5?'], { w: 256, h: 340, bg: '#8fd3ff', color: '#1a1a2a', font0: '58px Impact', font1: '40px "Gochi Hand"', gap: 80, tilt: false }), 0.8, 1.06);
+  // clock stuck at midnight
+  wallDecal(17.98, 2.3, 9, faceRot(-1, 0), canvasTex(128, 128, (x) => { x.fillStyle = '#f4f1e6'; x.beginPath(); x.arc(64, 64, 60, 0, 7); x.fill(); x.lineWidth = 6; x.strokeStyle = '#222'; x.stroke(); x.lineWidth = 5; x.beginPath(); x.moveTo(64, 64); x.lineTo(64, 18); x.stroke(); x.lineWidth = 7; x.beginPath(); x.moveTo(64, 64); x.lineTo(64, 30); x.stroke(); for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; x.fillStyle = '#222'; x.fillRect(64 + Math.sin(a) * 50 - 2, 64 - Math.cos(a) * 50 - 2, 4, 4); } }), 0.5, 0.5, { transparent: true });
+
+  // ---------- SCIENCE LAB ----------
+  for (const z of [7.5, 11.2]) { white.box(28.5, 0.92, z, 7, 0.08, 1.1); dark.box(28.5, 0.45, z, 6.8, 0.9, 1.0); solid(25, 32, z - 0.55, z + 0.55); }
+  for (let i = 0; i < 7; i++) { const col = pick([0x40ff80, 0xb060ff, 0x40c0ff, 0xff60a0]); const b = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.22, 10), new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.8, transparent: true, opacity: 0.8 })); b.position.set(25.6 + i * 0.95, 1.07, i % 2 ? 7.5 : 11.2); level.add(b); }
+  // the locked cupboard with a 3-number padlock
+  metal.box(28.5, 1.05, 3.32, 2.2, 2.1, 0.6); solid(27.4, 29.6, 3, 3.65);
+  const cabDoors = [];
+  for (const s of [-1, 1]) { const piv = new THREE.Group(); piv.position.set(28.5 + s * 1.1, 1.05, 3.64); level.add(piv); const dm = new THREE.Mesh(new THREE.BoxGeometry(1.08, 2.0, 0.04), stdMat({ color: 0x6f8f8a, metalness: 0.4, roughness: 0.5 })); dm.position.x = -s * 0.54; piv.add(dm); cabDoors.push({ piv, s }); }
+  const pad = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.22, 0.08), stdMat({ color: 0xc9a227, metalness: 0.8, roughness: 0.3 })); pad.position.set(28.5, 1.15, 3.7); level.add(pad);
+  wallDecal(28.5, 2.35, 3.66, 0, textTex(['DANGER: SPARE FUSES'], { w: 512, h: 80, size: 40, family: 'Impact', color: '#111', bg: '#f0c419', tilt: false }), 2.0, 0.32);
+  G.cabinet = { doors: cabDoors, pad, open: 0 };
+  G.fuseSci = addItem('fuse', 28.5, 1.0, 3.35, { avail: false, label: 'Take the fuse', id: 'fuseSci' });
+  interact.push({ kind: 'cabinet', x: 28.5, y: 1.2, z: 3.9, reach: 2.4, label: () => run.cabinetOpen ? null : 'Science cupboard: 3-number lock', act: () => openKeypad('cabinet') });
+  wallDecal(35.98, 1.8, 9, faceRot(-1, 0), textTex(['PERIODIC', 'TABLE', 'H He Li Be B C N O'], { w: 384, h: 256, bg: '#d9e7ff', color: '#1d3557', font0: '44px Impact', font1: '30px "Gochi Hand"', gap: 60, tilt: false }), 1.8, 1.2);
+  // a model skeleton in the corner (its head follows you…)
+  G.skel = buildSkeleton(); G.skel.g.position.set(22.2, 0, 13.8); G.skel.g.rotation.y = 0.6; level.add(G.skel.g);
+
+  // ---------- LIBRARY ----------
+  const shelf = (x0, x1, z, depth, twoSided) => { const w = x1 - x0, x = (x0 + x1) / 2; books.box(x, 1.15, z, w, 2.3, depth, 0, 0); wood.box(x, 2.33, z, w + 0.1, 0.06, depth + 0.1); solid(x0, x1, z - depth / 2, z + depth / 2); void twoSided; };
+  shelf(39.1, 48, 3.3, 0.6); shelf(51, 59.9, 3.3, 0.6);
+  shelf(40.5, 46.5, 7.8, 0.7, true); shelf(52.5, 58.5, 7.8, 0.7, true); shelf(40.5, 46.5, 11.2, 0.7, true); shelf(55.5, 59.5, 11.2, 0.7, true);
+  // book UVs: repeat the texture every ~1.5 m
+  // the secret shelf: swings open like a door once the 3 red books are pulled
+  const spiv = new THREE.Group(); spiv.position.set(48, 0, 3.6); level.add(spiv);
+  const sb = new THREE.Mesh(new THREE.BoxGeometry(3, 2.3, 0.3), MAT.books); sb.position.set(1.5, 1.15, -0.15); sb.castShadow = !IS_TOUCH; spiv.add(sb);
+  const st = new THREE.Mesh(new THREE.BoxGeometry(3.05, 0.06, 0.35), MAT.wood); st.position.set(1.5, 2.33, -0.15); spiv.add(st);
+  dark.box(49.5, 1.15, 3.1, 3, 2.3, 0.2); // dark niche behind
+  wood.box(49.5, 0.6, 3.35, 0.6, 0.1, 0.3);
+  G.secret = { piv: spiv, open: 0 }; addBoxCol(1, 16, 48, 51, 3.0, 3.6);
+  G.fuseLib = addItem('fuse', 49.5, 0.85, 3.35, { avail: false, label: 'Take the hidden fuse', id: 'fuseLib' });
+  // red book slots (3 of these get a red book each game)
+  G.bookSlots = [[41.2, 1.55, 3.62, 0], [44.6, 0.95, 3.62, 0], [53.4, 1.85, 3.62, 0], [57.8, 0.6, 3.62, 0], [42.5, 1.3, 8.17, 0], [56, 1.9, 7.43, Math.PI], [44, 0.75, 10.83, Math.PI], [57.4, 1.45, 11.57, 0]];
+  G.redBooks = G.bookSlots.map(([x, y, z, ry]) => {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.36, 0.26), stdMat({ color: 0xd01a22, emissive: 0x500000, emissiveIntensity: 0.6, roughness: 0.6 })); b.position.set(x, y, z); b.rotation.y = ry; level.add(b);
+    const rb = { mesh: b, x, y, z, ry, used: false, pulled: false, base: z };
+    interact.push({ kind: 'book', x, y, z: z + (ry ? -0.35 : 0.35), reach: 2.0, label: () => rb.pulled ? null : 'Pull the red book', act: () => pullBook(rb), active: () => rb.used && !rb.pulled });
+    return rb;
+  });
+  wood.box(44, 0.75, 13.8, 2.2, 0.06, 1.0); for (const sx of [-1, 1]) for (const sz of [-1, 1]) wood.box(44 + sx, 0.37, 13.8 + sz * 0.4, 0.06, 0.74, 0.06); solid(42.9, 45.1, 13.3, 14.3);
+  wallDecal(44, 0.79, 13.8, 0, textTex(['NOTE'], { w: 128, h: 96, bg: '#f3ecd6', color: '#333', size: 34, family: '"Gochi Hand"' }), 0.3, 0.22).rotation.x = -Math.PI / 2;
+  interact.push({ kind: 'note', x: 44, y: 0.85, z: 13.8, reach: 2.2, label: () => "Read the librarian's note", act: () => readNote('library') });
+  wallDecal(59.98, 2.2, 9.5, faceRot(-1, 0), textTex(['SILENCE'], { w: 384, h: 96, size: 70, family: 'Impact', color: '#ff6a6a', bg: '#200', tilt: false }), 1.6, 0.4, { emissive: 0xffffff, ei: 0.6 });
+
+  // ---------- PRINCIPAL'S OFFICE ----------
+  wood.box(67.5, 0.78, 7, 2.2, 0.08, 1.1); wood.box(66.6, 0.38, 7, 0.4, 0.76, 1.0); wood.box(68.4, 0.38, 7, 0.4, 0.76, 1.0); solid(66.4, 68.6, 6.45, 7.55);
+  chair(chairs, 67.5, 5.7);
+  const lampG = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.08, 0.14, 12, 1, true), glowMat(0x40ff80, 0.7)); lampG.position.set(68.3, 1.05, 6.8); level.add(lampG);
+  wallDecal(67.2, 0.83, 7.1, 0, textTex(['NOTE'], { w: 128, h: 96, bg: '#f3ecd6', color: '#333', size: 34, family: '"Gochi Hand"' }), 0.3, 0.22).rotation.x = -Math.PI / 2;
+  interact.push({ kind: 'note', x: 67.2, y: 0.9, z: 7.6, reach: 2.2, label: () => "Read the principal's note", act: () => readNote('office') });
+  G.photo = wallDecal(71.98, 1.8, 10.2, faceRot(-1, 0), textTex(['?'], { bg: '#ccc' }), 1.3, 0.95);
+  interact.push({ kind: 'note', x: 71.3, y: 1.7, z: 10.2, reach: 2.4, label: () => 'Look at the class photo', act: () => readNote('photo') });
+  // the safe
+  const safe = new THREE.Group(); safe.position.set(70.6, 0, 4.0); level.add(safe);
+  const sbody = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.0, 0.9), stdMat({ color: 0x2d3238, metalness: 0.7, roughness: 0.4 })); sbody.position.y = 0.5; safe.add(sbody);
+  const spv = new THREE.Group(); spv.position.set(-0.48, 0.5, 0.46); safe.add(spv);
+  const sdoor = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, 0.06), stdMat({ color: 0x3a4048, metalness: 0.8, roughness: 0.35 })); sdoor.position.x = 0.45; spv.add(sdoor);
+  const dial = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.05, 16), stdMat({ color: 0xc9a227, metalness: 0.9, roughness: 0.3 })); dial.rotation.x = Math.PI / 2; dial.position.set(0.45, 0.1, 0.05); spv.add(dial);
+  solid(70.05, 71.15, 3.5, 4.5);
+  G.safe = { piv: spv, open: 0 };
+  G.frontKey = addItem('frontKey', 70.6, 0.55, 4.0, { avail: false, label: 'Take the FRONT DOOR KEY', id: 'frontKey' });
+  interact.push({ kind: 'safe', x: 70.6, y: 0.7, z: 4.8, reach: 2.2, label: () => run.safeOpen ? null : 'The safe: 4-number lock', act: () => openKeypad('safe') });
+  for (let i = 0; i < 2; i++) { metal.box(64, 0.7, 4.2 + i * 0.9, 0.7, 1.4, 0.8); } solid(63.6, 64.4, 3.8, 5.6);
+  const plant = new THREE.Mesh(new THREE.SphereGeometry(0.35, 10, 8), stdMat({ color: 0x2e6b2a })); plant.position.set(64, 0.9, 13.8); level.add(plant); wood.cyl(64, 0.3, 13.8, 0.25, 0.2, 0.6);
+
+  // ---------- MUSIC ROOM ----------
+  const piano = new THREE.Group(); piano.position.set(22, 0, 41.4); level.add(piano);
+  const pb = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.3, 0.7), MAT.black); pb.position.y = 0.65; piano.add(pb);
+  const kb = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.08, 0.35), MAT.white); kb.position.set(0, 0.85, -0.45); piano.add(kb);
+  const lidTop = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.05, 0.4), MAT.black); lidTop.position.set(0, 1.3, -0.15); piano.add(lidTop);
+  solid(20.8, 23.2, 40.4, 42);
+  G.pianoKeys = [];
+  const PCOL = [['red', 0xe53935, 60], ['blue', 0x1e88e5, 64], ['yellow', 0xfdd835, 67], ['green', 0x43a047, 72]];
+  PCOL.forEach(([name, col, note], i) => {
+    const k = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.1, 0.36), new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.25, roughness: 0.4 })); k.position.set(-0.72 + i * 0.48, 0.9, -0.46); piano.add(k);
+    const pk = { name, col, note, mesh: k, press: 0 }; G.pianoKeys.push(pk);
+    interact.push({ kind: 'piano', x: 22 - 0.72 + i * 0.48, y: 0.95, z: 40.95, reach: 1.9, label: () => run.pianoDone ? null : `Play the ${name.toUpperCase()} key`, act: () => playKey(pk) });
+  });
+  // the piano bench (the fuse is inside)
+  wood.box(22, 0.45, 39.9, 1.4, 0.1, 0.45); for (const sx of [-0.6, 0.6]) wood.box(22 + sx, 0.22, 39.9, 0.08, 0.45, 0.4); solid(21.3, 22.7, 39.67, 40.13);
+  const bl = new THREE.Group(); bl.position.set(22, 0.5, 39.7); level.add(bl); const blm = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.05, 0.45), MAT.wood); blm.position.z = 0.22; bl.add(blm);
+  G.bench = { piv: bl, open: 0 };
+  G.fusePiano = addItem('fuse', 22, 0.62, 39.9, { avail: false, label: 'Take the fuse from the bench', id: 'fusePiano' });
+  G.poster = wallDecal(3.02, 1.7, 36, faceRot(1, 0), textTex(['?'], { bg: '#fff7e0' }), 1.6, 1.2);
+  interact.push({ kind: 'note', x: 3.7, y: 1.6, z: 36, reach: 2.6, label: () => 'Read the song poster', act: () => readNote('poster') });
+  for (let i = 0; i < 7; i++) { const a = Math.PI * (0.15 + i * 0.12); chair(chairs, 15 + Math.cos(a) * 6, 38 - Math.sin(a) * 4); }
+  // drum + music stands
+  const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.5, 18), stdMat({ color: 0xc62828 })); drum.position.set(6, 0.25, 40.5); level.add(drum); solid(5.5, 6.5, 40, 41);
+  const skin = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.02, 18), MAT.white); skin.position.set(6, 0.51, 40.5); level.add(skin);
+  for (const x of [11, 14, 17]) { dark.box(x, 0.6, 34, 0.04, 1.2, 0.04); dark.box(x, 1.2, 34, 0.5, 0.35, 0.03); }
+  wallDecal(29.98, 1.8, 36, faceRot(-1, 0), textTex(['♪ ♫ ♪', 'SCHOOL CHOIR'], { w: 384, h: 256, bg: '#ffd1e8', color: '#4a1d6b', font0: '70px serif', font1: '44px "Gochi Hand"', gap: 80, tilt: false }), 1.6, 1.07);
+
+  // ---------- CAFETERIA ----------
+  for (const z of [34, 38.5]) for (const x of [41, 52]) { wood.box(x, 0.75, z, 6, 0.08, 1.2); dark.box(x, 0.37, z, 5.6, 0.72, 0.15); for (const s of [-1, 1]) wood.box(x, 0.45, z + s * 0.95, 6, 0.06, 0.35); solid(x - 3, x + 3, z - 0.6, z + 0.6); }
+  for (let i = 0; i < 9; i++) { const tr = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.03, 0.32), stdMat({ color: pick([0x3a6fd8, 0xe0a030, 0x43a047]) })); tr.position.set(rand(38.5, 54.5), 0.8, pick([34, 38.5]) + rand(-0.3, 0.3)); tr.rotation.y = rand(-0.3, 0.3); level.add(tr); }
+  metal.box(59.2, 0.55, 36, 1.2, 1.1, 8); solid(58.6, 60, 32, 40);
+  wallDecal(59.98 - 0.02, 2.3, 36, faceRot(-1, 0), textTex(["TODAY'S LUNCH:", 'MYSTERY STEW'], { w: 512, h: 160, bg: '#222', color: '#f4f1e6', font0: '44px "Gochi Hand"', font1: '56px "Gochi Hand"', gap: 60, tilt: false }), 2.4, 0.75);
+
+  // ---------- BATHROOM ----------
+  for (let i = 0; i < 3; i++) { const z = 33 + i * 3; white.box(70.5, 1.0, z, 3, 2.0, 0.06); }
+  white.box(70.5, 1.0, 42 - 0.03, 3, 2.0, 0.06);
+  for (let i = 0; i < 3; i++) { const z = 34.5 + i * 3; const dz = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.8, 1.2), stdMat({ color: 0xd8a8c8 })); dz.position.set(69.1, 1.0, z); dz.rotation.y = 0.5 * (i % 2 ? 1 : -1); level.add(dz); white.cyl(71.5, 0.25, z, 0.25, 0.2, 0.5); }
+  for (let i = 0; i < 3; i++) { const z = 31.5 + i * 3; addBoxCol(Math.floor(z / CS), 23, 69, 72, z - 0.03 + 1.5, z + 0.03 + 1.5); }
+  for (const z of [35, 38]) { white.box(63.4, 0.85, z, 0.7, 0.15, 0.9); white.cyl(63.4, 0.42, z, 0.12, 0.12, 0.84); solid(63, 63.8, z - 0.45, z + 0.45); }
+  const mirror = wallDecal(63.02, 1.75, 36.5, faceRot(1, 0), canvasTex(256, 256, (x, w, h) => { const g = x.createLinearGradient(0, 0, w, h); g.addColorStop(0, '#9fb6c8'); g.addColorStop(1, '#5d7286'); x.fillStyle = g; x.fillRect(0, 0, w, h); x.strokeStyle = '#ddd'; x.lineWidth = 10; x.strokeRect(0, 0, w, h); x.fillStyle = 'rgba(255,255,255,.2)'; x.beginPath(); x.moveTo(30, 200); x.lineTo(120, 20); x.lineTo(150, 20); x.lineTo(60, 200); x.fill(); x.fillStyle = 'rgba(200,240,255,.9)'; x.font = '34px "Gochi Hand"'; x.textAlign = 'center'; x.fillText('I lost my', w / 2, 100); x.fillText('locket…', w / 2, 140); x.font = '40px serif'; x.fillText('💔', w / 2, 190); }), 1.8, 1.4);
+  void mirror;
+  G.locket = addItem('locket', 63.45, 0.98, 38, { label: 'Pick up the golden locket', id: 'locket' });
+
+  level.add(wood.mesh(MAT.wood, !IS_TOUCH), metal.mesh(MAT.metal, !IS_TOUCH), white.mesh(MAT.white), dark.mesh(MAT.dark), chairs.mesh(MAT.chair, !IS_TOUCH), red.mesh(MAT.red));
+  const bm = books.mesh(MAT.books); const buv = bm.geometry.attributes.uv; for (let i = 0; i < buv.count; i++) buv.setX(i, buv.getX(i) * 3); TEX.books.wrapS = THREE.RepeatWrapping; level.add(bm);
+}
+function buildSkeleton() {
+  const g = new THREE.Group(), bone = stdMat({ color: 0xece4d0, roughness: 0.5 });
+  const add = (geo, x, y, z, p = g) => { const m = new THREE.Mesh(geo, bone); m.position.set(x, y, z); p.add(m); return m; };
+  add(new THREE.CylinderGeometry(0.03, 0.03, 1.8, 6), 0, 0.9, -0.15); add(new THREE.CylinderGeometry(0.25, 0.25, 0.04, 12), 0, 0.02, -0.15);
+  for (let i = 0; i < 5; i++) add(new THREE.TorusGeometry(0.15 - i * 0.012, 0.015, 4, 12), 0, 1.2 + i * 0.08, 0).rotation.x = Math.PI / 2;
+  add(new THREE.CylinderGeometry(0.025, 0.025, 0.5, 6), 0, 1.2, 0);
+  add(new THREE.BoxGeometry(0.3, 0.08, 0.12), 0, 0.92, 0);
+  for (const s of [-1, 1]) { add(new THREE.CylinderGeometry(0.02, 0.02, 0.85, 6), s * 0.1, 0.45, 0); const arm = add(new THREE.CylinderGeometry(0.018, 0.018, 0.7, 6), s * 0.22, 1.2, 0.02); arm.rotation.z = s * 0.15; }
+  const head = new THREE.Group(); head.position.set(0, 1.68, 0); g.add(head);
+  add(new THREE.SphereGeometry(0.13, 12, 10), 0, 0, 0, head);
+  for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), MAT.black); e.position.set(s * 0.05, 0.01, 0.11); head.add(e); }
+  return { g, head };
+}
+
+// =====================================================================
+//  THE GHOST: Miss Grimsby, the hall monitor
+// =====================================================================
+function buildGhost(phantom) {
+  const g = new THREE.Group(), root = new THREE.Group(); g.add(root);
+  const mat = new THREE.MeshStandardMaterial({ color: 0xe8f0ff, emissive: phantom ? 0x3050a0 : 0x7f9fd0, emissiveIntensity: 0.55, transparent: true, opacity: phantom ? 0.45 : 0.82, side: THREE.DoubleSide, roughness: 0.6, depthWrite: false });
+  const pts = [[0.001, 2.28], [0.2, 2.25], [0.36, 2.14], [0.44, 1.98], [0.46, 1.8], [0.44, 1.62], [0.5, 1.35], [0.6, 1.0], [0.7, 0.62], [0.78, 0.3]].map(([r, y]) => new THREE.Vector2(r, y));
+  const body = new THREE.Mesh(new THREE.LatheGeometry(pts, 22), mat); root.add(body);
+  const tatters = [];
+  for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, t = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.5, 6), mat); t.position.set(Math.sin(a) * 0.68, 0.1, Math.cos(a) * 0.68); t.rotation.x = Math.PI; root.add(t); tatters.push(t); }
+  const black = new THREE.MeshBasicMaterial({ color: 0x05060c });
+  const eyes = [];
+  for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 10), black); e.scale.set(1, 1.4, 0.5); e.position.set(s * 0.15, 1.93, 0.45); root.add(e); eyes.push(e); }
+  const mouth = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 10), black); mouth.scale.set(1.1, 1.5, 0.5); mouth.position.set(0, 1.68, 0.47); root.add(mouth);
+  // little round glasses, a hair bun and a hall monitor sash: she's very strict
+  const rim = new THREE.MeshStandardMaterial({ color: 0x222a3a, metalness: 0.6, roughness: 0.3, transparent: true, opacity: phantom ? 0.4 : 0.9 });
+  for (const s of [-1, 1]) { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 6, 18), rim); ring.position.set(s * 0.15, 1.93, 0.5); root.add(ring); }
+  const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.012, 0.012), rim); bridge.position.set(0, 1.95, 0.5); root.add(bridge);
+  const bun = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 10), mat); bun.position.set(0, 2.3, -0.2); root.add(bun);
+  const sashMat = new THREE.MeshStandardMaterial({ color: 0xffd23f, emissive: 0x806000, emissiveIntensity: 0.4, transparent: true, opacity: phantom ? 0.3 : 0.9 });
+  const sash = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.035, 6, 28), sashMat); sash.position.set(0, 1.25, 0); sash.rotation.set(Math.PI / 2, 0.55, 0); sash.scale.set(1, 0.85, 1); root.add(sash);
+  const arms = [];
+  for (const s of [-1, 1]) {
+    const piv = new THREE.Group(); piv.position.set(s * 0.46, 1.48, 0.05); root.add(piv);
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.05, 0.75, 8), mat); arm.position.y = -0.36; piv.add(arm);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 6), mat); hand.position.y = -0.75; piv.add(hand);
+    arms.push(piv);
+  }
+  const glows = [];
+  for (const e of eyes) { const gl = glowSprite(0x60c8ff, 0.5); gl.position.copy(e.position); gl.position.z += 0.05; gl.material.fog = false; gl.visible = false; root.add(gl); glows.push(gl); }
+  return { g, root, body, eyes, mouth, arms, tatters, glows, mat };
+}
+const ghost = { model: null, x: 0, z: 0, yaw: 0, state: 'dormant', path: [], pi: 0, goal: null, speed: 0, phase: 0, lastSeen: { x: 0, z: 0 }, lastSeenT: -99, searchT: 0, repath: 0, wakeT: 20, moanT: 5, hideTarget: null, stuckT: 0, ignoreT: 0, chaseT: 0, pause: 0 };
+let phantom = null, book = null;
+
+// =====================================================================
+//  GAME STATE
+// =====================================================================
+let state = 'loading', run = null;
+const P = { x: 0, z: 0, yaw: 0, pitch: 0, eye: 1.65, crouch: false, stamina: 100, light: true, hidden: null, officeKey: false, frontKey: false, locket: false, fuses: 0, bob: 0, stepAcc: 0, vx: 0, vz: 0, running: false, moving: false, lookOff: 0, flick: 0 };
+const keys = new Set();
+const input = { mx: 0, my: 0, run: false };
+let uiOpen = null;
+
+// =====================================================================
+//  COLLISION
+// =====================================================================
+const RAD = 0.32;
+function boxesAt(r, c, out) {
+  out.length = 0;
+  if (r < 0 || c < 0 || r >= ROWS || c >= COLS) { out.push([c * CS, c * CS + CS, r * CS, r * CS + CS]); return out; }
+  for (const b of cellBoxes[r][c]) out.push(b);
+  const k = ch(r, c);
+  if ('DOX'.includes(k)) { const d = doorAt(r, c); if (!d.open || d.t < 0.6) { const x = cx(c), z = cz(r); if (d.alongX) out.push([x - 0.15, x + 0.15, r * CS, r * CS + CS]); else out.push([c * CS, c * CS + CS, z - 0.15, z + 0.15]); } }
+  return out;
+}
+const _bx = [];
+function collide(p, rad) {
+  for (let pass = 0; pass < 2; pass++) {
+    const [r0, c0] = cellAt(p.x, p.z);
+    for (let r = r0 - 1; r <= r0 + 1; r++) for (let c = c0 - 1; c <= c0 + 1; c++) {
+      if (c < 0 && exitDoor.open && r === exitDoor.r) continue; // the way outside
+      if (c < 0 && exitDoor.open) continue;
+      for (const b of boxesAt(r, c, _bx)) {
+        const qx = clamp(p.x, b[0], b[1]), qz = clamp(p.z, b[2], b[3]);
+        const dx = p.x - qx, dz = p.z - qz, d2 = dx * dx + dz * dz;
+        if (d2 < rad * rad) {
+          if (d2 < 1e-8) { const pushes = [[b[0] - rad - p.x, 0], [b[1] + rad - p.x, 0], [0, b[2] - rad - p.z], [0, b[3] + rad - p.z]]; pushes.sort((a, b2) => Math.abs(a[0] + a[1]) - Math.abs(b2[0] + b2[1])); p.x += pushes[0][0]; p.z += pushes[0][1]; }
+          else { const d = Math.sqrt(d2), k2 = (rad - d) / d; p.x += dx * k2; p.z += dz * k2; }
+        }
+      }
+    }
+  }
+}
+function lineClear(x0, z0, x1, z1, block, skipEnds = true, step = 0.25) {
+  const dx = x1 - x0, dz = z1 - z0, d = Math.hypot(dx, dz), n = Math.max(1, Math.ceil(d / step));
+  const [ra, ca] = cellAt(x0, z0), [rb, cb] = cellAt(x1, z1);
+  for (let i = 1; i < n; i++) { const t = i / n, [r, c] = cellAt(x0 + dx * t, z0 + dz * t); if (skipEnds && ((r === ra && c === ca) || (r === rb && c === cb))) continue; if (block(r, c)) return false; }
+  return true;
+}
+function wideClear(x0, z0, x1, z1, w) {
+  const dx = x1 - x0, dz = z1 - z0, d = Math.hypot(dx, dz) || 1, px = -dz / d * w, pz = dx / d * w, nb = (r, c) => !ghostPass(r, c);
+  return lineClear(x0, z0, x1, z1, nb, false) && lineClear(x0 + px, z0 + pz, x1 + px, z1 + pz, nb, false) && lineClear(x0 - px, z0 - pz, x1 - px, z1 - pz, nb, false);
+}
+
+// =====================================================================
+//  PATHFINDING (grid BFS with diagonals)
+// =====================================================================
+function bfs(sr, sc, gr, gc) {
+  const N = ROWS * COLS, prev = new Int32Array(N).fill(-2), q = new Int32Array(N);
+  const si = sr * COLS + sc; let qh = 0, qt = 0; q[qt++] = si; prev[si] = -1;
+  let best = si, bestD = Math.abs(sr - gr) + Math.abs(sc - gc), found = false;
+  while (qh < qt) {
+    const i = q[qh++], r = (i / COLS) | 0, c = i % COLS;
+    if (r === gr && c === gc) { best = i; found = true; break; }
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      if (!dr && !dc) continue; const nr = r + dr, nc = c + dc; if (!ghostPass(nr, nc)) continue;
+      if (dr && dc && (!ghostPass(r + dr, c) || !ghostPass(r, c + dc))) continue;
+      const ni = nr * COLS + nc; if (prev[ni] !== -2) continue; prev[ni] = i; q[qt++] = ni;
+      const dd = Math.abs(nr - gr) + Math.abs(nc - gc); if (dd < bestD) { bestD = dd; best = ni; }
+    }
+  }
+  const path = []; let i = best; while (i !== si && i >= 0) { path.push([(i / COLS) | 0, i % COLS]); i = prev[i]; }
+  path.reverse(); return { path, found };
+}
+
+// =====================================================================
+//  GHOST AI
+// =====================================================================
+function gdist() { return Math.hypot(P.x - ghost.x, P.z - ghost.z); }
+function setGoal(x, z) {
+  const [sr, sc] = cellAt(ghost.x, ghost.z), [gr, gc] = cellAt(x, z);
+  const res = bfs(sr, sc, gr, gc); ghost.path = res.path; ghost.pi = 0; ghost.goal = { x, z, found: res.found };
+  if (!res.found) { const last = res.path[res.path.length - 1]; ghost.goal = last ? { x: cx(last[1]), z: cz(last[0]), found: false } : { x: ghost.x, z: ghost.z, found: false }; }
+}
+function wpt(i) { return i < ghost.path.length ? { x: cx(ghost.path[i][1]), z: cz(ghost.path[i][0]) } : ghost.goal; }
+function randomFloor(nearX, nearZ, radius) {
+  for (let k = 0; k < 80; k++) { const r = randi(1, ROWS - 2), c = randi(1, COLS - 2); if (ch(r, c) !== '.') continue; if (nearX != null && Math.hypot(cx(c) - nearX, cz(r) - nearZ) > radius) continue; return { x: cx(c), z: cz(r) }; }
+  return { x: cx(GHOST_START.c), z: cz(GHOST_START.r) };
+}
+function canSeePlayer() {
+  if (P.hidden || ghost.ignoreT > 0) return false;
+  const d = gdist(), D = DIFF[run.diff];
+  let range = (P.light ? 18 : 8) * (P.crouch ? 0.6 : 1) * D.sight;
+  if (ghost.state === 'chase') range = Math.max(range, 15);
+  if (d > range) return false;
+  const fx = Math.sin(ghost.yaw), fz = Math.cos(ghost.yaw), dot = ((P.x - ghost.x) * fx + (P.z - ghost.z) * fz) / (d || 1);
+  const inCone = dot > 0.35 || d < 3.2 || ghost.state === 'chase';
+  const cfx = -Math.sin(P.yaw), cfz = -Math.cos(P.yaw), lit = P.light && d < 14 * D.sight && ((ghost.x - P.x) * cfx + (ghost.z - P.z) * cfz) / (d || 1) > 0.88;
+  if (!inCone && !lit) return false;
+  return lineClear(ghost.x, ghost.z, P.x, P.z, sightBlock, true, 0.3);
+}
+function wakeGhost() {
+  if (ghost.state !== 'dormant') return;
+  ghost.state = 'patrol'; ghost.goal = null; A.bell(); setTimeout(() => A.moan(0.7, panTo(ghost.x, ghost.z)), 1200); flashLights(1.0); toast('The school bell rings… something is floating down the hall.', 3200);
+}
+function noise(x, z, r) {
+  if (!run || state !== 'playing') return;
+  const d = Math.hypot(x - ghost.x, z - ghost.z), R = r * DIFF[run.diff].hear;
+  if (d > R) return;
+  if (ghost.state === 'dormant') { if (r >= 10) wakeGhost(); return; }
+  if (ghost.state === 'chase' || ghost.state === 'hideCheck') return;
+  ghost.state = 'investigate'; ghost.lastSeen = { x, z }; setGoal(x, z); ghost.repath = 1;
+}
+const SHOUTS = ['No running in the halls!', 'Where is your hall pass?', 'Detention!', 'Back to class!', 'I can see you!'];
+function startChase() {
+  if (ghost.state !== 'chase') { A.sting(); run.spotted++; shake(0.15); say(pick(SHOUTS)); if (run.spotted === 1) toast('She sees you! RUN and hide!', 1800); }
+  ghost.state = 'chase'; ghost.chaseT = 0;
+}
+function updateGhost(dt, t) {
+  const D = DIFF[run.diff];
+  const rage = 1 + 0.06 * run.fusesIn + (run.power ? 0.08 : 0) + (exitDoor.open ? 0.12 : 0) + Math.min(0.12, run.time / 1500);
+  ghost.ignoreT = Math.max(0, ghost.ignoreT - dt);
+  if (ghost.state === 'dormant') {
+    ghost.wakeT -= dt; if (ghost.wakeT <= 0 || (gdist() < 4.5 && !P.hidden)) wakeGhost();
+    poseGhost(dt, t, 0); return;
+  }
+  const sees = canSeePlayer();
+  if (sees) { ghost.lastSeen = { x: P.x, z: P.z }; ghost.lastSeenT = run.time; if (ghost.state !== 'chase' && ghost.state !== 'hideCheck') startChase(); }
+  let speed = D.patrol * rage;
+  ghost.repath -= dt;
+  switch (ghost.state) {
+    case 'chase': {
+      speed = D.chase * rage; ghost.chaseT += dt;
+      if (!sees && run.time - ghost.lastSeenT > 2.2) { ghost.state = 'hunt'; setGoal(ghost.lastSeen.x, ghost.lastSeen.z); break; }
+      if (ghost.chaseT > D.giveUp && !sees) { ghost.state = 'patrol'; ghost.goal = null; break; }
+      if (ghost.repath <= 0) { ghost.repath = 0.35; setGoal(ghost.lastSeen.x, ghost.lastSeen.z); }
+      break;
+    }
+    case 'hunt': speed = D.chase * rage * 0.85; if (arrived()) { ghost.state = 'search'; ghost.searchT = 7; ghost.goal = null; } break;
+    case 'investigate': speed = D.patrol * rage * 1.5; if (arrived()) { ghost.state = 'search'; ghost.searchT = 5; ghost.goal = null; } break;
+    case 'search':
+      speed = D.patrol * rage; ghost.searchT -= dt;
+      if (!ghost.goal || arrived()) { const p = randomFloor(ghost.lastSeen.x, ghost.lastSeen.z, 7); setGoal(p.x, p.z); ghost.pause = rand(0.5, 1.5); }
+      if (ghost.searchT <= 0) { ghost.state = 'patrol'; ghost.goal = null; }
+      break;
+    case 'patrol':
+      if (!ghost.goal || arrived()) { const p = Math.random() < 0.5 ? randomFloor(P.x, P.z, 15) : randomFloor(); setGoal(p.x, p.z); ghost.pause = rand(0.8, 2.5); if (Math.random() < 0.45) moanNear(); }
+      break;
+    case 'hideCheck': {
+      speed = D.chase * rage; const lk = ghost.hideTarget;
+      if (!ghost.goal) setGoal(lk.front.x, lk.front.z);
+      const fd = Math.hypot(ghost.x - lk.front.x, ghost.z - lk.front.z);
+      if (fd < 1.1 || (arrived() && fd < 3.3)) { ghost.yaw = Math.atan2(lk.x - ghost.x, lk.z - ghost.z); lk.open = 1; A.locker(1); say('Found you!'); setTimeout(() => jumpscare(), 350); ghost.state = 'grab'; }
+      break;
+    }
+    case 'grab': speed = 0; break;
+  }
+  if (ghost.pause > 0 && (ghost.state === 'patrol' || ghost.state === 'search')) { ghost.pause -= dt; speed = 0; }
+  let mv = 0;
+  if (speed > 0 && ghost.goal) {
+    if (ghost.state === 'chase' && sees && gdist() < 7 && wideClear(ghost.x, ghost.z, P.x, P.z, 0.4)) { ghost.path = []; ghost.pi = 0; ghost.goal = { x: P.x, z: P.z, found: true }; }
+    while (ghost.pi < ghost.path.length && wideClear(ghost.x, ghost.z, wpt(ghost.pi + 1).x, wpt(ghost.pi + 1).z, 0.4)) ghost.pi++;
+    const w = wpt(ghost.pi), dx = w.x - ghost.x, dz = w.z - ghost.z, d = Math.hypot(dx, dz);
+    if (d < 0.35 && ghost.pi < ghost.path.length) ghost.pi++;
+    else if (d > 0.05) { mv = Math.min(d, speed * dt); ghost.x += dx / d * mv; ghost.z += dz / d * mv; const ty = Math.atan2(dx, dz); ghost.yaw += wrapAng(ty - ghost.yaw) * (1 - Math.exp(-8 * dt)); }
+  }
+  if (ghost.state === 'chase' && sees) { const ty = Math.atan2(P.x - ghost.x, P.z - ghost.z); ghost.yaw += wrapAng(ty - ghost.yaw) * (1 - Math.exp(-6 * dt)); }
+  ghost.speed = mv / Math.max(dt, 1e-4);
+  // she opens doors as she floats through them (creeeak)
+  const [gr, gc] = cellAt(ghost.x, ghost.z), gd = doorAt(gr, gc);
+  if (gd && gd.k === 'D' && !gd.open) { gd.open = true; gd.t = 0; const dd = gdist(); A.creak(clamp(1 - dd / 22, 0.05, 1), panTo(ghost.x, ghost.z)); }
+  ghost.moanT -= dt; if (ghost.moanT <= 0) { ghost.moanT = ghost.state === 'chase' ? rand(3, 5) : rand(7, 13); moanNear(); }
+  if (state === 'playing' && !P.hidden && ghost.state !== 'grab' && gdist() < 1.2 && lineClear(ghost.x, ghost.z, P.x, P.z, sightBlock)) { ghost.state = 'grab'; jumpscare(); }
+  poseGhost(dt, t, ghost.speed);
+}
+function moanNear() { const d = gdist(); A.moan(clamp(1 - d / 26, 0, 1) * (ghost.state === 'chase' ? 1 : 0.7), panTo(ghost.x, ghost.z)); }
+function arrived() { return !ghost.goal || (ghost.pi >= ghost.path.length && Math.hypot(ghost.x - ghost.goal.x, ghost.z - ghost.goal.z) < 0.5); }
+function panTo(x, z) { const dx = x - P.x, dz = z - P.z, d = Math.hypot(dx, dz) || 1; return clamp((dx * Math.cos(P.yaw) - dz * Math.sin(P.yaw)) / d, -1, 1) * 0.85; }
+function poseGhost(dt, t, speed, m = ghost.model) {
+  m.g.position.set(ghost.x, 0, ghost.z); m.g.rotation.y = ghost.yaw;
+  const chase = ghost.state === 'chase' || ghost.state === 'hunt' || ghost.state === 'hideCheck';
+  ghost.phase += dt * (1.5 + speed);
+  m.root.position.y = 0.3 + Math.sin(ghost.phase * 1.3) * 0.12;
+  m.root.rotation.x = damp(m.root.rotation.x, chase ? 0.25 : ghost.state === 'dormant' ? -0.05 : 0.08, 4, dt);
+  m.root.rotation.z = Math.sin(ghost.phase * 0.7) * 0.06;
+  m.tatters.forEach((tt, i) => { tt.rotation.z = Math.sin(t * 4 + i) * 0.25; });
+  m.arms.forEach((a, i) => { const s = i ? 1 : -1; a.rotation.x = damp(a.rotation.x, chase ? -1.35 + Math.sin(t * 6 + i) * 0.15 : -0.15 + Math.sin(t * 1.5 + i) * 0.12, 6, dt); a.rotation.z = s * (chase ? 0.1 : 0.25); });
+  m.mouth.scale.y = damp(m.mouth.scale.y, chase ? 2.6 + Math.sin(t * 9) * 0.3 : 1.5, 6, dt);
+  m.glows.forEach((gl) => { gl.visible = chase; });
+  m.mat.opacity = ghost.state === 'dormant' ? 0.55 + Math.sin(t) * 0.1 : 0.82;
+  ghostLight.position.set(ghost.x, 1.7, ghost.z); ghostLight.intensity = ghost.state === 'dormant' ? 0.5 : chase ? 1.8 : 1.1;
+}
+
+// =====================================================================
+//  PLAYER ACTIONS + PUZZLES
+// =====================================================================
+function takeItem(it) {
+  it.taken = true; it.g.visible = false; A.pickup();
+  if (it.kind === 'fuse') { P.fuses++; toast(`Got a fuse! (${P.fuses + run.fusesIn}/3)`); }
+  else if (it.kind === 'frontKey') { P.frontKey = true; toast('Got the FRONT DOOR KEY! 🔑', 2600); }
+  else if (it.kind === 'locket') { P.locket = true; toast('A golden locket… there is an old photo of a smiling teacher inside. 💛', 3600); A.lullaby(0.06, 1.2); }
+  run.items++; updateHUD(true);
+}
+function searchDesk() {
+  if (run.deskSearched) return;
+  run.deskSearched = true; P.officeKey = true; A.click(); A.pickup();
+  toast("Found a key in the drawer: 'PRINCIPAL'S OFFICE' 🗝️", 3000); updateHUD(true);
+}
+function useDoor(d) {
+  if (d.locked) {
+    if (!P.officeKey) { A.locked(); noise(cx(d.c), cz(d.r), 7); toast("Locked. The office key must be somewhere…"); return; }
+    d.locked = false; A.unlock(); toast("Unlocked the principal's office!"); updateHUD(true);
+  }
+  d.open = !d.open; d.t = 0;
+  if (d.open) A.creak(0.8); else A.shut(0.6);
+  noise(cx(d.c), cz(d.r), 6);
+}
+function fuseLabel() { if (run.power) return null; return P.fuses ? `Put in ${P.fuses} fuse${P.fuses > 1 ? 's' : ''} (${run.fusesIn}/3 inside)` : `Fuse box: ${run.fusesIn}/3 fuses`; }
+function useFuseBox() {
+  if (run.power) return;
+  if (!P.fuses) { A.buzz(); toast(`The fuse box needs 3 fuses. ${run.fusesIn}/3 inside.`); return; }
+  run.fusesIn += P.fuses; P.fuses = 0; A.fuse(); noise(fuseBox.x, fuseBox.z, 16);
+  fuseBox.slots.forEach((s, i) => { if (i < run.fusesIn) s.material.emissive.setHex(0x20ff40); });
+  if (run.fusesIn >= 3) {
+    run.power = true; A.bell(); flashLights(0.6);
+    exitDoor.led.material.emissive.setHex(0xffaa00);
+    toast('POWER ON! The lights are back. Now find the front door key!', 3800);
+    if (ghost.state === 'dormant') wakeGhost(); else { ghost.lastSeen = { x: P.x, z: P.z }; if (ghost.state !== 'chase') { ghost.state = 'hunt'; setGoal(P.x, P.z); } }
+    setTimeout(() => say('Who turned the lights on?!'), 900);
+  } else toast(`Fuse in! ${run.fusesIn}/3. She heard that…`, 2500);
+  updateHUD(true);
+}
+function useExit() {
+  if (exitDoor.open) return;
+  if (!run.power) { A.buzz(); toast('The electric lock is dead. Fix the power first!'); return; }
+  if (!P.frontKey) { A.locked(); noise(exitDoor.pivs ? cx(0) : 0, cz(7), 8); toast('Locked tight. The key is in the principal\'s safe.'); return; }
+  exitDoor.open = true; exitDoor.t = 0; A.unlock(); A.creak(1); exitDoor.chain.visible = false; exitDoor.lock.visible = false; exitDoor.led.material.emissive.setHex(0x20ff40);
+  toast('THE DOORS ARE OPEN! GET OUT!', 3000);
+  ghost.lastSeen = { x: P.x, z: P.z }; if (ghost.state === 'dormant') wakeGhost(); ghost.state = 'hunt'; setGoal(P.x, P.z); say('Come back here!');
+  updateHUD(true);
+}
+function pullBook(rb) {
+  if (rb.pulled) return;
+  rb.pulled = true; A.thud(0.4); A.click(); noise(rb.x, rb.z, 5);
+  rb.mesh.position.z = rb.base + (rb.ry ? -0.16 : 0.16); rb.mesh.rotation.x = rb.ry ? 0.35 : -0.35;
+  const n = G.redBooks.filter((b) => b.used && b.pulled).length;
+  if (n >= 3) { run.secretOpen = true; A.creak(1); setTimeout(() => A.tada(), 400); G.fuseLib.avail = true; G.fuseLib.g.visible = true; toast('CLICK! A secret bookshelf swings open!', 3000); }
+  else toast(`Click… (${n}/3 red books)`, 1600);
+}
+function playKey(pk) {
+  if (run.pianoDone) return;
+  A.piano(pk.note, 0.22); pk.press = 1; run.pianoIn.push(pk.name);
+  const seq = run.song, i = run.pianoIn.length - 1;
+  if (run.pianoIn[i] !== seq[i]) {
+    run.pianoIn = []; setTimeout(() => A.sour(), 200);
+    noise(22, 41, 22); toast('PLONK! Wrong note… and it was LOUD. She heard that!', 2600); return;
+  }
+  noise(22, 41, 7);
+  if (run.pianoIn.length === seq.length) {
+    run.pianoDone = true; setTimeout(() => A.tada(), 300);
+    G.fusePiano.avail = true; G.fusePiano.g.visible = true; run.benchOpen = true;
+    toast('🎵 Perfect! The piano bench pops open!', 3000);
+  }
+}
+// ---------- keypads (science cupboard: 3 numbers, safe: 4 numbers) ----------
+let kp = null, kpEntry = '';
+function openKeypad(which) {
+  if (which === 'cabinet' && run.cabinetOpen) return; if (which === 'safe' && run.safeOpen) return;
+  kp = which === 'cabinet' ? { which, len: 3, code: run.sciCode, title: 'Science cupboard padlock' } : { which, len: 4, code: String(run.year), title: "The principal's safe" };
+  kpEntry = ''; $('kpTitle').textContent = kp.title; renderKP(); openUI('keypad'); A.click();
+}
+function renderKP(bad) { $('kpDisp').textContent = (kpEntry + '____').slice(0, kp.len); $('kpDisp').classList.toggle('bad', !!bad); $('kpHint').textContent = (kp.which === 'cabinet' ? 'Hint: the chalkboard in MATHS' : 'Hint: read the principal\'s note') + ' · Esc to close'; }
+function kpPress(k) {
+  if (k === 'C') { kpEntry = ''; A.click(); renderKP(); return; }
+  if (k === 'OK') { submitCode(); return; }
+  if (kpEntry.length < kp.len) { kpEntry += k; A.beep(false); renderKP(); if (kpEntry.length === kp.len) setTimeout(submitCode, 220); }
+}
+function submitCode() {
+  if (!kp || kpEntry.length < kp.len) return;
+  if (kpEntry === kp.code) {
+    const which = kp.which; closeUI(); A.unlock(); setTimeout(() => A.beep(true), 120);
+    if (which === 'cabinet') { run.cabinetOpen = true; G.fuseSci.avail = true; G.fuseSci.g.visible = true; G.cabinet.pad.visible = false; toast('The padlock clicks open!'); }
+    else { run.safeOpen = true; G.frontKey.avail = true; G.frontKey.g.visible = true; toast('The safe swings open!'); }
+    noise(P.x, P.z, 5); updateHUD(true);
+  } else { A.buzz(); kpEntry = ''; renderKP(true); setTimeout(() => { if (kp) renderKP(); }, 600); }
+}
+// ---------- notes ----------
+const COLHEX = { red: '#e53935', blue: '#1e88e5', yellow: '#fdd835', green: '#43a047' };
+function readNote(which) {
+  const p = $('paper'); p.className = 'paper';
+  let html = '';
+  if (which === 'janitor') html = '<b>To the night janitor:</b><br>The power keeps going out! I hid the 3 spare <b>FUSES</b>: one in the <b>SCIENCE</b> cupboard, one in the <b>MUSIC</b> room and one in the <b>LIBRARY</b>.<br>The <b>front door key</b> is in the principal\'s <b>SAFE</b>.<br><br>P.S. Don\'t run in the halls. <i>SHE</i> doesn\'t like it.<br>— Mr Mops';
+  else if (which === 'board') { p.classList.add('board'); html = `<div class="big2">DETENTION MATHS</div>${run.sums.map((s, i) => `<div style="font-size:30px">${'ABC'[i]}:&nbsp; ${s} = ?</div>`).join('')}<div style="margin-top:10px;font-size:22px">The science cupboard code is <b>A B C</b>.<br>Show your working!</div>`; }
+  else if (which === 'library') html = '<b>SHHH!</b><br>To open my secret bookshelf, pull out the <b>3 RED books</b> hidden on the shelves.<br>Every time I tell the students they just say "red books? where??"<br>— The Librarian 📚';
+  else if (which === 'office') html = 'Note to self:<br>I keep forgetting the code for my safe!<br>So I made it the <b>YEAR on my old class photo</b>. Nobody will ever guess.<br>— Principal Pickles';
+  else if (which === 'photo') { html = `<div class="big2">CLASS OF ${run.year}</div><div style="text-align:center;font-size:44px">🙂🙂😄🙂🙂<br>🙂😁🙂👻🙂</div><div style="font-size:16px;text-align:center">(Wait… who is that at the back?)</div>`; }
+  else if (which === 'poster') { p.classList.add('poster'); html = `<div class="big2">♪ THE SCHOOL SONG ♪</div><div style="text-align:center">Play these colours on the piano, in this order:</div><div class="dots">${run.song.map((c, i) => `<i style="background:${COLHEX[c]}">${i + 1}</i>`).join('')}</div><div style="font-size:16px;text-align:center">Wrong notes are LOUD. Be careful!</div>`; }
+  $('noteText').innerHTML = html; openUI('note'); A.click();
+}
+function enterLocker(lk) {
+  if (P.hidden) return;
+  P.hidden = lk; lk.open = 1; A.locker(0.7); P.light = false; syncButtons();
+  P.lookOff = 0; P.pitch = 0;
+  if ((ghost.state === 'chase' || ghost.state === 'hunt') && run.time - ghost.lastSeenT < 1.3 && gdist() < 12) { ghost.state = 'hideCheck'; ghost.hideTarget = lk; ghost.goal = null; }
+  else if (ghost.state === 'chase') { ghost.state = 'hunt'; setGoal(ghost.lastSeen.x, ghost.lastSeen.z); }
+  run.hides++; $('hideView').hidden = false;
+  setTimeout(() => { if (P.hidden === lk) lk.open = 0; }, 300);
+}
+function exitLocker() {
+  const lk = P.hidden; if (!lk) return; P.hidden = null; lk.open = 1; A.locker(0.5); setTimeout(() => { lk.open = 0; }, 400);
+  P.x = lk.front.x; P.z = lk.front.z; P.yaw = lk.yaw; $('hideView').hidden = true;
+}
+let wantUnlock = false;
+function openUI(which) { uiOpen = which; $('noteView').hidden = which !== 'note'; $('keypad').hidden = which !== 'keypad'; if (document.pointerLockElement) { wantUnlock = true; try { document.exitPointerLock(); } catch (e) {} } }
+function closeUI() { uiOpen = null; kp = null; $('noteView').hidden = true; $('keypad').hidden = true; if (!IS_TOUCH && state === 'playing') lockPointer(); }
+
+// =====================================================================
+//  SCARES
+// =====================================================================
+function scareCheck() {
+  const [r, c] = cellAt(P.x, P.z), k = dkey(r, c);
+  if (!run.scareCells.has(k) || run.scareCD > 0) return;
+  run.scareCells.delete(k); run.scareCD = 20;
+  const opts = ['lights', 'book', 'whisper', 'piano', 'giggle']; if (gdist() > 14 && ghost.state !== 'chase') opts.push('peek', 'peek');
+  const s = pick(opts);
+  if (s === 'lights') { run.blackout = 1.6; A.giggle(rand(-1, 1)); }
+  else if (s === 'book') { const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw); book.position.set(P.x + fx * 1.6, WH - 0.3, P.z + fz * 1.6); book.userData.vy = 0; book.visible = true; book.rotation.set(rand(-1, 1), rand(0, 6), rand(-1, 1)); book.userData.landed = false; }
+  else if (s === 'whisper') { A.whisper(rand(-1, 1)); toast('…shhhhh…', 1500); }
+  else if (s === 'piano') { const t0 = A.ctx ? A.ctx.currentTime : 0; [64, 63, 64, 59, 62, 60, 57].forEach((m, i) => A.piano(m, 0.06, t0 + i * 0.35, -0.6)); toast('Is someone playing the piano?', 2000); }
+  else if (s === 'giggle') { A.giggle(rand(-1, 1)); }
+  else if (s === 'peek') {
+    const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw); let d = 10; while (d > 4 && !lineClear(P.x, P.z, P.x + fx * d, P.z + fz * d, sightBlock, false)) d -= 1;
+    if (d > 4) { phantom.g.position.set(P.x + fx * d, 0.3, P.z + fz * d); phantom.g.rotation.y = Math.atan2(-fx, -fz); phantom.g.visible = true; A.sting(); run.peekT = 0.8; P.flick = 0.8; }
+  }
+}
+function updateScares(dt) {
+  run.scareCD -= dt; run.blackout = Math.max(0, run.blackout - dt);
+  if (run.peekT > 0) { run.peekT -= dt; phantom.g.position.y += dt * 0.5; if (run.peekT <= 0) phantom.g.visible = false; }
+  if (book.visible && !book.userData.landed) { book.userData.vy -= 14 * dt; book.position.y += book.userData.vy * dt; if (book.position.y <= 0.03) { book.position.y = 0.03; book.userData.landed = true; book.rotation.set(0, book.rotation.y, 0); A.thud(1, 0); noise(book.position.x, book.position.z, 8); shake(0.12); } }
+}
+function flashLights(sec) { if (run) run.blackout = Math.max(run.blackout, sec); }
+
+// =====================================================================
+//  CAUGHT + ENDINGS
+// =====================================================================
+let scareT = 0;
+function jumpscare() {
+  if (state !== 'playing') return;
+  closeUI(); if (P.hidden) { P.hidden.open = 1; $('hideView').hidden = true; }
+  state = 'scare'; scareT = 0; A.scream(); shake(1.0); setBody(); say('DETENTION!', 0.2);
+  $('flash').style.background = '#cfe8ff'; $('flash').style.opacity = 0.7; setTimeout(() => { $('flash').style.background = '#05103a'; $('flash').style.opacity = 0.3; }, 120);
+  if (document.pointerLockElement) { try { document.exitPointerLock(); } catch (e) {} }
+}
+function updateScare(dt, t) {
+  scareT += dt;
+  const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw), m = ghost.model;
+  const d = lerp(2.6, 1.45, clamp(scareT * 5, 0, 1));
+  ghost.x = P.x + fx * d; ghost.z = P.z + fz * d; ghost.yaw = Math.atan2(-fx, -fz); ghost.state = 'chase';
+  poseGhost(dt, t, 0);
+  m.root.position.y = P.eye - 1.93 + Math.sin(t * 40) * 0.03; m.mouth.scale.y = 3.4 + Math.sin(t * 30) * 0.4; m.arms.forEach((a) => { a.rotation.x = -1.7; });
+  torch.intensity = Math.random() < 0.3 ? 0.3 : 1.4;
+  camera.position.set(P.x + rand(-1, 1) * 0.03, P.eye + rand(-1, 1) * 0.03, P.z); camera.rotation.set(0.02, P.yaw, rand(-0.03, 0.03));
+  if (scareT > 1.6) { $('flash').style.opacity = 0; caught(); }
+}
+function caught() {
+  run.lives--; run.caught++;
+  if (run.lives <= 0) { finish('caught'); return; }
+  // back to detention, keep everything you found
+  state = 'intro'; setBody();
+  $('fadeText').textContent = `Miss Grimsby drags you back to the detention room… "Stay in your seat!" (${run.lives} ${run.lives === 1 ? 'life' : 'lives'} left)`;
+  $('fade').classList.add('on'); introT = 3.0;
+  Object.assign(P, { x: START.x, z: START.z, yaw: 0, pitch: 0, hidden: null, stamina: 100, light: true, vx: 0, vz: 0 });
+  Object.assign(ghost, { x: cx(GHOST_START.c), z: cz(GHOST_START.r), state: 'dormant', wakeT: 15, goal: null, path: [], ignoreT: 0, hideTarget: null });
+  $('hideView').hidden = true; syncButtons(); updateHUD(true);
+  if (!IS_TOUCH) lockPointer();
+}
+function finish(kind) {
+  if (state === 'over') return;
+  state = 'over'; setBody();
+  if (window.speechSynthesis) try { speechSynthesis.cancel(); } catch (e) {}
+  const firstTime = !save.endings[kind]; save.endings[kind] = true;
+  const tm = run.time, mm = Math.floor(tm / 60), ss = String(Math.floor(tm % 60)).padStart(2, '0');
+  const win = kind !== 'caught';
+  let newBest = false;
+  if (win) { const b = save.best[run.diff]; if (!b || tm < b) { save.best[run.diff] = tm; newBest = true; } }
+  persist();
+  const T = {
+    caught: ['DETENTION FOREVER', 'GAME OVER', 'Miss Grimsby got you. Now you have to stay after school… for the next hundred years.', 'bad'],
+    escape: ['YOU ESCAPED!', 'ENDING: ESCAPED', 'You burst through the front doors into the cool night air. Behind you, a pale face glares from the window… "And DON\'T be late tomorrow!"', 'good'],
+    sneaky: ['SNEAKY ESCAPE!', 'ENDING: SNEAKY', 'Miss Grimsby never even saw you. You tiptoed out like a ninja, and she is still checking the lockers for hall passes.', 'good'],
+    friend: ['GHOST FRIEND', 'TRUE ENDING', 'At the doors you hold up the golden locket. Miss Grimsby floats over… and smiles for the first time in 100 years. "My locket! Thank you, dear." She glows warm and bright, waves goodbye, and finally goes home. 💛', 'good'],
+  }[kind];
+  $('endTitle').textContent = T[0]; $('endTitle').className = T[3];
+  $('endTag').textContent = T[1] + (firstTime ? ' · NEW!' : '');
+  $('endText').textContent = T[2];
+  const stars = win ? 1 + (run.spotted <= 2 ? 1 : 0) + (run.caught === 0 ? 1 : 0) : 0;
+  $('endStats').innerHTML = [['Time', `${mm}:${ss}`], ['Stars', win ? '⭐'.repeat(stars) + '☆'.repeat(3 - stars) : '—'], ['Spotted', run.spotted + 'x'], ['Caught', run.caught + 'x'], ['Fuses', run.fusesIn + '/3'], ['Best', save.best[run.diff] ? fmt(save.best[run.diff]) + (newBest ? ' 🆕' : '') : '—']].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
+  renderEndings($('endList2'));
+  $('bAgain').textContent = win ? 'PLAY AGAIN' : 'TRY AGAIN';
+  if (kind === 'friend') A.lullaby(0.13, 1); else if (win) A.tada();
+  setState('over');
+}
+const fmt = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+function renderEndings(el) { el.innerHTML = Object.entries(ENDINGS).map(([k, e]) => `<span class="${save.endings[k] ? 'got' : ''}">${save.endings[k] ? e.icon + ' ' + e.name : '🔒 ???'}</span>`).join(''); }
+
+// =====================================================================
+//  RUN SETUP (puzzles are reshuffled every game)
+// =====================================================================
+function makeSum(d) {
+  const forms = [];
+  for (let a = 0; a <= d; a++) forms.push(`${a} + ${d - a}`);
+  for (let b = 1; b <= 5; b++) forms.push(`${d + b} − ${b}`);
+  for (let a = 2; a <= d; a++) if (d % a === 0 && d / a > 1) forms.push(`${a} × ${d / a}`);
+  return pick(forms);
+}
+function paintPuzzles() {
+  const b = G.board; b.material.map = canvasTex(1024, 400, (x, w, h) => {
+    x.fillStyle = '#1f3b2e'; x.fillRect(0, 0, w, h); for (let i = 0; i < 30; i++) { x.fillStyle = 'rgba(255,255,255,.03)'; x.beginPath(); x.ellipse(rand(0, w), rand(0, h), rand(40, 160), rand(10, 40), rand(0, 3), 0, 7); x.fill(); }
+    x.fillStyle = '#f4f1e6'; x.textAlign = 'left'; x.font = '56px "Gochi Hand"'; x.fillText('DETENTION MATHS', 40, 70);
+    x.font = '50px "Gochi Hand"'; run.sums.forEach((s, i) => x.fillText(`${'ABC'[i]}:  ${s} = ?`, 60, 150 + i * 70));
+    x.font = '40px "Gochi Hand"'; x.fillText('cupboard code = A B C', 560, 360); x.font = '70px "Gochi Hand"'; x.fillText('☺', 880, 120);
+  }); b.material.needsUpdate = true;
+  G.poster.material.map = canvasTex(512, 384, (x, w, h) => {
+    x.fillStyle = '#fff7e0'; x.fillRect(0, 0, w, h); x.strokeStyle = '#2a2016'; x.lineWidth = 8; x.strokeRect(4, 4, w - 8, h - 8);
+    x.fillStyle = '#2a2016'; x.textAlign = 'center'; x.font = '50px "Gochi Hand"'; x.fillText('♪ THE SCHOOL SONG ♪', w / 2, 70); x.font = '30px "Gochi Hand"'; x.fillText('play it on the piano', w / 2, 110);
+    run.song.forEach((c, i) => { const px = w / 2 + (i - (run.song.length - 1) / 2) * 88; x.fillStyle = COLHEX[c]; x.beginPath(); x.arc(px, 220, 36, 0, 7); x.fill(); x.lineWidth = 5; x.strokeStyle = '#2a2016'; x.stroke(); x.fillStyle = '#fff'; x.font = 'bold 30px system-ui'; x.fillText(String(i + 1), px, 231); });
+    x.fillStyle = '#2a2016'; x.font = '28px "Gochi Hand"'; x.fillText('wrong notes are LOUD!', w / 2, 330);
+  }); G.poster.material.needsUpdate = true;
+  G.photo.material.map = canvasTex(512, 384, (x, w, h) => {
+    x.fillStyle = '#6b4423'; x.fillRect(0, 0, w, h); x.fillStyle = '#d9cfb3'; x.fillRect(24, 24, w - 48, h - 48);
+    x.fillStyle = '#9fb3c4'; x.fillRect(40, 40, w - 80, 200);
+    for (let row = 0; row < 2; row++) for (let i = 0; i < 6; i++) { const px = 80 + i * 70, py = 110 + row * 70; x.fillStyle = row === 1 && i === 4 ? 'rgba(220,235,255,.7)' : '#e8c39e'; x.beginPath(); x.arc(px, py, 20, 0, 7); x.fill(); x.fillStyle = row === 1 && i === 4 ? 'rgba(220,235,255,.5)' : pick(['#2c4f8a', '#8c2f35', '#2f7a4a']); x.fillRect(px - 22, py + 20, 44, 40); x.fillStyle = '#222'; x.fillRect(px - 8, py - 4, 4, 4); x.fillRect(px + 4, py - 4, 4, 4); }
+    x.fillStyle = '#2a2016'; x.textAlign = 'center'; x.font = '54px "Gochi Hand"'; x.fillText(`CLASS OF ${run.year}`, w / 2, 310);
+  }); G.photo.material.needsUpdate = true;
+}
+function resetLevel() {
+  for (const d of Object.values(doors)) { d.open = false; d.t = 0; if (d.k === 'O') d.locked = true; }
+  exitDoor.led.material.emissive.setHex(0xff2020); exitDoor.chain.visible = true; exitDoor.lock.visible = true;
+  fuseBox.slots.forEach((s) => s.material.emissive.setHex(0xff1010));
+  for (const it of items) { it.taken = false; it.avail = it.id === 'locket'; it.g.visible = it.avail; }
+  for (const lk of lockers) lk.open = 0;
+  G.cabinet.pad.visible = true; G.cabinet.open = 0; G.safe.open = 0; G.secret.open = 0; G.bench.open = 0;
+  const used = shuffle(G.redBooks.map((b, i) => i)).slice(0, 3);
+  G.redBooks.forEach((b, i) => { b.used = used.includes(i); b.pulled = false; b.mesh.visible = b.used; b.mesh.position.z = b.base; b.mesh.rotation.x = 0; });
+  book.visible = false; phantom.g.visible = false;
+}
+const START_POS = { x: 12.75, z: 13.4 };
+function startRun() {
+  A.init(); resetLevel();
+  const digits = [randi(1, 9), randi(1, 9), randi(1, 9)];
+  const colors = ['red', 'blue', 'yellow', 'green'], song = [];
+  while (song.length < 5) { const c = pick(colors); if (c !== song[song.length - 1]) song.push(c); }
+  run = { diff: save.diff, time: 0, power: false, fusesIn: 0, spotted: 0, hides: 0, items: 0, caught: 0, lives: DIFF[save.diff].lives, blackout: 0, scareCD: 10, peekT: 0, scareCells: new Set(),
+    sciCode: digits.join(''), sums: digits.map(makeSum), song, pianoIn: [], pianoDone: false, year: randi(1951, 1999), cabinetOpen: false, safeOpen: false, secretOpen: false, deskSearched: false, benchOpen: false };
+  paintPuzzles();
+  const floorCells = []; for (let r = 1; r < ROWS - 1; r++) for (let c = 1; c < COLS - 1; c++) if (grid[r][c] === '.' && Math.hypot(r - START.r, c - START.c) > 3) floorCells.push(dkey(r, c));
+  for (let i = 0; i < 9; i++) run.scareCells.add(pick(floorCells));
+  START.x = START_POS.x; START.z = START_POS.z;
+  Object.assign(P, { x: START_POS.x, z: START_POS.z, yaw: 0, pitch: 0, eye: 1.65, crouch: false, stamina: 100, light: true, hidden: null, officeKey: false, frontKey: false, locket: false, fuses: 0, bob: 0, stepAcc: 0, vx: 0, vz: 0, flick: 0, lookOff: 0 });
+  Object.assign(ghost, { x: cx(GHOST_START.c), z: cz(GHOST_START.r), yaw: Math.PI, state: 'dormant', path: [], pi: 0, goal: null, wakeT: DIFF[save.diff].wake, lastSeenT: -99, hideTarget: null, stuckT: 0, ignoreT: 0, moanT: 6, pause: 0 });
+  ghost.model.g.visible = true; $('hideView').hidden = true; closeUI();
+  syncButtons(); updateHUD(true);
+  setState('intro');
+  $('fadeText').textContent = 'You wake up at your desk. The clock says midnight. The school is dark… and somewhere down the hall, someone is humming.';
+  $('fade').classList.add('on'); introT = 3.4;
+  A.lullaby(0.04, 0.8);
+  if (!IS_TOUCH) lockPointer();
+}
+let introT = 0;
+
+// =====================================================================
+//  HUD
+// =====================================================================
+let toastTimer = 0;
+function toast(msg, ms = 2200) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), ms); }
+function objective() {
+  if (exitDoor.open) return 'RUN out of the front doors!';
+  if (!run.power) { const have = P.fuses + run.fusesIn; return have >= 3 ? 'Put the fuses in the FUSE BOX by the front doors' : `Find 3 fuses to fix the power (${have}/3)`; }
+  if (!P.frontKey) return 'Find the FRONT DOOR KEY';
+  return 'Unlock the FRONT DOORS and escape!';
+}
+let lastHUD = 0;
+function updateHUD(force) {
+  if (!run) return;
+  const now = performance.now(); if (!force && now - lastHUD < 150) return; lastHUD = now;
+  $('objective').textContent = objective();
+  const chips = [`<span class="chip">${'❤️'.repeat(Math.max(0, run.lives))}</span>`];
+  chips.push(run.power ? '<span class="chip" style="color:#7ee08a">⚡ POWER ON</span>' : `<span class="chip">🔌 Fuses ${P.fuses + run.fusesIn}/3</span>`);
+  if (P.officeKey) chips.push('<span class="chip">🗝️ Office key</span>');
+  if (P.frontKey) chips.push('<span class="chip" style="color:#ffd45a">🔑 Front door key</span>');
+  if (P.locket) chips.push('<span class="chip" style="color:#ffcc40">💛 Locket</span>');
+  const html = chips.join(''); if ($('inv').innerHTML !== html) $('inv').innerHTML = html;
+  $('staBar').querySelector('i').style.width = P.stamina + '%';
+}
+
+// =====================================================================
+//  PLAYER UPDATE
+// =====================================================================
+let curTarget = null, shakeK = 0;
+function shake(k) { shakeK = Math.max(shakeK, k); }
+function updatePlayer(dt, t) {
+  if (P.hidden) {
+    const lk = P.hidden; camera.position.set(lk.x + lk.dc * 0.12, 1.6, lk.z + lk.dr * 0.12);
+    P.lookOff = clamp(P.lookOff, -0.5, 0.5); camera.rotation.set(clamp(P.pitch, -0.35, 0.35), lk.yaw + P.lookOff, 0);
+    P.stamina = Math.min(100, P.stamina + 20 * dt); torch.intensity = 0; fill.intensity = 0.02; return;
+  }
+  let f = 0, s = 0;
+  if (keys.has('KeyW') || keys.has('ArrowUp')) f += 1; if (keys.has('KeyS') || keys.has('ArrowDown')) f -= 1;
+  if (keys.has('KeyD') || keys.has('ArrowRight')) s += 1; if (keys.has('KeyA') || keys.has('ArrowLeft')) s -= 1;
+  f += -input.my; s += input.mx;
+  const mag = Math.hypot(f, s); if (mag > 1) { f /= mag; s /= mag; }
+  const wantRun = (keys.has('ShiftLeft') || keys.has('ShiftRight') || input.run) && f > 0.2 && !P.crouch && P.stamina > 3;
+  P.running = wantRun && Math.hypot(f, s) > 0.3;
+  const sp = P.crouch ? 1.7 : P.running ? 5.4 : 3.1;
+  const dx = (-Math.sin(P.yaw) * f + Math.cos(P.yaw) * s) * sp, dz = (-Math.cos(P.yaw) * f - Math.sin(P.yaw) * s) * sp;
+  P.vx = damp(P.vx, dx, 12, dt); P.vz = damp(P.vz, dz, 12, dt);
+  const p = { x: P.x + P.vx * dt, z: P.z + P.vz * dt }; collide(p, RAD);
+  const moved = Math.hypot(p.x - P.x, p.z - P.z); P.x = p.x; P.z = p.z; P.moving = moved > 0.3 * dt;
+  if (P.running) P.stamina = Math.max(0, P.stamina - 21 * dt); else P.stamina = Math.min(100, P.stamina + (P.moving ? 9 : 16) * dt);
+  P.stepAcc += moved; const stride = P.crouch ? 0.55 : P.running ? 0.95 : 0.75;
+  if (P.stepAcc > stride) { P.stepAcc = 0; A.step(P.crouch ? 'crouch' : P.running ? 'run' : 'walk'); if (P.running) noise(P.x, P.z, 12); else if (!P.crouch) noise(P.x, P.z, 4.5); }
+  P.eye = damp(P.eye, P.crouch ? 1.05 : 1.65, 10, dt);
+  P.bob += moved * (P.running ? 2.2 : 2.6);
+  const bobY = Math.sin(P.bob) * (P.running ? 0.06 : 0.035) * (P.moving ? 1 : 0), bobX = Math.cos(P.bob * 0.5) * 0.03 * (P.moving ? 1 : 0);
+  let sx = 0, sy = 0; if (shakeK > 0) { sx = rand(-1, 1) * shakeK * 0.08; sy = rand(-1, 1) * shakeK * 0.08; shakeK = Math.max(0, shakeK - dt * 1.5); }
+  camera.position.set(P.x + Math.cos(P.yaw) * bobX, P.eye + bobY + sy, P.z - Math.sin(P.yaw) * bobX);
+  camera.rotation.set(P.pitch + sy * 0.3, P.yaw + sx * 0.3, 0);
+  P.flick = Math.max(0, (P.flick || 0) - dt);
+  let li = P.light ? 2.6 : 0;
+  if (P.light && P.flick > 0 && Math.random() < 0.25) li *= 0.1;
+  if (P.light && ghost.state !== 'dormant' && gdist() < 5 && Math.random() < 0.12) li *= 0.2; // the torch flickers when she's close
+  torch.intensity = li; fill.intensity = P.light ? 0.28 : 0.06;
+  if (exitDoor.open && P.x < 0.4) finish(P.locket ? 'friend' : run.spotted === 0 ? 'sneaky' : 'escape');
+}
+function findTarget() {
+  if (P.hidden) return { label: 'Get out of the locker', act: exitLocker };
+  const fx = -Math.sin(P.yaw) * Math.cos(P.pitch), fy = Math.sin(P.pitch), fz = -Math.cos(P.yaw) * Math.cos(P.pitch);
+  let best = null, bs = -1e9;
+  for (const o of interact) {
+    if (o.active && !o.active()) continue;
+    const dx = o.x - camera.position.x, dy = o.y - camera.position.y, dz = o.z - camera.position.z, d = Math.hypot(dx, dy, dz), dh = Math.hypot(dx, dz);
+    if (dh > (o.reach || 2.3)) continue;
+    const dot = (dx * fx + dy * fy + dz * fz) / (d || 1); if (dot < 0.6 && dh > 0.9) continue;
+    if (!lineClear(P.x, P.z, o.x, o.z, sightBlock, true, 0.2)) continue;
+    const sc = dot * 2 - dh * 0.4; if (sc > bs) { const lab = o.label(); if (!lab) continue; bs = sc; best = o; }
+  }
+  if (!best) return null; return { label: best.label(), act: best.act };
+}
+function useAction() { if (state !== 'playing') return; if (uiOpen) { closeUI(); return; } A.init(); const tg = findTarget(); if (tg) tg.act(); }
+
+// =====================================================================
+//  LAMPS + ANIMATION EACH FRAME
+// =====================================================================
+let poolT = 0;
+function updateLamps(t, dt, camX, camZ) {
+  for (const L of lamps) { L.level = lampLevel(L, t); L.mat.emissiveIntensity = L.level * 1.5; }
+  poolT -= dt;
+  if (poolT <= 0) { poolT = 0.2; const sorted = lamps.map((L) => [L, (L.x - camX) ** 2 + (L.z - camZ) ** 2]).sort((a, b) => a[1] - b[1]); pool.forEach((l, i) => { const L = sorted[i] && sorted[i][0]; l.userData.L = L; if (L) l.position.set(L.x, L.y, L.z); }); }
+  let hum = 0;
+  pool.forEach((l) => { const L = l.userData.L; l.intensity = L ? 1.5 * L.level : 0; if (L) hum = Math.max(hum, L.level * clamp(1 - Math.hypot(L.x - camX, L.z - camZ) / 6, 0, 1)); });
+  A.set(A.hum, hum * 0.02, 0.05);
+  hemi.intensity = run && run.power ? 0.42 : 0.34;
+}
+function updateDoors(dt) {
+  for (const d of Object.values(doors)) {
+    if (d.k === 'X') { if (d.open && d.t < 1) d.t = Math.min(1, d.t + dt * 0.9); d.pivs.forEach(({ piv, s }) => { piv.rotation.y = -s * d.t * 1.5; }); continue; }
+    const tgt = d.open ? 1 : 0; d.t = d.open ? Math.min(1, d.t + dt * 2.2) : Math.max(0, d.t - dt * 2.6);
+    d.piv.rotation.y = d.t * 1.45; void tgt;
+  }
+  outsideLight.intensity = exitDoor.open ? 3.5 * exitDoor.t : 0;
+  for (const lk of lockers) lk.piv.rotation.y = damp(lk.piv.rotation.y, lk.open ? -1.3 : 0, 10, dt);
+  if (run) {
+    G.cabinet.open = damp(G.cabinet.open, run.cabinetOpen ? 1 : 0, 4, dt); G.cabinet.doors.forEach(({ piv, s }) => { piv.rotation.y = s * G.cabinet.open * 1.6; });
+    G.safe.open = damp(G.safe.open, run.safeOpen ? 1 : 0, 3, dt); G.safe.piv.rotation.y = -G.safe.open * 1.7;
+    G.secret.open = damp(G.secret.open, run.secretOpen ? 1 : 0, 1.5, dt); G.secret.piv.rotation.y = -G.secret.open * 1.25;
+    G.bench.open = damp(G.bench.open, run.benchOpen ? 1 : 0, 4, dt); G.bench.piv.rotation.x = -G.bench.open * 1.4;
+    for (const pk of G.pianoKeys) { pk.press = Math.max(0, pk.press - dt * 4); pk.mesh.position.y = 0.9 - pk.press * 0.04; pk.mesh.material.emissiveIntensity = 0.25 + pk.press * 1.2; }
+    // the skeleton's head slowly turns to watch you
+    const sk = G.skel, sx = P.x - sk.g.position.x, sz = P.z - sk.g.position.z;
+    if (Math.hypot(sx, sz) < 9) sk.head.rotation.y = damp(sk.head.rotation.y, clamp(wrapAng(Math.atan2(sx, sz) - sk.g.rotation.y), -1.2, 1.2), 1.2, dt);
+  }
+}
+function updateItems(t) { for (const it of items) if (!it.taken && it.avail && it.spin) { it.g.rotation.y = t * 1.6; it.g.position.y = it.baseY + Math.sin(t * 2 + it.x) * 0.03; } }
+
+// =====================================================================
+//  MAIN LOOP
+// =====================================================================
+let last = performance.now();
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; const t = now / 1000;
+  if (state === 'title' || state === 'how') titleCam(t, dt);
+  else if (state === 'intro') {
+    introT -= dt; updatePlayer(0, t); poseGhost(dt, t, 0); updateLamps(t, dt, P.x, P.z);
+    if (introT <= 0) { $('fade').classList.remove('on'); setState('playing'); if (run.caught === 0) toast(IS_TOUCH ? 'Find a way out. Tap USE on things that glow.' : 'Find a way out! WASD to move, E to use, F for your flashlight.', 4200); }
+  } else if (state === 'playing') {
+    run.time += dt;
+    updatePlayer(dt, t); updateGhost(dt, t); updateScares(dt); scareCheck();
+    curTarget = uiOpen ? null : findTarget();
+    $('prompt').hidden = !curTarget; if (curTarget) $('prompt').innerHTML = `<kbd>E</kbd>${curTarget.label}`;
+    $('cross').classList.toggle('on', !!curTarget); $('tUse').classList.toggle('ready', !!curTarget);
+    updateHUD(false);
+  } else if (state === 'scare') updateScare(dt, t);
+  if (state !== 'title' && state !== 'how' && state !== 'paused' && run) {
+    updateLamps(t, dt, camera.position.x, camera.position.z); updateDoors(dt); updateItems(t);
+    const d = gdist(), chaseK = ghost.state === 'chase' || ghost.state === 'hunt' || ghost.state === 'hideCheck' ? 1 : 0;
+    const threat = state === 'playing' ? clamp(Math.max(chaseK * 0.7, 1 - d / 18) * (ghost.state === 'dormant' ? 0.25 : 1), 0, 1) : 0;
+    A.chaseK = damp(A.chaseK, chaseK, 1.5, dt);
+    A.tick(threat, A.chaseK, state === 'playing'); A.set(A.breath, P.hidden ? 0.05 + threat * 0.08 : 0, 0.2);
+    $('redv').style.opacity = state === 'playing' ? clamp(threat * 1.1 - 0.15, 0, 0.85) : 0;
+  } else if (state === 'title' || state === 'how') { A.tick(0, 0, false); }
+  renderer.render(scene, camera);
+}
+function titleCam(t, dt) {
+  // the ghost floats along the dark corridor while the camera hides by the lockers
+  ghost.state = 'patrol'; ghost.x = 40 + Math.sin(t * 0.15) * 14; ghost.z = cz(7) + Math.sin(t * 0.4) * 0.6; ghost.yaw = Math.cos(t * 0.15) > 0 ? Math.PI / 2 : -Math.PI / 2;
+  poseGhost(dt, t, 1.2);
+  camera.position.set(64 + Math.sin(t * 0.2) * 0.3, 1.5, cz(7) + 1.6); camera.rotation.set(0.02, Math.PI / 2 - 0.08 + Math.sin(t * 0.13) * 0.06, 0);
+  torch.intensity = 1.8 + (Math.random() < 0.04 ? -1.6 : 0); fill.intensity = 0;
+  updateLamps(t, dt, camera.position.x, camera.position.z);
+  updateDoors(dt);
+}
+
+// =====================================================================
+//  STATE + MENUS
+// =====================================================================
+const SHEETS = { title: 'mTitle', how: 'mHow', paused: 'mPause', over: 'mEnd' };
+function setState(s) {
+  state = s;
+  for (const [k, id] of Object.entries(SHEETS)) $(id).hidden = k !== s;
+  if (s === 'title') { renderEndings($('endList')); renderDiff(); const b = save.best[save.diff]; $('bestTxt').textContent = b ? `Best escape on ${DIFF[save.diff].name}: ${fmt(b)}` : ''; }
+  setBody();
+}
+function setBody() {
+  const inGame = state === 'playing' || state === 'intro' || state === 'paused' || state === 'scare';
+  $('hud').hidden = !(state === 'playing' || state === 'intro');
+  $('touch').hidden = !(IS_TOUCH && state === 'playing');
+  document.body.classList.toggle('playing', inGame);
+  if (state !== 'playing') $('prompt').hidden = true;
+}
+function renderDiff() { $('diffSeg').innerHTML = Object.entries(DIFF).map(([k, d]) => `<button data-d="${k}" aria-pressed="${save.diff === k}">${d.name}</button>`).join(''); }
+function pause() { if (state !== 'playing') return; closeUI(); setState('paused'); A.set(A.breath, 0); }
+function resume() { setState('playing'); last = performance.now(); A.init(); if (!IS_TOUCH) lockPointer(); }
+function toTitle() { if (P.hidden) { P.hidden = null; $('hideView').hidden = true; } closeUI(); run = null; if (window.speechSynthesis) try { speechSynthesis.cancel(); } catch (e) {} setState('title'); }
+function syncButtons() { $('tLight').classList.toggle('on', P.light); $('tCrouch').classList.toggle('on', P.crouch); }
+function toggleLight() { if (P.hidden) return; P.light = !P.light; A.click(); syncButtons(); }
+function toggleCrouch() { P.crouch = !P.crouch; syncButtons(); }
+
+// ---------- pointer lock + mouse ----------
+let dragLook = false;
+function lockPointer() { const el = renderer.domElement; if (el.requestPointerLock) { try { const p = el.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (e) {} } }
+renderer.domElement.addEventListener('mousedown', () => { if (state === 'playing' && !IS_TOUCH && !uiOpen) { if (!document.pointerLockElement) lockPointer(); dragLook = true; } });
+window.addEventListener('mouseup', () => { dragLook = false; });
+window.addEventListener('mousemove', (e) => {
+  if (state !== 'playing' || uiOpen) return;
+  if (document.pointerLockElement || dragLook) look(e.movementX * 0.0022, e.movementY * 0.0022);
+});
+function look(dx, dy) { if (P.hidden) { P.lookOff -= dx; P.pitch = clamp(P.pitch - dy, -0.35, 0.35); return; } P.yaw -= dx; P.pitch = clamp(P.pitch - dy, -1.4, 1.4); }
+document.addEventListener('pointerlockchange', () => { if (document.pointerLockElement) return; if (wantUnlock) { wantUnlock = false; return; } if (state === 'playing' && !uiOpen && !IS_TOUCH) pause(); });
+
+// ---------- keyboard ----------
+window.addEventListener('keydown', (e) => {
+  keys.add(e.code);
+  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+  if (e.repeat) return;
+  if (uiOpen === 'keypad') { if (/^Digit\d$/.test(e.code) || /^Numpad\d$/.test(e.code)) kpPress(e.code.slice(-1)); else if (e.code === 'Backspace') { kpEntry = kpEntry.slice(0, -1); renderKP(); } else if (e.code === 'Enter') submitCode(); else if (e.code === 'Escape' || e.code === 'KeyE') closeUI(); return; }
+  if (uiOpen === 'note') { if (e.code === 'Escape' || e.code === 'KeyE' || e.code === 'Space' || e.code === 'Enter') closeUI(); return; }
+  if (e.code === 'KeyM') toggleSound();
+  if (state === 'playing') {
+    if (e.code === 'KeyE') useAction();
+    if (e.code === 'KeyF') toggleLight();
+    if (e.code === 'KeyC' || e.code === 'ControlLeft') toggleCrouch();
+    if (e.code === 'Escape' || e.code === 'KeyP') pause();
+  } else if (state === 'paused' && (e.code === 'Escape' || e.code === 'KeyP')) resume();
+});
+window.addEventListener('keyup', (e) => keys.delete(e.code));
+window.addEventListener('blur', () => { keys.clear(); if (state === 'playing' && !uiOpen) pause(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'playing') pause(); });
+
+// ---------- touch ----------
+const joy = { id: null, ox: 0, oy: 0 }, lk = { id: null, x: 0, y: 0 };
+$('joyZone').addEventListener('pointerdown', (e) => { e.preventDefault(); A.init(); joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; const j = $('joy'); j.style.left = (e.clientX - 60) + 'px'; j.style.top = (e.clientY - 60) + 'px'; j.style.bottom = 'auto'; try { e.target.setPointerCapture(e.pointerId); } catch (er) {} });
+$('joyZone').addEventListener('pointermove', (e) => { if (e.pointerId !== joy.id) return; let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy; const d = Math.hypot(dx, dy), m = 52; if (d > m) { dx *= m / d; dy *= m / d; } $('knob').style.transform = `translate(${dx}px,${dy}px)`; input.mx = dx / m; input.my = dy / m; });
+const joyEnd = (e) => { if (e.pointerId !== joy.id) return; joy.id = null; input.mx = input.my = 0; $('knob').style.transform = ''; const j = $('joy'); j.style.left = ''; j.style.top = ''; j.style.bottom = ''; };
+$('joyZone').addEventListener('pointerup', joyEnd); $('joyZone').addEventListener('pointercancel', joyEnd);
+$('lookZone').addEventListener('pointerdown', (e) => { e.preventDefault(); A.init(); lk.id = e.pointerId; lk.x = e.clientX; lk.y = e.clientY; try { e.target.setPointerCapture(e.pointerId); } catch (er) {} });
+$('lookZone').addEventListener('pointermove', (e) => { if (e.pointerId !== lk.id) return; look((e.clientX - lk.x) * 0.0058, (e.clientY - lk.y) * 0.0058); lk.x = e.clientX; lk.y = e.clientY; });
+const lkEnd = (e) => { if (e.pointerId === lk.id) lk.id = null; };
+$('lookZone').addEventListener('pointerup', lkEnd); $('lookZone').addEventListener('pointercancel', lkEnd);
+$('tRun').addEventListener('pointerdown', (e) => { e.preventDefault(); input.run = true; $('tRun').classList.add('held'); try { $('tRun').setPointerCapture(e.pointerId); } catch (er) {} });
+const runEnd = () => { input.run = false; $('tRun').classList.remove('held'); };
+$('tRun').addEventListener('pointerup', runEnd); $('tRun').addEventListener('pointercancel', runEnd);
+$('tCrouch').addEventListener('pointerdown', (e) => { e.preventDefault(); toggleCrouch(); });
+$('tLight').addEventListener('pointerdown', (e) => { e.preventDefault(); toggleLight(); });
+$('tUse').addEventListener('pointerdown', (e) => { e.preventDefault(); useAction(); });
+
+// ---------- buttons ----------
+$('bPlay').addEventListener('click', () => { A.init(); startRun(); });
+$('bHow').addEventListener('click', () => { A.init(); setState('how'); });
+document.querySelectorAll('[data-back]').forEach((b) => b.addEventListener('click', () => setState('title')));
+$('diffSeg').addEventListener('click', (e) => { const b = e.target.closest('[data-d]'); if (!b) return; A.init(); save.diff = b.dataset.d; persist(); A.click(); setState('title'); });
+$('bSound').addEventListener('click', toggleSound); $('bSoundP').addEventListener('click', toggleSound);
+$('hMute').addEventListener('click', (e) => { e.stopPropagation(); toggleSound(); });
+$('hPause').addEventListener('click', (e) => { e.stopPropagation(); pause(); });
+$('bResume').addEventListener('click', resume);
+$('bRestart').addEventListener('click', startRun);
+$('bMenuP').addEventListener('click', toTitle);
+$('bAgain').addEventListener('click', startRun);
+$('bMenuE').addEventListener('click', toTitle);
+$('noteClose').addEventListener('click', closeUI);
+$('noteView').addEventListener('click', (e) => { if (e.target === $('noteView')) closeUI(); });
+$('keypad').addEventListener('click', (e) => { if (e.target === $('keypad')) closeUI(); });
+$('kpKeys').innerHTML = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', 'OK'].map((k) => `<button data-k="${k}">${k}</button>`).join('');
+$('kpKeys').addEventListener('click', (e) => { const b = e.target.closest('[data-k]'); if (b) kpPress(b.dataset.k); });
+window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+
+// =====================================================================
+//  BOOT
+// =====================================================================
+function boot() {
+  makeTextures(); buildLevel();
+  ghost.model = buildGhost(false); scene.add(ghost.model.g);
+  phantom = buildGhost(true); phantom.g.visible = false; scene.add(phantom.g);
+  book = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.07, 0.26), stdMat({ color: 0x2c4f8a })); book.visible = false; scene.add(book);
+  syncSound(); syncButtons();
+  $('loading').hidden = true;
+  setState('title');
+  requestAnimationFrame(frame);
+}
+window.__hs = { get state() { return state; }, P, ghost, get run() { return run; }, items, doors, G, startRun, finish, noise, useAction, findTarget, interact, keys, input, lockers, setState, readNote, openKeypad, playKey, pullBook, searchDesk, useFuseBox, useExit, takeItem, useDoor, enterLocker, exitLocker,
+  submit: (code) => { kpEntry = code; submitCode(); }, kpPress, closeUI, get exitDoor() { return exitDoor; },
+  fast(sec) { if (state === 'intro') { introT = 0; $('fade').classList.remove('on'); setState('playing'); } const n = Math.round(sec * 60); for (let i = 0; i < n && state === 'playing'; i++) { run.time += 1 / 60; updatePlayer(1 / 60, i / 60); updateGhost(1 / 60, i / 60); updateScares(1 / 60); updateDoors(1 / 60); } } };
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot, boot); else boot();
+})();
+</script>
