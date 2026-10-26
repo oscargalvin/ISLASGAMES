@@ -48,7 +48,7 @@ button:focus-visible { outline: 2px solid var(--neon); outline-offset: 3px; }
 #strikes { display: flex; gap: 4px; }
 #strikes i { width: 20px; height: 20px; border: 2px solid var(--dim); border-radius: 4px; font-style: normal; display: grid; place-items: center; font-size: 13px; font-weight: 800; color: transparent; }
 #strikes i.x { border-color: var(--bad); background: rgba(255, 74, 90, .25); color: var(--bad); }
-#scoreTxt { font-family: var(--mono); font-size: 13px; color: var(--dim); }
+#scoreTxt, #cashTxt { font-family: var(--mono); font-size: 13px; color: var(--dim); }
 #scoreTxt b { color: var(--ink); }
 #tasks { font-family: var(--mono); font-size: 12px; line-height: 1.55; color: var(--dim); max-width: 260px; }
 #tasks .done { color: var(--good); text-decoration: line-through; }
@@ -131,6 +131,16 @@ h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 h2.bad { color: var(--bad); text-shadow: 0 0 20px rgba(255, 74, 90, .5); }
 h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
 .tag { font-family: var(--mono); font-size: 12px; letter-spacing: .3em; color: var(--dim); }
+.cash b { color: var(--warn); }
+.shop { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; width: 100%; max-height: 52vh; overflow-y: auto; text-align: left; }
+.shop button { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: rgba(0, 0, 0, .35); font-size: 13px; text-align: left; }
+.shop button b { font-size: 14px; }
+.shop button span { color: var(--dim); font-size: 12px; }
+.shop button.low { border-color: var(--bad); }
+.shop button:disabled { opacity: .45; }
+.note.talk { font-size: 16px; min-height: 4.5em; }
+#mTalk { place-items: end center; background: linear-gradient(transparent 40%, rgba(0, 0, 0, .75)); }
+#mTalk .card { gap: 10px; }
 .stats { display: grid; grid-template-columns: repeat(3, auto); gap: 10px 26px; font-variant-numeric: tabular-nums; }
 .stats div { display: flex; flex-direction: column; gap: 2px; }
 .stats span { font-size: 10px; letter-spacing: .18em; color: var(--dim); text-transform: uppercase; }
@@ -182,7 +192,7 @@ h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
 <div id="hud" hidden>
   <div class="tl">
     <div id="clock">12:00 AM</div>
-    <div class="row"><div id="strikes"></div><div id="scoreTxt">SCORE <b id="score">0</b></div></div>
+    <div class="row"><div id="strikes"></div><div id="scoreTxt">SCORE <b id="score">0</b></div><div id="cashTxt" class="cash">£<b id="cash">40</b></div></div>
     <div id="tasks"></div>
   </div>
   <div class="tr">
@@ -283,7 +293,7 @@ h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
       <div><h3>SPOT THE MONSTERS</h3><ol>
         <li>ID not expired (check tonight's date at the top of the rules)</li><li>Photo matches: hair colour and glasses</li><li>Spoken name matches the ID</li><li>Spoken age and birthday match the ID</li><li>5 fingers on each hand</li><li>They blink</li><li>No glowing eyes on CCTV</li><li>No twitching</li><li>Normal smile, sensible answers</li></ol></div>
       <div><h3>CONTROLS</h3><p><b>Computer:</b> <kbd>WASD</kbd> move, mouse look, <kbd>Shift</kbd> run, <kbd>E</kbd> use, <kbd>Space</kbd> or click to swing the bat, <kbd>C</kbd> CCTV, <kbd>Q</kbd> inspect the door, <kbd>F</kbd> torch, <kbd>Esc</kbd> back or pause, <kbd>M</kbd> mute. Click the buttons to decide.<br><b>Phone:</b> turn sideways. Joystick to walk, swipe to look, and big USE, HIT, CCTV, RUN and LIGHT buttons.</p>
-      <h3 style="margin-top:10px">FIGHT BACK</h3><p>You've got a baseball bat. If you let a monster in while a shopper is inside, it goes for them, so run over and hit it to break up the fight before it eats them. Think someone is a monster? Hit them first, but if they're a real person that's a mistake.</p><h3 style="margin-top:10px">JOBS</h3><p>Every night has different jobs: lock the back door, mop spills, restock, check the freezer, take out the rubbish, count the till, check the cameras, fix lights and answer the phone. Reset the breaker when the power cuts out. Beat a night to unlock the next one.</p></div>
+      <h3 style="margin-top:10px">FIGHT BACK</h3><p>You've got a baseball bat. If you let a monster in while a shopper is inside, it goes for them, so run over and hit it to break up the fight before it eats them. Think someone is a monster? Hit them first, but if they're a real person they'll call the police, and you'll be arrested and fired.</p><h3 style="margin-top:10px">RUN THE SHOP</h3><p>Shoppers buy real food off the shelves and pay you. If something sells out, they leave unhappy. When the delivery truck pulls up out front, go to the front doors to buy crates of stock. Watch out for robbers in black masks: they sneak in and steal. Hit them with the bat to make them drop it and run. Sometimes a shopper fakes being hit to get you in trouble, but the CCTV never lies.</p><h3 style="margin-top:10px">JOBS</h3><p>Every night has different jobs: lock the back door, mop spills, restock, check the freezer, take out the rubbish, count the till, check the cameras, fix lights and answer the phone. Reset the breaker when the power cuts out. Beat a night to unlock the next one.</p></div>
     </div>
     <button class="big" id="bHowBack">Got it</button>
   </div>
@@ -297,6 +307,24 @@ h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
     <div class="jobs" id="briefJobs"></div>
     <button class="big" id="bClockIn">CLOCK IN</button>
     <button class="ghost" id="bBriefBack">Back</button>
+  </div>
+</div>
+
+<div class="sheet dim" id="mShop" hidden>
+  <div class="card">
+    <div class="tag">🚚 FRESH FOOD CO. · DELIVERY</div>
+    <h2 class="good">BUY STOCK</h2>
+    <p class="small">Each crate fills a shelf with 12 more. Shoppers pay you when they buy them. You have <b id="shopCash">£40</b>.</p>
+    <div class="shop" id="shopList"></div>
+    <button class="big" id="bShopDone">DONE</button>
+  </div>
+</div>
+
+<div class="sheet dim" id="mTalk" hidden>
+  <div class="card">
+    <div class="tag">👮 OFFICER BANKS · MIDNIGHT CITY POLICE</div>
+    <p class="note talk" id="talkTxt"></p>
+    <button class="big" id="bTalkNext">NEXT ▶</button>
   </div>
 </div>
 
@@ -526,6 +554,10 @@ const Sfx = {
     const g = c.createGain(); this.env(g, t, 0.08, 0.12, 0.9);
     o.connect(f).connect(g).connect(this.master); o.start(t); lfo.start(t); o.stop(t + 1.1); lfo.stop(t + 1.1);
   },
+  engine() { this.tone({ freq: 55, to: 70, type: 'sawtooth', vol: 0.08, a: 0.3, r: 1.6 }); this.nz({ freq: 300, vol: 0.12, a: 0.3, r: 1.6 }); },
+  horn() { this.tone({ freq: 330, type: 'square', vol: 0.08, r: 0.25 }); this.tone({ freq: 330, type: 'square', vol: 0.08, r: 0.35, delay: 0.35 }); },
+  alarm() { for (let i = 0; i < 6; i++) this.tone({ freq: i % 2 ? 880 : 1180, type: 'square', vol: 0.07, r: 0.2, delay: i * 0.22 }); },
+  siren() { for (let i = 0; i < 4; i++) this.tone({ freq: 700, to: 1100, type: 'sawtooth', vol: 0.05, a: 0.05, r: 0.45, delay: i * 0.5 }); },
   swish() { this.nz({ freq: 1400, to: 500, type: 'bandpass', vol: 0.18, a: 0.02, r: 0.18 }); },
   whack() { this.nz({ freq: 500, vol: 0.6, r: 0.12 }); this.tone({ freq: 120, to: 50, type: 'square', vol: 0.3, r: 0.15 }); },
   slam() { this.nz({ freq: 900, vol: 0.5, r: 0.25 }); this.tone({ freq: 80, to: 45, type: 'square', vol: 0.25, r: 0.25 }); },
@@ -651,6 +683,78 @@ const lightning = new THREE.PointLight(0xc8d8ff, 0, 80, 1); lightning.position.s
 const panels = []; let lightPool = [];
 
 // =====================================================================
+//  STOCK: real food on the shelves, sold to shoppers and bought from the delivery truck
+// =====================================================================
+// Aisle 0 is the wall side of the first shelf; aisles 1-4 match the hanging signs. One product per shelf level.
+const PRODUCTS = [
+  { id: 'cheeryos', name: 'Cheery-Os', aisle: 0, emoji: '🥣', shape: 'box', w: 0.2, h: 0.3, d: 0.08, bg: '#f5c518', fg: '#1d3f8f', price: 3 },
+  { id: 'chocopops', name: 'Choco Pops', aisle: 0, emoji: '🍫', shape: 'box', w: 0.2, h: 0.3, d: 0.08, bg: '#6b3a1d', fg: '#ffd88a', price: 3 },
+  { id: 'bread', name: 'Bread', aisle: 0, emoji: '🍞', shape: 'box', w: 0.24, h: 0.14, d: 0.13, bg: '#f4e6c8', fg: '#c0392b', price: 2 },
+  { id: 'milk', name: 'Milk', aisle: 0, emoji: '🥛', shape: 'box', w: 0.1, h: 0.25, d: 0.1, bg: '#ffffff', fg: '#1f6fd1', price: 2 },
+  { id: 'crisps', name: 'Crunchies', aisle: 1, emoji: '🥔', shape: 'box', w: 0.2, h: 0.26, d: 0.06, bg: '#d62828', fg: '#ffe066', price: 2 },
+  { id: 'choc', name: 'Chocolate', aisle: 1, emoji: '🍫', shape: 'box', w: 0.22, h: 0.08, d: 0.05, bg: '#5a2ca0', fg: '#ffffff', price: 1 },
+  { id: 'cookies', name: 'Cookies', aisle: 1, emoji: '🍪', shape: 'box', w: 0.22, h: 0.1, d: 0.1, bg: '#2a9d8f', fg: '#fff3c4', price: 2 },
+  { id: 'popcorn', name: 'Popcorn', aisle: 1, emoji: '🍿', shape: 'box', w: 0.18, h: 0.24, d: 0.07, bg: '#ffffff', fg: '#e63946', price: 2 },
+  { id: 'beans', name: 'Baked Beans', aisle: 2, emoji: '🥫', shape: 'can', w: 0.1, h: 0.13, d: 0.1, bg: '#1d7fd1', fg: '#ffffff', price: 1 },
+  { id: 'soup', name: 'Tomato Soup', aisle: 2, emoji: '🍅', shape: 'can', w: 0.1, h: 0.13, d: 0.1, bg: '#d62828', fg: '#ffffff', price: 1 },
+  { id: 'tuna', name: 'Tuna', aisle: 2, emoji: '🐟', shape: 'can', w: 0.12, h: 0.06, d: 0.12, bg: '#3a86ff', fg: '#ffd166', price: 2 },
+  { id: 'pasta', name: 'Pasta', aisle: 2, emoji: '🍝', shape: 'box', w: 0.22, h: 0.2, d: 0.07, bg: '#ffd166', fg: '#1d3557', price: 1 },
+  { id: 'cola', name: 'Cola', aisle: 3, emoji: '🥤', shape: 'bottle', w: 0.09, h: 0.32, d: 0.09, bg: '#b5121b', fg: '#ffffff', price: 2 },
+  { id: 'juice', name: 'Orange Juice', aisle: 3, emoji: '🍊', shape: 'box', w: 0.1, h: 0.24, d: 0.1, bg: '#ff9f1c', fg: '#ffffff', price: 2 },
+  { id: 'water', name: 'Water', aisle: 3, emoji: '💧', shape: 'bottle', w: 0.08, h: 0.28, d: 0.08, bg: '#a8dadc', fg: '#1d3557', price: 1 },
+  { id: 'energy', name: 'Zap! Energy', aisle: 3, emoji: '⚡', shape: 'can', w: 0.07, h: 0.16, d: 0.07, bg: '#111111', fg: '#7dff3a', price: 2 },
+  { id: 'loo', name: 'Toilet Roll', aisle: 4, emoji: '🧻', shape: 'box', w: 0.22, h: 0.24, d: 0.22, bg: '#e9f1f7', fg: '#3a86ff', price: 4 },
+  { id: 'soap', name: 'Washing-up', aisle: 4, emoji: '🧽', shape: 'bottle', w: 0.08, h: 0.26, d: 0.08, bg: '#52b788', fg: '#ffffff', price: 2 },
+  { id: 'batteries', name: 'Batteries', aisle: 4, emoji: '🔋', shape: 'box', w: 0.14, h: 0.18, d: 0.03, bg: '#222222', fg: '#ffb703', price: 4 },
+  { id: 'catfood', name: 'Cat Food', aisle: 4, emoji: '🐱', shape: 'can', w: 0.1, h: 0.08, d: 0.1, bg: '#9d4edd', fg: '#ffffff', price: 1 },
+];
+const CRATE = 12;
+const crateCost = (p) => Math.max(4, Math.round(p.price * CRATE * 0.5));
+const AISLE_X = [1.5, 5.5, 9.5, 13.5, 17.5];
+const zeroM = new THREE.Matrix4().makeScale(0, 0, 0);
+function labelTex(p) {
+  return canvasTex(128, 160, (x, w, h) => {
+    x.fillStyle = p.bg; x.fillRect(0, 0, w, h);
+    x.fillStyle = p.fg; x.fillRect(0, h * 0.72, w, h * 0.06); x.fillRect(0, h * 0.12, w, h * 0.03);
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.font = '64px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; x.fillText(p.emoji, w / 2, h * 0.42);
+    x.fillStyle = p.fg; let size = 26; x.font = `900 ${size}px Inter, Arial`;
+    while (x.measureText(p.name).width > w - 10 && size > 12) { size -= 2; x.font = `900 ${size}px Inter, Arial`; }
+    x.fillText(p.name, w / 2, h * 0.87);
+  });
+}
+function buildStock(shelves) {
+  const levels = [0.32, 0.78, 1.24, 1.7];
+  const geos = { box: new THREE.BoxGeometry(1, 1, 1), can: new THREE.CylinderGeometry(0.5, 0.5, 1, 14), bottle: new THREE.CylinderGeometry(0.32, 0.5, 1, 12) };
+  for (const p of PRODUCTS) { p.slots = []; p.w *= 1.3; p.h *= 1.3; p.d *= 1.3; }
+  const boards = []; for (const [x, z] of shelves) for (const side of [-1, 1]) for (const y of levels) boards.push([x + 0.5 + side * 0.5, y - 0.015, z + 0.5]);
+  instanced(new THREE.BoxGeometry(0.2, 0.03, 1.0), lam({ color: 0xc7cdd0 }), boards, (d, [x, y, z]) => d.position.set(x, y, z));
+  const SHELF_XS = [3, 7, 11, 15];
+  for (const [x, z] of shelves) for (const side of [-1, 1]) {
+    const aisle = SHELF_XS.indexOf(x) + (side > 0 ? 1 : 0);
+    const list = PRODUCTS.filter((p) => p.aisle === aisle);
+    levels.forEach((y, li) => { const p = list[li]; for (let k = 0; k < 3; k++) p.slots.push({ x: x + 0.5 + side * (0.43 + p.d / 2), y, z: z + 0.2 + k * 0.3, rot: side > 0 ? Math.PI / 2 : -Math.PI / 2 }); });
+  }
+  for (const p of PRODUCTS) {
+    p.tex = labelTex(p);
+    p.mesh = instanced(geos[p.shape], lam({ map: p.tex }), p.slots, (d, sl) => { d.position.set(sl.x, sl.y + p.h / 2, sl.z); d.rotation.y = sl.rot; d.scale.set(p.w, p.h, p.d); });
+    p.mats = p.slots.map((_, i) => { const m = new THREE.Matrix4(); p.mesh.getMatrixAt(i, m); return m; });
+    p.order = shuffle(p.slots.map((_, i) => i)); p.max = p.slots.length; p.stock = p.max;
+  }
+}
+function setStock(p, n) {
+  p.stock = clamp(Math.round(n), 0, p.max);
+  p.order.forEach((idx, i) => p.mesh.setMatrixAt(idx, i < p.stock ? p.mats[idx] : zeroM));
+  p.mesh.instanceMatrix.needsUpdate = true;
+}
+function stockNight() {
+  for (const p of PRODUCTS) { p.order = shuffle(p.order); setStock(p, p.max * rand(night === 2 ? 0.15 : 0.3, 0.9)); }
+  for (const p of shuffle([...PRODUCTS]).slice(0, 2 + (night >= 2 ? 1 : 0))) setStock(p, randi(0, 2));
+}
+let money = 40;
+function addMoney(n) { money = Math.max(0, money + n); $('cash').textContent = money; }
+
+// =====================================================================
 //  WORLD
 // =====================================================================
 const world = new THREE.Group(); scene.add(world);
@@ -666,6 +770,8 @@ const interactables = [];  // {x,z,r,label,act,show}
 const tasksState = {};
 let spillMesh = null, restockMesh = null, backDoorLight = null, breakerLight = null, neonMesh = null;
 const props = { bag: null, ladder: null, lightPanel: null, pumpkins: [] };
+const truck = { mesh: null, phase: 'away', x: -40, wait: 0, visits: [] };
+const copCar = { mesh: null, red: null, blue: null, light: null, phase: 'away', x: 50 };
 // The window sign. RUN is drawn mirrored so it reads the right way from inside the store.
 function neonTex(word, mirror) { return canvasTex(256, 96, (x, w, h) => { x.fillStyle = '#000'; x.fillRect(0, 0, w, h); if (mirror) { x.translate(w, 0); x.scale(-1, 1); } x.font = '800 64px Inter, Arial'; x.textAlign = 'center'; x.fillStyle = '#ff3b6b'; x.shadowColor = '#ff3b6b'; x.shadowBlur = 16; x.fillText(word, w / 2, 72); }); }
 const camLEDs = [];
@@ -695,6 +801,23 @@ function buildWorld() {
   const ct = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.6, 1.7), phong({ color: 0x121418, shininess: 90 })); ct.position.set(-0.2, 1.3, 0); car.add(ct);
   for (const [x, z] of [[-1.3, 0.95], [1.3, 0.95], [-1.3, -0.95], [1.3, -0.95]]) { const wh = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.25, 12), lam({ color: 0x0d0d0d })); wh.rotation.x = Math.PI / 2; wh.position.set(x, 0.36, z); car.add(wh); }
   car.position.set(21, 0, 40); car.rotation.y = 0.12; world.add(car);
+  // the delivery truck (drives up twice a night) and the police car (only if someone calls them)
+  truck.mesh = new THREE.Group();
+  const tbox = new THREE.Mesh(new THREE.BoxGeometry(5, 2.4, 2.2), lam({ map: signTex('FRESH FOOD CO.', 'DELIVERIES 24/7', '#f4f1e8', '#1d6f42') })); tbox.position.set(-0.6, 1.65, 0); truck.mesh.add(tbox);
+  const tcab = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.8, 2.1), phong({ color: 0x1d6f42, shininess: 60 })); tcab.position.set(2.7, 1.35, 0); truck.mesh.add(tcab);
+  const twin = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.7, 1.8), phong({ color: 0x0d1418, shininess: 120 })); twin.position.set(3.51, 1.75, 0); truck.mesh.add(twin);
+  for (const [x, z] of [[-2.2, 1.05], [0.6, 1.05], [2.7, 1.05], [-2.2, -1.05], [0.6, -1.05], [2.7, -1.05]]) { const wh = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.3, 12), lam({ color: 0x0d0d0d })); wh.rotation.x = Math.PI / 2; wh.position.set(x, 0.42, z); truck.mesh.add(wh); }
+  for (const z of [-0.7, 0.7]) { const hl = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.2), new THREE.MeshBasicMaterial({ color: 0xfff2c0 })); hl.position.set(3.52, 0.8, z); hl.rotation.y = Math.PI / 2; truck.mesh.add(hl); }
+  truck.mesh.rotation.y = 0; truck.mesh.visible = false; world.add(truck.mesh);
+  copCar.mesh = new THREE.Group();
+  const pb = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.8, 1.9), phong({ color: 0xf2f2f2, shininess: 80 })); pb.position.y = 0.65; copCar.mesh.add(pb);
+  const stripe = new THREE.Mesh(new THREE.BoxGeometry(4.42, 0.22, 1.92), lam({ color: 0x1d3fbf })); stripe.position.y = 0.7; copCar.mesh.add(stripe);
+  const pt = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.6, 1.7), phong({ color: 0x121418, shininess: 90 })); pt.position.set(-0.2, 1.3, 0); copCar.mesh.add(pt);
+  for (const [x, z] of [[-1.4, 0.95], [1.4, 0.95], [-1.4, -0.95], [1.4, -0.95]]) { const wh = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.25, 12), lam({ color: 0x0d0d0d })); wh.rotation.x = Math.PI / 2; wh.position.set(x, 0.36, z); copCar.mesh.add(wh); }
+  copCar.red = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.15, 0.6), new THREE.MeshBasicMaterial({ color: 0xff2020 })); copCar.red.position.set(-0.2, 1.68, -0.35); copCar.mesh.add(copCar.red);
+  copCar.blue = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.15, 0.6), new THREE.MeshBasicMaterial({ color: 0x2050ff })); copCar.blue.position.set(-0.2, 1.68, 0.35); copCar.mesh.add(copCar.blue);
+  copCar.light = new THREE.PointLight(0xff2020, 0, 22, 1.4); copCar.light.position.set(0, 2.4, 0); copCar.mesh.add(copCar.light);
+  copCar.mesh.visible = false; world.add(copCar.mesh);
   for (let i = 0; i < 9; i++) { const hgt = rand(4, 9); const b = new THREE.Mesh(new THREE.BoxGeometry(rand(5, 9), hgt, 5), lam({ color: 0x0d1012 })); b.position.set(i * 9 - 26, hgt / 2, 66); world.add(b); if (Math.random() < 0.6) { const win = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 1), new THREE.MeshBasicMaterial({ color: Math.random() < 0.5 ? 0xffd27a : 0x88aaff })); win.position.set(b.position.x + rand(-2, 2), rand(1.5, hgt - 1), 63.45); world.add(win); } }
   // walls
   const walls = [];
@@ -731,10 +854,7 @@ function buildWorld() {
   // shelves + products
   const shelves = []; for (let z = 0; z <= 30; z++) for (let x = 0; x < W; x++) if (Gd[z][x] === 'S') shelves.push([x, z]);
   instanced(new THREE.BoxGeometry(0.84, 1.95, 1.0), lam({ color: 0x9aa3a6 }), shelves, (d, [x, z]) => d.position.set(x + 0.5, 0.975, z + 0.5));
-  const prods = []; const PCOLS = [0xd93a3a, 0xf2c230, 0x3a7bd9, 0x3ac26a, 0xf28a30, 0xe8e8e8, 0x8a3ad9, 0x2ad1c9, 0xc96a3a];
-  for (const [x, z] of shelves) for (const side of [-1, 1]) for (const y of [0.32, 0.78, 1.24, 1.7]) for (let k = 0; k < 3; k++) if (Math.random() < 0.88) prods.push({ x: x + 0.5 + side * 0.36, y, z: z + 0.2 + k * 0.3, c: pick(PCOLS), h: rand(0.18, 0.34), w: rand(0.14, 0.24) });
-  const pm = instanced(new THREE.BoxGeometry(1, 1, 1), lam({ color: 0xffffff }), prods, (d, p) => { d.position.set(p.x, p.y + p.h / 2, p.z); d.scale.set(0.16, p.h, p.w); });
-  if (pm) { const col = new THREE.Color(); prods.forEach((p, i) => pm.setColorAt(i, col.setHex(p.c))); pm.instanceColor.needsUpdate = true; }
+  buildStock(shelves);
   const aisleNames = [['AISLE 1', 'SNACKS', 5.5], ['AISLE 2', 'CANNED FOOD', 9.5], ['AISLE 3', 'DRINKS', 13.5], ['AISLE 4', 'HOUSEHOLD', 17.5]];
   for (const [a, b, x] of aisleNames) { const s = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.55), new THREE.MeshBasicMaterial({ map: signTex(a, b), side: THREE.DoubleSide })); s.position.set(x, 2.75, 20.5); world.add(s); }
   // checkouts
@@ -1002,7 +1122,8 @@ let customers = [];        // all active customers
 let doorCust = null;       // the one waiting at the door
 let nextArrival = 4, musicT = 5, whisperT = 15, thunderT = 20, phantomT = 30, heartT = 0, powerCutT = 999;
 let shake = 0, toastT = 0, scareT = 0, endT = 0, backDoorEvent = false, decisionCount = 0;
-const stats = { served: 0, caught: 0, mistakes: 0, hunts: 0, saved: 0, eaten: 0, beaten: 0 };
+const stats = { served: 0, caught: 0, mistakes: 0, hunts: 0, saved: 0, eaten: 0, beaten: 0, robbers: 0, fakers: 0, sold: 0 };
+let police = null, robberies = [], fakeAt = 1e9;
 let endingPending = null;
 const keys = new Set();
 const input = { jx: 0, jy: 0, lx: 0, ly: 0, run: false };
@@ -1045,9 +1166,15 @@ function newGame() {
   player.pos.set(20.5, 0, 26.5);
   elapsed = 0; hourIdx = 0; score = 0; strikes = 0; decisionCount = 0; backDoorEvent = false;
   $('score').textContent = '0';
-  Object.assign(stats, { served: 0, caught: 0, mistakes: 0, hunts: 0, saved: 0, eaten: 0, beaten: 0 }); swingT = 0; swingCd = 0;
+  Object.assign(stats, { served: 0, caught: 0, mistakes: 0, hunts: 0, saved: 0, eaten: 0, beaten: 0, robbers: 0, fakers: 0, sold: 0 }); swingT = 0; swingCd = 0;
   nextArrival = 3; musicT = 4; whisperT = rand(12, 20); thunderT = rand(10, 20); phantomT = rand(35, 60); powerCutT = DIFF[diffKey].hourLen * rand(1.2, 1.8) / NT().cuts;
   setupNight();
+  stockNight(); money = 40; $('cash').textContent = money;
+  const HL = DIFF[diffKey].hourLen;
+  truck.phase = 'away'; truck.mesh.visible = false; truck.visits = [HL * rand(0.8, 1.3), HL * rand(3.3, 3.9)];
+  copCar.phase = 'away'; copCar.mesh.visible = false; copCar.light.intensity = 0; police = null;
+  robberies = [HL * rand(1.4, 2.6)]; if (night >= 3) robberies.push(HL * rand(3.8, 5.0));
+  fakeAt = night >= 2 && Math.random() < 0.6 ? HL * rand(2.2, 4.6) : 1e9;
   for (const d of doors) { d.open = 1; d.target = 1; }
   entrance.open = 0; entrance.target = 0;
   setPower(true, true);
@@ -1082,8 +1209,8 @@ function setupNight() {
 function setState(s) {
   state = s;
   document.body.classList.toggle('playing', s === 'playing' || s === 'inspect');
-  $('mTitle').hidden = s !== 'title'; $('mBrief').hidden = s !== 'brief'; $('mPause').hidden = s !== 'paused'; $('mEnd').hidden = s !== 'end'; if (s !== 'title') $('mHow').hidden = true;
-  $('hud').hidden = !(s === 'playing' || s === 'scare' || s === 'inspect' || s === 'paused');
+  $('mTitle').hidden = s !== 'title'; $('mBrief').hidden = s !== 'brief'; $('mPause').hidden = s !== 'paused'; $('mEnd').hidden = s !== 'end'; $('mShop').hidden = s !== 'shop'; $('mTalk').hidden = s !== 'talk'; if (s !== 'title') $('mHow').hidden = true;
+  $('hud').hidden = !(s === 'playing' || s === 'scare' || s === 'inspect' || s === 'paused' || s === 'shop' || s === 'talk');
   $('touch').hidden = !(IS_TOUCH && s === 'playing');
   $('inspect').hidden = s !== 'inspect';
   document.body.classList.toggle('inspecting', s === 'inspect');
@@ -1213,14 +1340,30 @@ function updateCustomer(c, dt, t) {
       }
       break;
     case 'shopping':
-      if (stepAlong(c, dt)) { c.shopT -= dt; c.browse = Math.sin(t * 2 + c.seed); if (c.shopT <= 0) { routeTo(c, c.pos.x < 13 ? 6.5 : 18.5, c.pos.x < 13 ? 26.5 : 25.5, true); c.state = 'checkout'; c.shopT = 3; } }
+      if (stepAlong(c, dt)) { c.shopT -= dt; c.browse = Math.sin(t * 2 + c.seed); if (c.shopT <= 0) pickShopping(c); }
       break;
     case 'checkout':
-      if (stepAlong(c, dt)) { c.shopT -= dt; if (c.shopT <= 0) { Sfx.tone({ freq: 1800, type: 'square', vol: 0.03, r: 0.08 }); routeTo(c, DOOR_SPOT.x, 31.5); c.state = 'exiting'; } }
+      if (stepAlong(c, dt)) { c.shopT -= dt; if (c.shopT <= 0) { Sfx.tone({ freq: 1800, type: 'square', vol: 0.03, r: 0.08 }); payFor(c); routeTo(c, DOOR_SPOT.x, 31.5); c.state = 'exiting'; } }
       break;
     case 'exiting':
       if (c.pos.z > 28.5) entrance.target = 1;
-      if (stepAlong(c, dt)) { routeTo(c, rand(3, 23), 35.5); c.state = 'leaving'; }
+      if (stepAlong(c, dt)) { routeTo(c, rand(3, 23), 35.5); c.state = 'leaving'; if (c.loot) robberGotAway(c); }
+      break;
+    case 'rob-in':
+      if (stepAlong(c, dt)) { c.state = 'rob-grab'; c.grabT = 2.4; c.handsT = 2.4; }
+      break;
+    case 'rob-grab':
+      faceTowards(c, c.pos.x > c.loot0.shelfX ? -Math.PI / 2 : Math.PI / 2, dt);
+      c.grabT -= dt;
+      if (c.grabT <= 0) robberGrabs(c);
+      break;
+    case 'faking':
+      break;
+    case 'cop-in':
+      updateCop(c, dt);
+      break;
+    case 'cop-wait':
+      faceTowards(c, Math.atan2(player.pos.x - c.pos.x, player.pos.z - c.pos.z), dt);
       break;
     case 'leaving':
       if (stepAlong(c, dt)) { c.state = 'gone'; }
@@ -1255,8 +1398,9 @@ function updateCustomer(c, dt, t) {
 
 function animatePerson(c, dt, t) {
   const P = c.parts, g = c.group; if (!g) return;
-  g.position.set(c.pos.x, 0, c.pos.z);
-  const moving = ['arriving', 'entering', 'shopping', 'checkout', 'exiting', 'leaving', 'lurking', 'hunt', 'attack'].includes(c.state) && (c.path && c.path.length || c.final);
+  g.position.set(c.pos.x, c.lying ? 0.12 : 0, c.pos.z);
+  g.rotation.x = c.lying ? -Math.PI / 2 : 0;
+  const moving = ['arriving', 'entering', 'shopping', 'checkout', 'exiting', 'leaving', 'lurking', 'hunt', 'attack', 'rob-in', 'cop-in'].includes(c.state) && (c.path && c.path.length || c.final);
   const sw = moving ? Math.sin(c.anim * 2) : 0;
   P.legs[0].rotation.x = sw * 0.55; P.legs[1].rotation.x = -sw * 0.55;
   // arms: idle swing / knock / hands up / reveal claws
@@ -1386,6 +1530,170 @@ function updateHunter(c, dt) {
 }
 
 
+// ---------- the shop: shoppers, the delivery truck, robbers and the police ----------
+function pickShopping(c) {
+  const p = c.want || (c.want = pick(PRODUCTS));
+  if (p.stock <= 0) {
+    toast(`${c.first} wanted ${p.name} but it's SOLD OUT. Buy more from the delivery truck! -25`, 'warn', 3);
+    score = Math.max(0, score - 25); $('score').textContent = score;
+    routeTo(c, DOOR_SPOT.x, 31.5); c.state = 'exiting'; return;
+  }
+  c.basket = { p, n: Math.min(p.stock, randi(1, 3)) }; setStock(p, p.stock - c.basket.n);
+  routeTo(c, c.pos.x < 13 ? 6.5 : 18.5, c.pos.x < 13 ? 26.5 : 25.5, true); c.state = 'checkout'; c.shopT = 3;
+}
+function payFor(c) {
+  if (!c.basket) return;
+  const { p, n } = c.basket, cash = p.price * n; c.basket = null;
+  addMoney(cash); stats.sold += n; addScore(cash * 10);
+  toast(`${c.first} bought ${n} ${p.name}. +£${cash}`, 'good', 2);
+}
+// delivery truck
+function updateTruck(dt) {
+  const tm = truck.mesh;
+  if (truck.phase === 'away') { if (truck.visits.length && elapsed >= truck.visits[0]) { truck.visits.shift(); truck.phase = 'arriving'; truck.x = -40; tm.visible = true; Sfx.engine(); } }
+  else if (truck.phase === 'arriving') { truck.x = Math.min(8, truck.x + dt * 9 * clamp((8 - truck.x) / 6, 0.15, 1)); if (truck.x >= 7.95) { truck.phase = 'parked'; truck.wait = 75; Sfx.horn(); toast('🚚 The delivery truck is here! Go to the front doors to buy more food.', 'warn', 4); } }
+  else if (truck.phase === 'parked') { truck.wait -= dt; if (truck.wait <= 0) { truck.phase = 'leaving'; Sfx.engine(); toast('🚚 The delivery truck drove off.', '', 2.5); } }
+  else if (truck.phase === 'leaving') { truck.x += dt * 10; if (truck.x > 60) { truck.phase = 'away'; tm.visible = false; } }
+  tm.position.set(truck.x, 0, 37.2);
+}
+function openShop() { if (truck.phase !== 'parked') return; renderShop(); setState('shop'); }
+function renderShop() {
+  $('shopCash').textContent = '£' + money;
+  $('shopList').innerHTML = PRODUCTS.map((p, i) => `<button data-i="${i}" class="${p.stock < 6 ? 'low' : ''}" ${money < crateCost(p) || p.stock >= p.max ? 'disabled' : ''}><b>${p.emoji} ${p.name}</b><span>On shelf: ${p.stock}/${p.max}</span><span>Crate of ${CRATE}: £${crateCost(p)}</span></button>`).join('');
+}
+function buyCrate(i) {
+  const p = PRODUCTS[i]; if (!p || money < crateCost(p) || p.stock >= p.max) return;
+  addMoney(-crateCost(p)); setStock(p, p.stock + CRATE); Sfx.clunk(); renderShop();
+}
+// robbers
+function spawnRobber() {
+  const options = PRODUCTS.filter((p) => p.stock >= 4); if (!options.length) return false;
+  const r = genCustomer(hourIdx, 'human');
+  Object.assign(r.look, { jacket: '#151515', pants: '#111111', hair: 'black', style: 'short', glasses: false }); r.photo = { ...r.look };
+  r.robber = true; buildPerson(r);
+  const mask = canvasTex(128, 128, (x, w, h) => { x.fillStyle = '#0c0c0c'; x.fillRect(0, 0, w, h); x.fillStyle = r.look.skin; x.fillRect(26, 40, 76, 24); x.fillStyle = '#111'; for (const ex of [46, 82]) { x.beginPath(); x.arc(ex, 52, 6, 0, 7); x.fill(); } x.fillStyle = r.look.skin; x.beginPath(); x.ellipse(64, 96, 12, 7, 0, 0, 7); x.fill(); });
+  for (const k of Object.keys(r.tex)) r.tex[k].dispose(); r.tex = { open: mask, closed: mask, reveal: mask }; r.parts.faceMat.map = mask;
+  r.tells.add('noblink');
+  const sack = new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 8), lam({ color: 0x8a6a3a })); sack.position.y = -0.18; sack.visible = false; r.parts.arms[1].hand.add(sack); r.sack = sack;
+  const p = pick(options), shelfX = [3, 7, 11, 15][Math.max(0, p.aisle - 1)] + 0.5;
+  r.loot0 = { p, shelfX };
+  Object.assign(r, { pos: new THREE.Vector3(rand(3, 9), 0, 36), blinkT: 1, blinking: 0, anim: 0, twitchT: 2, twitch: 0, knockT: 0, knocking: 0, hands: 0, handsT: 0, reveal: 0, seed: Math.random() * 99, stepD: 0, speed: 1.7 });
+  routeTo(r, AISLE_X[p.aisle], randi(6, 18) + 0.5, true); r.state = 'rob-in';
+  customers.push(r); return true;
+}
+function robberGrabs(r) {
+  const p = r.loot0.p, n = Math.min(p.stock, randi(8, 14)); setStock(p, p.stock - n);
+  r.loot = { p, n }; r.sack.visible = true; r.handsT = 0;
+  routeTo(r, DOOR_SPOT.x, 31.5); r.state = 'exiting'; r.speed = 3.0;
+  Sfx.alarm(); shake = 0.2;
+  toast(`🚨 YOU'VE JUST BEEN ROBBED! They took the ${p.name}! Hit them with the bat before they get away!`, 'bad', 4.5);
+}
+function robberGotAway(r) {
+  const { p, n } = r.loot; r.loot = null;
+  const lost = Math.min(money, p.price * n);
+  addMoney(-lost); score = Math.max(0, score - 100); $('score').textContent = score;
+  toast(`The robber got away with ${n} ${p.name}. -£${lost}`, 'bad', 3.5);
+}
+function hitRobber(r) {
+  if (r.hitOnce) return;
+  r.hitOnce = true; r.robber = false; stats.robbers++;
+  if (r.loot) { setStock(r.loot.p, r.loot.p.stock + r.loot.n); r.sack.visible = false; }
+  const what = r.loot ? ` dropped the ${r.loot.p.name} and` : ''; r.loot = null;
+  Sfx.talk('ow ow ow! okay! I am going!', r.voice, false);
+  routeTo(r, DOOR_SPOT.x, 31.5); r.state = 'exiting'; r.speed = 3.8; r.handsT = 3;
+  addScore(200); toast(`WHACK! The robber${what} ran away! +${Math.round(200 * DIFF[diffKey].mult)}`, 'good', 3);
+}
+// police: called when you hit a real person, or when a shopper fakes it
+function callPolice(reason, who) {
+  if (police) return;
+  police = { phase: 'called', reason, name: who.first, who, t: 10 };
+  setTimeout(() => toast(`📞 ${who.first} is calling the police...`, 'bad', 3), 3200);
+}
+function startFake() {
+  const v = customers.find((c) => c.human && !c.robber && c.state === 'shopping' && c.pos.z < 27);
+  if (!v || police || customers.some(isHostile)) return false;
+  v.state = 'faking'; v.lying = true; v.path = null; v.final = null; v.basket = null;
+  Sfx.talk('owww! the night worker hit me! I am calling the police!', v.voice, false);
+  toast(`${v.first} fell over and is yelling: "OWWW! The night worker HIT me! I'm calling the police!" (You didn't!)`, 'warn', 5);
+  callPolice('fake', v); return true;
+}
+function spawnCop() {
+  const c = genCustomer(hourIdx, 'human');
+  c.first = 'Officer Banks'; c.cop = true;
+  Object.assign(c.look, { jacket: '#1b2a4a', pants: '#14161c', glasses: false, style: 'short', hair: pick(['black', 'brown', 'grey']) }); c.photo = { ...c.look };
+  buildPerson(c);
+  const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.12, 0.08, 14), lam({ color: 0x14203a })); hat.position.y = 0.12; c.parts.head.add(hat);
+  const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.015, 14), lam({ color: 0x0b0b0b })); brim.position.set(0, 0.085, 0.03); c.parts.head.add(brim);
+  const badge = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.01), new THREE.MeshBasicMaterial({ color: 0xffd34a })); badge.position.set(-0.09, 0.45, 0.19); c.parts.body.add(badge);
+  Object.assign(c, { pos: new THREE.Vector3(copCar.x - 1, 0, 35.2), blinkT: 1, blinking: 0, anim: 0, twitchT: 2, twitch: 0, knockT: 0, knocking: 0, hands: 0, handsT: 0, reveal: 0, seed: Math.random() * 99, stepD: 0, speed: 2.2, repathT: 0, stuckT: 0 });
+  c.state = 'cop-in'; customers.push(c); police.cop = c;
+  toast('🚔 The police are here. Officer Banks wants a word with you.', 'warn', 3.5);
+}
+function updateCop(c, dt) {
+  // on a fake call the officer checks on the person on the floor first, then comes to you
+  const faker = police.reason === 'fake' && police.who.group && !police.checked ? police.who : null;
+  if (faker && Math.hypot(faker.pos.x - c.pos.x, faker.pos.z - c.pos.z) < 1.6) { police.checked = true; toast(`Officer Banks talks to ${police.name}... then comes over to you.`, '', 3); c.repathT = 0; }
+  const tx = faker ? faker.pos.x : player.pos.x, tz = faker ? faker.pos.z : player.pos.z;
+  c.repathT -= dt;
+  if (c.repathT <= 0) { c.repathT = 1.2; routeTo(c, tx, tz); if (!c.path.length && Math.hypot(tx - c.pos.x, tz - c.pos.z) > 2) c.stuckT += 1.2; }
+  stepAlong(c, dt);
+  if ((!faker && Math.hypot(player.pos.x - c.pos.x, player.pos.z - c.pos.z) < 1.8) || c.stuckT > 8) startTalk();
+}
+const TALK = {
+  real: (n) => ["Evening. I'm Officer Banks, Midnight City Police.", `${n} says you hit them with a baseball bat.`, 'Let\'s have a look at your CCTV...', `*The tape shows you swinging the bat at ${n}. They were a real person.*`, "That's assault. You're under arrest. Hands where I can see them.", '*Your phone buzzes. It\'s the manager.* "You hit a CUSTOMER?! You\'re FIRED!"'],
+  fake: (n) => ["Evening. I'm Officer Banks, Midnight City Police.", `${n} says you hit them with a baseball bat.`, 'Let\'s have a look at your CCTV...', `*The tape shows you nowhere near ${n}. They just lay down on the floor and started yelling.*`, `${n}, you faked the whole thing! Wasting police time is a crime. You're coming with me.`, 'Sorry to bother you. Keep up the good work tonight!'],
+};
+function startTalk() {
+  if (!police || police.phase === 'talk') return;
+  police.phase = 'talk'; police.lines = TALK[police.reason](police.name); police.i = 0;
+  if (player.hidden) unhide();
+  if (state === 'inspect') setView('fp');
+  const c = police.cop; if (c) { c.state = 'cop-wait'; c.path = null; c.final = null; player.yaw = Math.atan2(-(c.pos.x - player.pos.x), -(c.pos.z - player.pos.z)); player.pitch = 0; }
+  $('talkTxt').textContent = police.lines[0]; $('bTalkNext').textContent = 'NEXT ▶'; $('toast').classList.remove('on'); toastT = 0;
+  setState('talk'); Sfx.talk(police.lines[0], 120, false);
+}
+function nextTalk() {
+  if (!police || state !== 'talk') return;
+  police.i++;
+  if (police.i < police.lines.length) {
+    $('talkTxt').textContent = police.lines[police.i]; Sfx.talk(police.lines[police.i], 120, false);
+    if (police.i === police.lines.length - 1) $('bTalkNext').textContent = police.reason === 'real' ? 'GO WITH THE OFFICER' : 'OK';
+    return;
+  }
+  if (police.reason === 'real') {
+    Sfx.siren(); Sfx.setDrone(0);
+    showEnd({ tag: 'GAME OVER · ARRESTED', title: 'ARRESTED AND FIRED', text: `The CCTV showed everything. You hit ${police.name}, a real customer, with a baseball bat. Officer Banks drives you away in the back of the police car, and the Midnight Mart fires you on the spot.`, good: false });
+    return;
+  }
+  const v = police.who, c = police.cop;
+  if (v.group) { v.lying = false; routeTo(v, DOOR_SPOT.x, 31.5); v.state = 'exiting'; v.speed = 1.8; v.handsT = 99; }
+  if (c) { routeTo(c, DOOR_SPOT.x, 31.5); c.state = 'exiting'; c.speed = 1.9; }
+  stats.fakers++; addScore(300);
+  police.phase = 'done';
+  setState('playing'); toast(`${police.name} got arrested for faking it! +${Math.round(300 * DIFF[diffKey].mult)}`, 'good', 3.5);
+}
+function updatePolice(dt) {
+  const cc = copCar;
+  if (cc.phase !== 'away') {
+    cc.mesh.position.set(cc.x, 0, 37.4); cc.mesh.rotation.y = Math.PI;
+    const f = Math.sin(performance.now() / 90) > 0; cc.red.visible = f; cc.blue.visible = !f; cc.light.color.setHex(f ? 0xff2020 : 0x2050ff); cc.light.intensity = 1.6;
+    if (cc.phase === 'arriving') { cc.x = Math.max(19, cc.x - dt * 12 * clamp((cc.x - 19) / 6, 0.15, 1)); if (cc.x <= 19.05) { cc.phase = 'parked'; spawnCop(); } }
+    if (cc.phase === 'leaving') { cc.x -= dt * 12; if (cc.x < -50) { cc.phase = 'away'; cc.mesh.visible = false; cc.light.intensity = 0; } }
+  }
+  if (!police) return;
+  if (police.phase === 'called') {
+    police.t -= dt;
+    if (police.t <= 0 && !customers.some(isHostile)) { police.phase = 'walking'; cc.phase = 'arriving'; cc.x = 50; cc.mesh.visible = true; Sfx.siren(); }
+  } else if (police.phase === 'done') {
+    if (!police.cop || !police.cop.group || police.cop.state === 'leaving' || police.cop.state === 'gone') { if (cc.phase === 'parked') { cc.phase = 'leaving'; Sfx.siren(); } police = null; }
+  }
+}
+function updateShopEvents(dt) {
+  updateTruck(dt); updatePolice(dt);
+  if (robberies.length && elapsed >= robberies[0]) { if (!customers.some(isHostile) && !police && (spawnRobber() || true)) robberies.shift(); else robberies[0] += 10; }
+  if (elapsed >= fakeAt) { if (startFake()) fakeAt = 1e9; else fakeAt += 8; }
+}
+
 // ---------- fighting back ----------
 // A monster you let in goes for any shopper inside first. Hit it with the bat to save them, or beat it before it shows itself.
 const isHostile = (c) => c.state === 'hunt' || c.state === 'attack';
@@ -1450,7 +1758,7 @@ function swing() {
   const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw);
   let hit = null, hd = 1e9;
   for (const c of customers) {
-    if (!c.group || !['shopping', 'checkout', 'entering', 'exiting', 'lurking', 'hunt', 'attack', 'scared'].includes(c.state)) continue;
+    if (!c.group || !['shopping', 'checkout', 'entering', 'exiting', 'lurking', 'hunt', 'attack', 'scared', 'rob-in', 'rob-grab', 'faking', 'cop-in', 'cop-wait'].includes(c.state)) continue;
     const dx = c.pos.x - player.pos.x, dz = c.pos.z - player.pos.z, d = Math.hypot(dx, dz);
     if (d > 1.9 || (dx * fx + dz * fz) / (d || 1) < 0.45 || !lineOfSight(player.pos.x, player.pos.z, c.pos.x, c.pos.z)) continue;
     if (d < hd) { hd = d; hit = c; }
@@ -1460,12 +1768,14 @@ function swing() {
 function landHit(c, fx, fz) {
   if (state !== 'playing' || !customers.includes(c)) return;
   Sfx.whack(); shake = Math.max(shake, 0.25);
+  if (c.robber) { hitRobber(c); return; }
+  if (c.cop) { Sfx.talk('hey! watch it!', c.voice, false); return; }
   if (c.human) {
-    if (c.state === 'scared') return;
+    if (c.state === 'scared' || c.state === 'faking') return;
     routeTo(c, DOOR_SPOT.x, 31.5); c.state = 'exiting'; c.speed = 2.6; c.handsT = 3;
-    Sfx.talk('ow! what is wrong with you?!', c.voice, false);
-    toast(`OW! ${c.first} was a real person! They're leaving to call the police. Mistake!`, 'bad', 3.2);
-    addStrike(); return;
+    Sfx.talk('ow! what is wrong with you?! I am calling the police!', c.voice, false);
+    toast(`OW! ${c.first} was a REAL person! They're calling the POLICE...`, 'bad', 3.5);
+    stats.mistakes++; callPolice('real', c); return;
   }
   c.hp = (c.hp || DIFF[diffKey].hp) - 1; c.stunT = 0.9; c.reveal = Math.max(c.reveal, 0.4);
   const nx = c.pos.x + fx * 1.3, nz = c.pos.z + fz * 1.3;
@@ -1532,7 +1842,7 @@ function showEnd(e) {
   $('endText').textContent = e.text + (newBest && e.good ? ' New best score!' : '');
   endGood = !!e.good;
   $('bAgain').textContent = e.good ? (night < 5 ? `NIGHT ${night + 1} ▶` : 'PLAY AGAIN') : `TRY NIGHT ${night} AGAIN`;
-  $('endStats').innerHTML = [['Night', night + ' of 5'], ['Score', score], ['Mistakes', stats.mistakes], ['Monsters caught', stats.caught], ['Shoppers saved', stats.saved], ['Customers served', stats.served], ['Jobs done', activeTasks.filter((id) => tasksState[id]).length + '/' + activeTasks.length]].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
+  $('endStats').innerHTML = [['Night', night + ' of 5'], ['Score', score], ['Mistakes', stats.mistakes], ['Monsters caught', stats.caught], ['Shoppers saved', stats.saved], ['Robbers stopped', stats.robbers], ['Money', '£' + money], ['Customers served', stats.served], ['Jobs done', activeTasks.filter((id) => tasksState[id]).length + '/' + activeTasks.length]].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
   setState('end');
 }
 
@@ -1547,6 +1857,7 @@ function findInteract() {
   const consider = (x, z, maxD, o) => { const dx = x - player.pos.x, dz = z - player.pos.z, d = Math.hypot(dx, dz); if (d > maxD) return; const dot = (dx * fx + dz * fz) / (d || 1); if (dot < 0.3 && d > 0.9) return; const s = d - dot; if (s < bs) { bs = s; best = o; } };
   consider(21.5, 28.3, 2.0, { label: doorCust && doorCust.state === 'waiting' ? 'Inspect the customer' : 'Look through the window', act: () => openInspect('window') });
   for (const d of doors) consider(d.x + 0.5, d.z + 0.5, 1.9, { label: d.target ? `Close the ${d.name} door` : `Open the ${d.name} door`, act: () => toggleDoor(d) });
+  if (truck.phase === 'parked') consider(13, 29.3, 2.2, { label: 'Buy stock from the delivery truck 🚚', act: openShop });
   for (const h of HIDE_SPOTS) consider(h.x, h.z, 1.9, { label: `Hide in the ${h.name}`, act: () => hide(h) });
   if (isTask('backdoor')) consider(24.6, 12.5, 2.0, { label: 'Lock the back door', act: () => doTask('backdoor') });
   if (isTask('spill')) consider(9.5, 9.5, 1.8, { label: 'Mop the spill', act: () => doTask('spill') });
@@ -1758,7 +2069,7 @@ function updateWorld(dt, t) {
   // doors
   for (const d of doors) { d.open += (d.target - d.open) * Math.min(1, dt * 6); d.pivot.rotation.y = d.dir * d.open * 1.5; }
   // entrance: only opens for customers you let in or who are leaving
-  const want = customers.some((c) => ['entering', 'exiting'].includes(c.state) && Math.hypot(c.pos.x - 13, c.pos.z - 30.5) < 2.6);
+  const want = customers.some((c) => ['entering', 'exiting', 'rob-in', 'cop-in'].includes(c.state) && Math.hypot(c.pos.x - 13, c.pos.z - 30.5) < 2.6);
   entrance.target = want ? 1 : 0;
   const was = entrance.open;
   entrance.open += (entrance.target - entrance.open) * Math.min(1, dt * 4);
@@ -1792,6 +2103,7 @@ function updateWorld(dt, t) {
 }
 
 function updateEvents(dt, t) {
+  updateShopEvents(dt);
   const D = DIFF[diffKey];
   // the clock
   elapsed += dt;
@@ -1970,6 +2282,8 @@ window.addEventListener('keydown', (e) => {
     if (e.code === 'Escape' || e.code === 'KeyC' || e.code === 'KeyQ') setView('fp');
     if (e.code === 'Digit1') ask('why'); if (e.code === 'Digit2') ask('name'); if (e.code === 'Digit3') ask('hands'); if (e.code === 'Digit4') ask('age');
   } else if (state === 'paused' && (e.code === 'Escape' || e.code === 'KeyP')) resume();
+  else if (state === 'shop' && (e.code === 'Escape' || e.code === 'KeyE')) setState('playing');
+  else if (state === 'talk' && (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyE')) nextTalk();
 });
 window.addEventListener('keyup', (e) => keys.delete(e.code));
 window.addEventListener('blur', () => { keys.clear(); if (state === 'playing') setState('paused'); });
@@ -2018,6 +2332,9 @@ function openBrief() {
 }
 $('bPlay').addEventListener('click', () => { Sfx.init(); openBrief(); });
 $('bClockIn').addEventListener('click', () => { Sfx.init(); newGame(); });
+$('shopList').addEventListener('click', (e) => { const b = e.target.closest('button[data-i]'); if (b && !b.disabled) buyCrate(+b.dataset.i); });
+$('bShopDone').addEventListener('click', () => { if (state === 'shop') setState('playing'); });
+$('bTalkNext').addEventListener('click', nextTalk);
 $('bBriefBack').addEventListener('click', () => setState('title'));
 $('nightPick').addEventListener('click', (e) => { const b = e.target.closest('button[data-n]'); if (!b || b.disabled) return; night = +b.dataset.n; store.set('ns-night', night); renderBest(); Sfx.init(); Sfx.clunk(); });
 $('bHow').addEventListener('click', () => { $('mHow').hidden = false; $('mTitle').hidden = true; });
@@ -2063,7 +2380,7 @@ function boot() {
   setState('title');
   requestAnimationFrame(frame);
 }
-window.__ns = { swing, get stats() { return stats; }, get state() { return state; }, get view() { return view; }, get customers() { return customers; }, get doorCust() { return doorCust; }, player, decide, ask, newGame, setView, startHunt, get strikes() { return strikes; }, get score() { return score; }, get elapsed() { return elapsed; }, set elapsed(v) { elapsed = v; }, spawnCustomer, tasksState, doTask, interact, Gd, get night() { return night; }, set night(v) { night = v; }, set unlocked(v) { unlocked = v; renderBest(); }, get activeTasks() { return activeTasks; }, get phone() { return phone; }, answerPhone, openBrief, creepEvent, spawnHunterAt, props, setHour(h) { elapsed = h * DIFF[diffKey].hourLen - 0.5; }, get camGhost() { return camGhost; } };
+window.__ns = { PRODUCTS, setStock, truck, get police() { return police; }, spawnRobber, startFake, callPolice, nextTalk, openShop, buyCrate, get money() { return money; }, swing, get stats() { return stats; }, get state() { return state; }, get view() { return view; }, get customers() { return customers; }, get doorCust() { return doorCust; }, player, decide, ask, newGame, setView, startHunt, get strikes() { return strikes; }, get score() { return score; }, get elapsed() { return elapsed; }, set elapsed(v) { elapsed = v; }, spawnCustomer, tasksState, doTask, interact, Gd, get night() { return night; }, set night(v) { night = v; }, set unlocked(v) { unlocked = v; renderBest(); }, get activeTasks() { return activeTasks; }, get phone() { return phone; }, answerPhone, openBrief, creepEvent, spawnHunterAt, props, setHour(h) { elapsed = h * DIFF[diffKey].hourLen - 0.5; }, get camGhost() { return camGhost; } };
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot, boot); else boot();
 })();
 </script>
