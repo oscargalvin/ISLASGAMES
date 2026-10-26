@@ -51,6 +51,10 @@ header p { margin: 12px 0 0; color: var(--muted); font-size: 16px; }
 #player { position: fixed; inset: 0; z-index: 100; background: #000; }
 #player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
 #closeBtn { position: absolute; z-index: 2; left: 50%; top: calc(8px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); padding: 6px 14px; border-radius: 999px; border: 2px solid rgba(255,255,255,.5); background: rgba(0, 0, 0, .55); color: #fff; font: 900 13px var(--body); letter-spacing: .04em; cursor: pointer; }
+#closeBtn.gone { display: none; }
+#eyeBtn { position: absolute; z-index: 2; left: calc(6px + env(safe-area-inset-left, 0px)); top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(255,255,255,.45); background: rgba(0, 0, 0, .45); color: #fff; font-size: 18px; line-height: 1; padding: 0; cursor: pointer; opacity: .75; }
+#eyeBtn:hover { opacity: 1; background: rgba(0, 0, 0, .75); }
+#eyeBtn:focus-visible { outline: 3px solid var(--sun); }
 #closeBtn:hover { background: rgba(0, 0, 0, .8); }
 #closeBtn:focus-visible { outline: 3px solid var(--sun); }
 @media (prefers-reduced-motion: reduce) { .game, .game:hover { transition: none; transform: none; } }
@@ -107,6 +111,7 @@ header p { margin: 12px 0 0; color: var(--muted); font-size: 16px; }
 
 <div id="player" hidden>
   <button id="closeBtn">✕ All games</button>
+  <button id="eyeBtn" aria-label="Hide the All games button" title="Hide or show the All games button">👁️</button>
 </div>
 
 <script>
@@ -132,6 +137,17 @@ header p { margin: 12px 0 0; color: var(--muted); font-size: 16px; }
   }
   document.querySelectorAll('.game[data-src]').forEach((b) => b.addEventListener('click', () => open(b.dataset.src, b)));
   document.getElementById('closeBtn').addEventListener('click', close);
+  // the eye button on the side hides or shows "All games" so it doesn't cover the game
+  const closeBtn = document.getElementById('closeBtn'), eyeBtn = document.getElementById('eyeBtn');
+  function setHidden(h) {
+    closeBtn.classList.toggle('gone', h);
+    eyeBtn.textContent = h ? '🙈' : '👁️';
+    eyeBtn.setAttribute('aria-label', h ? 'Show the All games button' : 'Hide the All games button');
+    try { localStorage.setItem('hub-hide-close', h ? '1' : ''); } catch (e) {}
+  }
+  let saved = false; try { saved = localStorage.getItem('hub-hide-close') === '1'; } catch (e) {}
+  setHidden(saved);
+  eyeBtn.addEventListener('click', () => { setHidden(!closeBtn.classList.contains('gone')); if (frame) try { frame.contentWindow.focus(); } catch (e) {} });
 })();
 </script>
 <script src="live.js"></script>
