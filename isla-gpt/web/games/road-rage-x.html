@@ -99,6 +99,7 @@ h3 { margin: 4px 0 0; font-family: var(--display); font-weight: 400; font-size: 
 .ghost { padding: 8px 14px; border: 1px solid var(--line); border-radius: 12px; background: rgba(0, 0, 0, .45); font-size: 16px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; }
+#modes { grid-template-columns: repeat(5, 1fr); }
 .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
 .opt { padding: 8px 6px; border-radius: 14px; border: 2px solid var(--line); background: rgba(0, 0, 0, .5); text-align: center; line-height: 1.15; font-size: 14px; }
 .opt .em { font-size: 24px; }
@@ -150,7 +151,7 @@ h3 { margin: 4px 0 0; font-family: var(--display); font-weight: 400; font-size: 
   #tBrake { right: calc(112px + env(safe-area-inset-right, 0px)); width: 76px; height: 72px; } #tNitro { right: calc(112px + env(safe-area-inset-right, 0px)); bottom: calc(98px + env(safe-area-inset-bottom, 0px)); width: 76px; height: 56px; }
   #tCam { bottom: calc(110px + env(safe-area-inset-bottom, 0px)); }
 }
-@media (max-width: 600px) { .side { place-items: stretch; background: rgba(4, 6, 12, .9); } .grid4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .side { place-items: stretch; background: rgba(4, 6, 12, .9); } .grid4, #modes { grid-template-columns: repeat(2, 1fr); } }
 </style>
 
 <div id="loading">STARTING ENGINES…</div>
@@ -322,6 +323,7 @@ const MODES = {
   race:    { name: 'Street Race', em: '🏁', sub: 'Beat 3 racers' },
   police:  { name: 'Police Chase', em: '🚓', sub: "Don't get busted" },
   time:    { name: 'Speed Challenge', em: '⏱', sub: 'Beat the clock' },
+  escape:  { name: 'Quick Escape', em: '🔥', sub: 'Car on fire! Get it fixed' },
 };
 const MAPS = {
   city:   { name: 'Sunset City',    em: '🌆', tod: 0.66, todSpeed: 1 / 300, weather: 'random', curve: 1.0 },
@@ -1051,7 +1053,7 @@ function wreck(why) {
   const v = new V3(car.vx, 0, car.vz), sp = v.length();
   car.wreck = { vel: new V3(car.vx * 0.7, 6 + Math.min(10, sp * 0.18), car.vz * 0.7), ang: new V3(rand(-5, 5), rand(-6, 6), rand(-7, 7)), t: 0, quat: new THREE.Quaternion().setFromEuler(new THREE.Euler(0, car.th, 0)), pos: car.pos.clone(), exploded: false };
   car.wreck.pos.y = 0;
-  run.endReason = why === 'busted' ? 'busted' : 'wrecked';
+  run.endReason = why === 'busted' ? 'busted' : why === 'fire' ? 'burned' : 'wrecked';
   state = 'crashing'; targetTS = 0.28; timeScale = 0.35; A.crash(1.2); shake = 1;
   sparks(car.pos.x, 0.6, car.pos.z, 40, car.vx, car.vz);
   setBody();
@@ -1270,10 +1272,11 @@ function updatePickups(dt, t) {
 }
 function makeGate(s, kind) {
   const g = new THREE.Group(), tmp = {}; roadToWorld(s, 0, tmp);
-  const col = kind === 'finish' ? 0xffffff : 0x22d3ee;
+  const col = kind === 'finish' ? 0xffffff : kind === 'fix' ? 0xff9f1c : kind === 'shop' ? 0x4ade80 : 0x22d3ee;
   const pm = new THREE.MeshStandardMaterial({ color: 0x222222, emissive: col, emissiveIntensity: 0.6 });
   for (const side of [-1, 1]) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.6, 7, 0.6), pm); p.position.set(side * (ROAD_W + 0.6), 3.5, 0); g.add(p); }
-  const banner = new THREE.Mesh(new THREE.BoxGeometry(2 * ROAD_W + 1.8, 1.4, 0.3), kind === 'finish' ? new THREE.MeshStandardMaterial({ map: TEX.check, emissive: 0x333333 }) : new THREE.MeshStandardMaterial({ map: signTex('CHECKPOINT', '#06222a', '#22d3ee'), emissive: 0xffffff, emissiveMap: signTex('CHECKPOINT', '#06222a', '#22d3ee'), emissiveIntensity: 0.8 }));
+  const sign = kind === 'fix' ? ['CAR FIXER', '#2a1400', '#ff9f1c', 'DRIVE THROUGH = FREE REPAIR'] : kind === 'shop' ? ['REPAIR SHOP', '#05230f', '#4ade80', 'DRIVE IN TO PUT THE FIRE OUT'] : ['CHECKPOINT', '#06222a', '#22d3ee'];
+  const banner = new THREE.Mesh(new THREE.BoxGeometry(2 * ROAD_W + 1.8, 1.4, 0.3), kind === 'finish' ? new THREE.MeshStandardMaterial({ map: TEX.check, emissive: 0x333333 }) : new THREE.MeshStandardMaterial({ map: signTex(...sign), emissive: 0xffffff, emissiveMap: signTex(...sign), emissiveIntensity: 0.8 }));
   banner.position.y = 7.2; g.add(banner);
   g.position.set(tmp.x, 0, tmp.z); g.rotation.y = tmp.h; scene.add(g);
   const gate = { s, kind, g }; gates.push(gate); return gate;
@@ -1324,7 +1327,8 @@ function startRun() {
   Object.assign(car, { vx: 0, vz: 0, th: 0, steer: 0, s: 20, d: 1.8, idx: 0, nitro: car.stats.nitroCap, nitroOn: false, hp: 100, drift: 0, gear: 1, wreck: null, scrapeT: 0, camH: 0, pitch: 0, roll: 0, vf: 0, vl: 0, rpm: 0.2 });
   roadToWorld(20, 1.8, TMP); car.pos.set(TMP.x, 0, TMP.z); car.th = TMP.h; car.camH = TMP.h; car.idx = 10;
   car.model.group.quaternion.identity();
-  run = { mode: save.mode, map: save.map, score: 0, coins: 0, nearMiss: 0, combo: 0, comboT: 0, topSpeed: 0, driftTime: 0, driftChain: 0, distKm: 0, escapes: 0, copsDown: 0, nitroTime: 0, checkpoints: 0, raceWin: 0, hits: 0, time: 0, bust: 0, heat: 0, wanted: false, nextWave: save.mode === 'police' ? 3 : 60, nextPick: 120, missionCoins: 0, missionsDone: [], endReason: '', finish: 4000, finishers: [], timeLeft: 35, nextCp: 900, startS: 20 };
+  run = { mode: save.mode, map: save.map, score: 0, coins: 0, nearMiss: 0, combo: 0, comboT: 0, topSpeed: 0, driftTime: 0, driftChain: 0, distKm: 0, escapes: 0, copsDown: 0, nitroTime: 0, checkpoints: 0, raceWin: 0, hits: 0, time: 0, bust: 0, heat: 0, wanted: false, nextWave: save.mode === 'police' ? 3 : 60, nextPick: 120, missionCoins: 0, missionsDone: [], endReason: '', finish: 4000, finishers: [], timeLeft: 35, nextCp: 900, startS: 20, nextFix: 600 };
+  if (run.mode === 'escape') { run.finish = 1800; makeGate(run.finish, 'shop'); }
   for (const m of save.missions) m.doneThisRun = false;
   if (run.mode === 'race') {
     const rivals = [['Blaze', 'super', '#f97316'], ['Nova', 'coupe', '#ec4899'], ['Ghost', 'muscle', '#e5e7eb']];
@@ -1344,7 +1348,7 @@ function endRun() {
   if (state === 'over') return;
   const r = run;
   checkMissions();
-  const coinsEarned = r.coins + Math.floor(r.score / 60) + r.missionCoins + (r.mode === 'race' && r.place === 1 ? 500 : r.mode === 'race' && r.place === 2 ? 250 : r.mode === 'race' && r.place === 3 ? 120 : 0);
+  const coinsEarned = r.coins + Math.floor(r.score / 60) + r.missionCoins + (r.mode === 'race' && r.place === 1 ? 500 : r.mode === 'race' && r.place === 2 ? 250 : r.mode === 'race' && r.place === 3 ? 120 : 0) + (r.endReason === 'escape' ? 400 : 0);
   save.coins += coinsEarned;
   const dist = Math.max(0, car.s - r.startS);
   save.bestDist = Math.max(save.bestDist || 0, dist);
@@ -1352,10 +1356,10 @@ function endRun() {
   const bk = r.mode + ':' + r.map, prev = save.best[bk] || { score: 0, dist: 0 }, isBest = r.score > prev.score;
   save.best[bk] = { score: Math.max(prev.score, r.score), dist: Math.max(prev.dist, Math.round(dist)) };
   rollMissions(); persist();
-  const titles = { wrecked: ['WRECKED!', 'Your car is a smoking heap of metal.'], busted: ['BUSTED!', 'The cops boxed you in. Off to jail!'], time: ["TIME'S UP!", 'So close to the next checkpoint!'], race: ['', ''], quit: ['RUN OVER', ''] };
+  const titles = { wrecked: ['WRECKED!', 'Your car is a smoking heap of metal.'], busted: ['BUSTED!', 'The cops boxed you in. Off to jail!'], time: ["TIME'S UP!", 'So close to the next checkpoint!'], race: ['', ''], quit: ['RUN OVER', ''], burned: ['BURNT OUT!', 'The fire got your car before the repair shop.'], escape: ['🔧 MADE IT!', 'The mechanics put the fire out just in time!'] };
   let title, text, good = false;
   if (r.endReason === 'race') { const ord = ['1st', '2nd', '3rd', '4th'][r.place - 1]; title = r.place === 1 ? '🏆 YOU WIN!' : `FINISHED ${ord}`; text = r.place === 1 ? 'First across the line. The streets are yours!' : 'Upgrade your car in the garage and try again!'; good = r.place === 1; }
-  else { [title, text] = titles[r.endReason] || titles.wrecked; }
+  else { [title, text] = titles[r.endReason] || titles.wrecked; good = r.endReason === 'escape'; }
   $('endTag').textContent = MODES[r.mode].name.toUpperCase() + ' · ' + MAPS[r.map].name.toUpperCase();
   $('endTitle').textContent = title; $('endTitle').className = good ? 'good' : 'bad';
   $('endText').textContent = text + (isBest ? ' New high score!' : '');
@@ -1389,7 +1393,20 @@ function updateRun(dt, rdt, t) {
   if (car.nitroOn) for (const sd of [-0.4, 0.4]) { const back = -car.model.len; const ex = car.pos.x + Math.sin(car.th) * back - Math.cos(car.th) * sd, ez = car.pos.z + Math.cos(car.th) * back + Math.sin(car.th) * sd; FX.add.spawn({ x: ex, y: 0.45, z: ez, vx: -Math.sin(car.th) * 8 + car.vx, vy: rand(-.3, .3), vz: -Math.cos(car.th) * 8 + car.vz, life: .18, size: .55, size1: .1, c0: C.nos, c1: C.nos2 }); }
   // damage smoke
   if (car.hp < 50 && Math.random() < (car.hp < 25 ? 0.7 : 0.3)) { const fx = car.pos.x + Math.sin(car.th) * car.model.len * 0.6, fz = car.pos.z + Math.cos(car.th) * car.model.len * 0.6; FX.norm.spawn({ x: fx, y: 1, z: fz, vx: car.vx * 0.9, vy: 1.5, vz: car.vz * 0.9, life: 1.2, size: .4, size1: 1.6, c0: car.hp < 25 ? C.dark : C.smoke, a: .45 }); if (car.hp < 25 && Math.random() < 0.3) FX.add.spawn({ x: fx, y: 0.9, z: fz, vx: car.vx * 0.9, vy: 2, vz: car.vz * 0.9, life: .3, size: .4, size1: .1, c0: C.fire, c1: C.fire2 }); }
+  // car fixers: show up now and then when the car is hurt (not in Quick Escape)
+  if (run.mode !== 'escape') {
+    const fx = gates.find((x) => x.kind === 'fix');
+    if (!fx && car.hp < 60 && car.s > run.nextFix) { makeGate(car.s + 450, 'fix'); pop('🔧 Car fixer ahead!', '#ff9f1c'); }
+    if (fx && car.s > fx.s) { car.hp = 100; addScore(100, '🔧 CAR FIXED!', '#ff9f1c'); A.ding(); scene.remove(fx.g); gates.splice(gates.indexOf(fx), 1); run.nextFix = car.s + rand(900, 1600); }
+  }
   // mode logic
+  if (run.mode === 'escape') {
+    if (!run.fireMsg) { run.fireMsg = true; bigMsg('🔥 ON FIRE!', '#ff7a1a', 1800); }
+    if (!run.done) car.hp -= 1.9 / Math.sqrt(car.stats.armor) * dt;
+    if (Math.random() < 0.9) { const fx = car.pos.x + Math.sin(car.th) * car.model.len * 0.6, fz = car.pos.z + Math.cos(car.th) * car.model.len * 0.6; FX.add.spawn({ x: fx + rand(-.4, .4), y: 1, z: fz + rand(-.4, .4), vx: car.vx * 0.9, vy: rand(1.5, 3), vz: car.vz * 0.9, life: rand(.25, .45), size: rand(.5, .8), size1: .1, c0: C.fire, c1: C.fire2 }); }
+    if (car.hp <= 0) { car.hp = 0; wreck('fire'); return; }
+    if (car.s >= run.finish && !run.done) { run.done = true; run.endReason = 'escape'; car.hp = 100; bigMsg('🔧 FIRE OUT!', '#4ade80', 1500); A.ding(); setTimeout(() => { if (state === 'playing') endRun(); }, 1500); }
+  }
   if (run.mode === 'time') {
     run.timeLeft -= dt;
     const g = gates.find((x) => x.kind === 'cp');
@@ -1483,7 +1500,8 @@ function updateHUD() {
   $('comboTxt').textContent = run.combo > 1 ? `COMBO x${run.combo}` : ''; $('coinChip').textContent = '🪙 ' + run.coins;
   let big = '', small = '';
   if (run.mode === 'race') { const place = 1 + agents.filter((a) => a.kind === 'racer' && a.s > car.s).length; big = ['1st', '2nd', '3rd', '4th'][place - 1] + ' / 4'; small = Math.max(0, Math.round(run.finish - car.s)) + ' m to finish'; }
-  else if (run.mode === 'time') { big = run.timeLeft.toFixed(1) + 's'; small = Math.round((gates[0] ? gates[0].s : car.s) - car.s) + ' m to checkpoint'; $('modeBig').style.color = run.timeLeft < 8 ? '#ff4f4f' : '#fff'; }
+  else if (run.mode === 'time') { big = run.timeLeft.toFixed(1) + 's'; small = Math.round((gates.find((x) => x.kind === 'cp') || car).s - car.s) + ' m to checkpoint'; $('modeBig').style.color = run.timeLeft < 8 ? '#ff4f4f' : '#fff'; }
+  else if (run.mode === 'escape') { big = '🔥 ' + Math.max(0, Math.round(run.finish - car.s)) + ' m'; small = 'to the repair shop. Hurry!'; $('modeBig').style.color = car.hp < 30 ? '#ff4f4f' : '#ffb347'; }
   else if (run.mode === 'police' || run.wanted) { big = run.wanted ? '🚨'.repeat(Math.max(1, run.heat)) : '😎'; small = run.wanted ? 'Lose the cops! Escapes: ' + run.escapes : 'Next wave incoming…'; }
   else { big = ''; small = MAPS[run.map].name; }
   $('modeBig').textContent = big; $('modeSmall').textContent = small;
