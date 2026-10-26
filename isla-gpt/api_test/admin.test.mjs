@@ -85,8 +85,12 @@ test("without a store the site still works and the panel explains the setup", as
   const g = await get();
   assert.equal(g.body.configured, false);
   const p = await post({ code: "5522", action: "login" });
-  assert.equal(p.statusCode, 503);
-  assert.ok(p.body.needsStore);
+  assert.equal(p.statusCode, 200);
+  assert.ok(p.body.noStore, "the code still opens the archived games");
+  assert.equal((await post({ code: "1111", action: "login" }, "7.7.7.7")).statusCode, 401);
+  const s = await post({ code: "5522", action: "save", v: 0, state: {} });
+  assert.equal(s.statusCode, 503);
+  assert.ok(s.body.needsStore);
 });
 
 test("the code is checked, saves make versions, and old versions come back", async () => {

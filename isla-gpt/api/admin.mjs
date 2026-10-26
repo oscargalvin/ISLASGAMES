@@ -233,6 +233,21 @@ async function checkCode(r, req, code) {
   return "wrong";
 }
 
+// Without a store the wrong-code count lives in this server's memory instead.
+const triesNoStore = new Map();
+function checkCodeNoStore(req, code) {
+  const ip = String(req.headers?.["x-forwarded-for"] || "anon").split(",")[0].trim().slice(0, 64);
+  const now = Date.now();
+  const t = triesNoStore.get(ip);
+  if (t && now - t.since > TRY_WINDOW_S * 1000) triesNoStore.delete(ip);
+  const cur = triesNoStore.get(ip) || { n: 0, since: now };
+  if (cur.n >= MAX_TRIES) return "locked";
+  if (sameCode(code, process.env.ADMIN_CODE || "5522")) return "ok";
+  cur.n++; triesNoStore.set(ip, cur);
+  if (triesNoStore.size > 5000) triesNoStore.clear();
+  return "wrong";
+}
+
 // ---------- the handler ----------
 
 const safeParse = (s) => {
@@ -265,6 +280,12 @@ export default async function handler(req, res) {
   }
   res.setHeader("Cache-Control", "no-store");
   if (!r) {
+    // No store yet: the code still unlocks the archived games, but nothing can be saved.
+    const body = typeof req.body === "string" ? safeParse(req.body) : req.body ?? {};
+    const ok = checkCodeNoStore(req, body.code);
+    if (ok === "locked") return res.status(429).json({ error: "Too many wrong codes. Try again in 10 minutes." });
+    if (ok === "wrong") return res.status(401).json({ error: "Wrong code." });
+    if (body.action === "login" || body.action === "get") return res.status(200).json({ noStore: true });
     return res.status(503).json({
       error: "The admin panel needs a store connected in Vercel first (Storage → Upstash Redis → connect to this project).",
       needsStore: true,
