@@ -111,7 +111,25 @@ h3 { margin: 4px 0 0; font-family: var(--display); font-weight: 400; font-size: 
 .duo .no i { background: linear-gradient(90deg, #22d3ee, #3b82f6); } .duo .hp i { background: linear-gradient(90deg, #ef4444, #3ddc97); }
 body.duoOn #speedo, body.duoOn .tl, body.duoOn #speedLines { display: none; }
 .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; }
-#modes { grid-template-columns: repeat(5, 1fr); }
+#modes { grid-template-columns: repeat(3, 1fr); }
+#alertPill { padding: 5px 14px; border-radius: 999px; background: rgba(200, 20, 30, .78); border: 2px solid #ff8a8a; font-size: 16px; font-weight: 700; white-space: nowrap; animation: pulse .8s ease-in-out infinite alternate; }
+@keyframes pulse { from { transform: scale(1); } to { transform: scale(1.06); } }
+#limit { width: 54px; height: 54px; border-radius: 50%; background: #fff; border: 7px solid #d61f1f; color: #111; display: grid; place-items: center; font-family: Arial, sans-serif; font-weight: 900; font-size: 21px; text-shadow: none; box-shadow: 0 3px 10px rgba(0,0,0,.6); }
+#limit.over { animation: flash .35s steps(2) infinite; }
+@keyframes flash { 50% { background: #ffb4b4; } }
+#ind { display: flex; gap: 70px; font-size: 26px; height: 0; overflow: visible; position: relative; top: -50px; pointer-events: none; }
+#ind span { opacity: .18; color: #22c55e; } #ind span.on { opacity: 1; animation: blink .7s steps(2) infinite; }
+@keyframes blink { 50% { opacity: .15; } }
+#talk { position: absolute; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: min(560px, 92vw); display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 16px; background: rgba(8, 12, 24, .9); border: 2px solid var(--line); pointer-events: auto; cursor: pointer; text-shadow: none; z-index: 3; }
+#talk .who { font-size: 44px; line-height: 1; }
+#talk b { font-family: var(--display); font-weight: 400; font-size: 15px; color: var(--nitro); letter-spacing: .04em; }
+#talk p { margin: 2px 0 0; font-size: 18px; line-height: 1.3; }
+#talk small { display: block; margin-top: 3px; color: var(--dim); font-size: 12.5px; }
+body.touch #talk { width: min(520px, calc(100vw - 470px)); min-width: 250px; }
+body.touch #talk p { font-size: 15px; } body.touch #talk .who { font-size: 32px; }
+#tIndL, #tIndR { bottom: calc(122px + env(safe-area-inset-bottom, 0px)); width: 60px; height: 44px; font-size: 16px; border-radius: 12px; display: none; background: rgba(34, 197, 94, .25); }
+#tIndL { left: calc(78px + env(safe-area-inset-left, 0px)); } #tIndR { left: calc(148px + env(safe-area-inset-left, 0px)); }
+body.testOn #tIndL, body.testOn #tIndR { display: grid; } body.testOn #tNitro { display: none; }
 .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
 .opt { padding: 8px 6px; border-radius: 14px; border: 2px solid var(--line); background: rgba(0, 0, 0, .5); text-align: center; line-height: 1.15; font-size: 14px; }
 .opt .em { font-size: 24px; }
@@ -173,7 +191,7 @@ body.duoOn #speedo, body.duoOn .tl, body.duoOn #speedLines { display: none; }
 
 <div id="hud" hidden>
   <div class="tl"><div id="scoreTxt">0</div><div id="distTxt">0.0 km</div><div id="comboTxt"></div></div>
-  <div class="tc"><div id="modeBig"></div><div id="modeSmall"></div><div id="bust" hidden><i></i></div><div id="nav" hidden><b id="navArrow">⬆</b><div id="navBar"><i></i><span>🔧</span></div></div></div>
+  <div class="tc"><div id="modeBig"></div><div id="modeSmall"></div><div id="bust" hidden><i></i></div><div id="nav" hidden><b id="navArrow">⬆</b><div id="navBar"><i></i><span>🔧</span></div></div><div id="limit" hidden>50</div><div id="ind" hidden><span id="indL">⬅</span><span id="indR">➡</span></div><div id="alertPill" hidden></div></div>
   <div class="tr">
     <span class="chip" id="coinChip">🪙 0</span>
     <button class="icon" id="hCam" aria-label="Change camera">🎥</button>
@@ -182,6 +200,7 @@ body.duoOn #speedo, body.duoOn .tl, body.duoOn #speedLines { display: none; }
   </div>
   <div id="pops"></div>
   <div id="bigMsg"></div>
+  <div id="talk" hidden><div class="who" id="talkWho">👮</div><div><b id="talkName"></b><p id="talkText"></p><small id="talkMore"></small></div></div>
   <div id="split" hidden></div><div class="duo" id="duo1" hidden></div><div class="duo" id="duo2" hidden></div>
   <div id="hint" hidden>W / ↑ gas · A D steer · Space brake & drift · Shift NITRO</div>
   <div id="speedo">
@@ -194,6 +213,8 @@ body.duoOn #speedo, body.duoOn .tl, body.duoOn #speedLines { display: none; }
   <button class="tb" id="tLeft" aria-label="Steer left">◀</button>
   <button class="tb" id="tRight" aria-label="Steer right">▶</button>
   <button class="tb" id="tCam" aria-label="Camera">🎥</button>
+  <button class="tb" id="tIndL" aria-label="Signal left">⬅💡</button>
+  <button class="tb" id="tIndR" aria-label="Signal right">💡➡</button>
   <button class="tb" id="tNitro">NITRO</button>
   <button class="tb" id="tBrake">BRAKE</button>
   <button class="tb" id="tGas">GAS</button>
@@ -259,6 +280,9 @@ body.duoOn #speedo, body.duoOn .tl, body.duoOn #speedLines { display: none; }
     <h2 class="good">HOW TO PLAY</h2>
     <div class="how">
       <p><b>Drive fast, dodge traffic.</b> Squeeze past cars for NEAR MISS points, chain them for a combo, hold brake while turning at speed to DRIFT, and hit NITRO for a huge boost. Near misses and drifts refill your nitro.</p>
+      <p><b>Driving Test (Driving Academy):</b> you have to pass it first to unlock everything else! Mr Bramble the examiner tells you what to do: keep to the speed limit signs, weave between the cones, stop at the red light, join the motorway, keep left unless overtaking, signal with <kbd>Q</kbd> / <kbd>E</kbd> before changing lanes, slow down for roadworks and park in the P box. More than 10 minor faults, or one serious fault (crashing, a red light, going way too fast) and you fail.</p>
+      <p><b>Road rage:</b> if you cut in front of other drivers or block them, they honk. Make them REALLY angry and they chase you! Get 160 m away to escape. If they catch you, they come up to your car and shout at you (and kick your bumper).</p>
+      <p><b>Police pull-overs:</b> in Police Chase a police car will sometimes ask you to PULL OVER. Move to the left lane and stop to get a talking-to (a warning, or a fine). Or drive off... and the whole police force comes after you!</p>
       <p><b>Modes:</b> Highway Rush (go as far as you can), Street Race (beat 3 racers over 4 km), Police Chase (don't get boxed in and BUSTED, make cops crash into traffic) and Speed Challenge (reach each checkpoint before the clock hits zero). Crash too hard and your car is WRECKED.</p>
       <p><b>Computer:</b> <kbd>W</kbd>/<kbd>↑</kbd> gas, <kbd>A</kbd><kbd>D</kbd>/<kbd>←</kbd><kbd>→</kbd> steer, <kbd>Space</kbd> or <kbd>S</kbd> brake (and drift), <kbd>Shift</kbd> NITRO, <kbd>C</kbd> camera, <kbd>Esc</kbd> pause, <kbd>M</kbd> mute.</p>
       <p><b>2 players (one keyboard, split screen):</b> a 2-minute Highway Rush battle. Player 1 drives with <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>, <kbd>Space</kbd> brake, <kbd>Left Shift</kbd> NITRO. Player 2 drives with the arrow keys and <kbd>Right Shift</kbd> NITRO. Most points wins! A wrecked car comes back next to the other player after 3 seconds, and if one of you falls too far behind you get pulled back into the race.</p>
@@ -334,6 +358,7 @@ const UPS = [
   { id: 'armor', name: 'Armor', icon: '🛡', blurb: 'Take less crash damage' },
 ];
 const MODES = {
+  test:    { name: 'Driving Test', em: '🎓', sub: 'Driving Academy: pass first!' },
   endless: { name: 'Highway Rush', em: '🛣️', sub: 'Go as far as you can' },
   race:    { name: 'Street Race', em: '🏁', sub: 'Beat 3 racers' },
   police:  { name: 'Police Chase', em: '🚓', sub: "Don't get busted" },
@@ -361,9 +386,9 @@ const MISSION_POOL = [
 const SAVE_KEY = 'road-rage-x-v1';
 function defaultSave() {
   return { coins: 0, cars: ['viper'], sel: 'viper', custom: {}, up: {}, best: {}, bestDist: 0, missions: [{ id: 'nm', tier: 0 }, { id: 'spd', tier: 0 }, { id: 'dist', tier: 0 }],
-    settings: { sound: true, music: true, steer: 'buttons', autoGas: IS_TOUCH, cam: 0 }, maps: { city: true }, mode: 'endless', map: 'city' };
+    settings: { sound: true, music: true, steer: 'buttons', autoGas: IS_TOUCH, cam: 0 }, maps: { city: true }, mode: 'test', map: 'city', passedTest: false };
 }
-function loadSave() { const d = defaultSave(); try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (s) { Object.assign(d, s); d.settings = Object.assign(defaultSave().settings, s.settings || {}); d.maps = Object.assign({ city: true }, s.maps || {}); } } catch (e) {} return d; }
+function loadSave() { const d = defaultSave(); try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (s) { Object.assign(d, s); d.settings = Object.assign(defaultSave().settings, s.settings || {}); d.maps = Object.assign({ city: true }, s.maps || {}); } } catch (e) {} if (!d.passedTest) { d.mode = 'test'; d.duo = false; } if (!MODES[d.mode]) d.mode = 'endless'; return d; }
 let save = loadSave();
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
 const carDef = (id) => CARS.find((c) => c.id === id) || CARS[0];
@@ -912,7 +937,7 @@ function spawnAgent(kind, s, d, v, opts = {}) {
   const a = { kind, model, s, d, v, targetD: d, lane: LANES.indexOf(d), len: model.len, wid: model.wid, crashed: false, yawOff: 0, spin: 0, vd: 0, passed: false, blink: 0, name: opts.name, top: opts.top, honk: 0, roll: 0 };
   agents.push(a); return a;
 }
-function removeAgent(a) { freeModel(a.model); agents.splice(agents.indexOf(a), 1); }
+function removeAgent(a) { if (a.rageSpr) { a.model.group.remove(a.rageSpr); a.rageSpr = null; } freeModel(a.model); agents.splice(agents.indexOf(a), 1); }
 function laneFree(lane, s, ahead, behind, self) { const d = LANES[lane]; for (const o of agents) if (o !== self && Math.abs(o.d - d) < 2.6 && o.s - s < ahead && s - o.s < behind) return false; return true; }
 
 // =====================================================================
@@ -1017,7 +1042,8 @@ function stepCar(dt) {
       brake = keys.has('Space') || keys.has('KeyS') || keys.has('ArrowDown') || input.brake ? 1 : 0;
       if (brake && IS_TOUCH && save.settings.autoGas) throttle = 0;
     }
-    const wantNos = (ctl ? k(ctl.nitro) : keys.has('ShiftLeft') || keys.has('ShiftRight') || input.nitro) && car.nitro > 1 && throttle;
+    const wantNos = (ctl ? k(ctl.nitro) : keys.has('ShiftLeft') || keys.has('ShiftRight') || input.nitro) && car.nitro > 1 && throttle && run.mode !== 'test';
+    if (run.mode === 'test' && (keys.has('ShiftLeft') || keys.has('ShiftRight') || input.nitro) && !run.nosTold) { run.nosTold = true; pop('🚫 No nitro on a driving test!', '#ffb347'); }
     if (wantNos && !car.nitroOn) A.nitroOn();
     car.nitroOn = wantNos;
   } else car.nitroOn = false;
@@ -1049,7 +1075,7 @@ function stepCar(dt) {
   car.drift = slide > 2.6 && vf > 12 ? Math.min(1, slide / 8) : 0;
   // nitro bookkeeping
   if (car.nitroOn) { car.nitro = Math.max(0, car.nitro - 26 * dt); run.nitroTime += dt; }
-  else car.nitro = Math.min(S.nitroCap, car.nitro + (2 + car.drift * 10) * dt);
+  else if (run.mode !== 'test') car.nitro = Math.min(S.nitroCap, car.nitro + (2 + car.drift * 10) * dt);
   // barriers
   const lim = ROAD_W - car.model.wid - 0.05;
   if (Math.abs(car.d) > lim) {
@@ -1074,6 +1100,7 @@ function stepCar(dt) {
 }
 function damage(amount, what) {
   if (car.wreck || state !== 'playing') return;
+  if (run.mode === 'test') { if (what === 'wall') testFault('wall', 'Bumped into the barrier'); else testFault('crash', 'You crashed into another car!', true); return; }
   const dmg = amount / car.stats.armor;
   car.hp -= run.mode === 'escape' ? dmg * 0.6 : dmg; run.hits++;
   $('dmgFlash').style.opacity = Math.min(1, dmg / 25); setTimeout(() => { $('dmgFlash').style.opacity = 0; }, 160);
@@ -1137,12 +1164,13 @@ function updateAgents(dt, t) {
     if (a.crashed) {
       a.v = damp(a.v, 0, 1.4, dt); a.yawOff += a.spin * dt; a.spin *= Math.exp(-1.8 * dt); a.d += a.vd * dt; a.vd *= Math.exp(-2.5 * dt);
       if (Math.random() < 0.3) FX.norm.spawn({ x: a.wx, y: 1, z: a.wz, vy: 2, life: 1.5, size: .6, size1: 1.8, c0: C.smoke, a: 0.35 });
-    } else if (a.kind === 'traffic') trafficAI(a, dt);
-    else if (a.kind === 'police') policeAI(a, dt);
+    } else if (a.angry) angryAI(a, dt);
+    else if (a.kind === 'traffic') trafficAI(a, dt);
+    else if (a.kind === 'police') (a.pull ? pullAI : a.leaving ? leaveAI : policeAI)(a, dt);
     else if (a.kind === 'racer') racerAI(a, dt);
     a.s += a.v * dt;
     if (Math.abs(a.d) > ROAD_W - a.wid) { a.d = Math.sign(a.d) * (ROAD_W - a.wid); a.vd = -a.vd * 0.3; if (!a.crashed && a.kind !== 'traffic') { a.v *= 0.97; } }
-    const far = a.kind === 'traffic' ? (a.s < loS() - 120 || a.s > hiS() + 500) : a.kind === 'police' ? car.s - a.s > 450 : false;
+    const far = a.kind === 'traffic' ? !a.angry && (a.s < loS() - 120 || a.s > hiS() + 500) : a.kind === 'police' ? car.s - a.s > 450 || (a.leaving && a.s - car.s > 350) : false;
     if (far) { if (a.kind === 'police' && !a.crashed) policeEscaped(a); removeAgent(a); continue; }
   }
   // agent vs agent bumps (cops and racers crash into traffic)
@@ -1174,12 +1202,13 @@ function trafficAI(a, dt) {
   let want = a.base;
   for (const o of agents) { if (o === a) continue; const ds = o.s - a.s; if (ds > 0 && ds < 22 && Math.abs(o.d - a.d) < 2.4) want = Math.min(want, o.crashed ? 0 : o.v - 0.5 + (ds - 10) * 0.2); }
   const pds = car.s - a.s; if (pds > 0 && pds < 16 && Math.abs(car.d - a.d) < 2.2) want = Math.min(want, Math.max(0, car.vf - 1));
+  if (run.mode === 'test') { want = Math.min(want, limitAt(a.s) / KMH * 0.97); if (a.s > TEST.works[0] - 120 && a.s < TEST.works[1] && Math.abs(a.targetD - LANES[3]) < 0.1) { a.targetD = LANES[2]; a.pendingLane = null; } }
   a.v = damp(a.v, Math.max(0, want), want < a.v ? 3 : 0.8, dt);
   // lazy lane changes, with a blinker
   a.lc = (a.lc || rand(4, 12)) - dt;
   if (a.lc <= 0 && Math.abs(a.d - a.targetD) < 0.1) {
     a.lc = rand(5, 14); const li = LANES.indexOf(a.targetD), nl = li + (Math.random() < 0.5 ? -1 : 1);
-    if (nl >= 0 && nl < 4 && laneFree(nl, a.s, 25, 18, a) && !(Math.abs(car.d - LANES[nl]) < 2.5 && Math.abs(car.s - a.s) < 20)) { a.blink = 1.4; a.pendingLane = LANES[nl]; }
+    if (nl >= 0 && nl < 4 && !(run.mode === 'test' && nl === 3 && a.s > TEST.works[0] - 150 && a.s < TEST.works[1]) && laneFree(nl, a.s, 25, 18, a) && !(Math.abs(car.d - LANES[nl]) < 2.5 && Math.abs(car.s - a.s) < 20)) { a.blink = 1.4; a.pendingLane = LANES[nl]; }
   }
   if (a.blink > 0) { a.blink -= dt; if (a.blink <= 0 && a.pendingLane != null) { a.targetD = a.pendingLane; a.pendingLane = null; } }
   a.d = moveTo(a.d, a.targetD, 1.8 * dt);
@@ -1227,25 +1256,26 @@ function spawnPoliceWave() {
 }
 function checkPolice(dt) {
   if (run.duo) return;
+  pullTick(dt);
   const cops = agents.filter((a) => a.kind === 'police');
-  const live = cops.filter((a) => !a.crashed);
+  const live = cops.filter((a) => !a.crashed && !a.pull && !a.leaving), lit = cops.filter((a) => !a.crashed && !a.leaving);
   // escape: no working cop within 300 m behind
   if (run.wanted && (live.length === 0 || live.every((a) => car.s - a.s > 300))) {
     run.wanted = false; run.escapes++; addScore(1000, '😎 ESCAPED! +1000', '#3ddc97');
-    for (const c of cops) removeAgent(c);
+    for (const c of cops) if (!c.leaving) removeAgent(c);
     run.nextWave = run.mode === 'police' ? 8 : rand(40, 80);
   }
-  if (!run.wanted) { run.nextWave -= dt; if (run.nextWave <= 0 && (run.mode === 'police' || (run.mode === 'endless' && car.s > 1500))) spawnPoliceWave(); }
+  if (!run.wanted && !run.pull && !run.talk) { run.nextWave -= dt; if (run.nextWave <= 0) { if (run.mode === 'police' && !run.firstWave) { run.firstWave = true; startPullover(); } else if (run.mode === 'police' && Math.random() < 0.5) startPullover(); else if (run.mode === 'police' || (run.mode === 'endless' && car.s > 1500)) spawnPoliceWave(); } }
   // busted: a cop right next to you while you're nearly stopped
   const near = live.some((a) => Math.abs(a.s - car.s) < 7 && Math.abs(a.d - car.d) < 4);
   if (near && car.vf < 9) run.bust += dt; else run.bust = Math.max(0, run.bust - dt * 0.7);
-  if (run.bust >= 2.2 && state === 'playing') { run.endReason = 'busted'; endRun(); }
+  if (run.bust >= 2.2 && state === 'playing' && !run.talk) { run.bust = 2.2; bigMsg('🚔 BUSTED!', '#60a5fa', 1500); startTalk('👮', 'POLICE OFFICER', ['STOP! Hands on the steering wheel!', pick(['You led us on a crazy chase all over the motorway!', 'Did you really think you could get away from us?']), "You're coming with us to the police station. 🚔"], () => { run.endReason = 'busted'; endRun(); }); }
   // siren volume from the nearest cop
-  let nd = 1e9, pan = 0; for (const a of live) { const d = Math.abs(car.s - a.s); if (d < nd) { nd = d; pan = clamp((a.d - car.d) / 8, -1, 1); } }
+  let nd = 1e9, pan = 0; for (const a of lit) { const d = Math.abs(car.s - a.s); if (d < nd) { nd = d; pan = clamp((a.d - car.d) / 8, -1, 1); } }
   A.set(A.sir || { gain: { setTargetAtTime() {} } }, nd < 400 ? clamp(1 - nd / 400, 0, 1) * 0.09 : 0, 0.2);
   if (A.sirPan) A.sirPan.pan.setTargetAtTime(-pan, A.ctx.currentTime, 0.1);
   copLight.intensity = 0;
-  if (live.length && nd < 60) { const c = live.reduce((x, y) => (Math.abs(x.s - car.s) < Math.abs(y.s - car.s) ? x : y)); copLight.position.set(c.wx, 2.5, c.wz); copLight.color.setHex(Math.sin(performance.now() / 70) > 0 ? 0xff2020 : 0x2050ff); copLight.intensity = 2 + ENV.night * 4; }
+  if (lit.length && nd < 60) { const c = lit.reduce((x, y) => (Math.abs(x.s - car.s) < Math.abs(y.s - car.s) ? x : y)); copLight.position.set(c.wx, 2.5, c.wz); copLight.color.setHex(Math.sin(performance.now() / 70) > 0 ? 0xff2020 : 0x2050ff); copLight.intensity = 2 + ENV.night * 4; }
 }
 
 // player vs agents
@@ -1277,6 +1307,7 @@ function playerCollisions() {
       sparks((a.wx + car.pos.x) / 2, 0.7, (a.wz + car.pos.z) / 2, Math.min(30, impact * 2), car.vx, car.vz);
       shake = Math.max(shake, Math.min(1, impact / 25));
       if (impact > 9) { A.crash(Math.min(1, impact / 30)); crashAgent(a, impact, Math.sign(dd || 1)); } else A.bump();
+      if (a.kind === 'traffic' && !a.angry) a.annoy = (a.annoy || 0) + 1.2;
       if (a.kind === 'police' && impact > 4) damage(impact * 0.8, 'cop'); else damage(impact * 1.25, 'car');
     }
   }
@@ -1329,15 +1360,15 @@ function parkTex() {
 }
 function makeGate(s, kind) {
   const g = new THREE.Group(), tmp = {}; roadToWorld(s, 0, tmp);
-  const col = kind === 'finish' ? 0xffffff : kind === 'fix' ? 0xff9f1c : kind === 'shop' ? 0x4ade80 : 0x22d3ee;
+  const col = kind === 'finish' ? 0xffffff : kind === 'fix' ? 0xff9f1c : kind === 'shop' || kind === 'park' ? 0x4ade80 : kind === 'motorway' ? 0x3b82f6 : kind === 'works' ? 0xf59e0b : 0x22d3ee;
   const pm = new THREE.MeshStandardMaterial({ color: 0x222222, emissive: col, emissiveIntensity: 0.6 });
   for (const side of [-1, 1]) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.6, 7, 0.6), pm); p.position.set(side * (ROAD_W + 0.6), 3.5, 0); g.add(p); }
-  const sign = kind === 'fix' ? ['CAR FIXER', '#2a1400', '#ff9f1c', 'DRIVE THROUGH = FREE REPAIR'] : kind === 'shop' ? ['REPAIR SHOP', '#05230f', '#4ade80', 'DRIVE IN TO PUT THE FIRE OUT'] : ['CHECKPOINT', '#06222a', '#22d3ee'];
+  const sign = kind === 'fix' ? ['CAR FIXER', '#2a1400', '#ff9f1c', 'DRIVE THROUGH = FREE REPAIR'] : kind === 'shop' ? ['REPAIR SHOP', '#05230f', '#4ade80', 'DRIVE IN TO PUT THE FIRE OUT'] : kind === 'park' ? ['TEST CENTRE', '#05230f', '#4ade80', 'PARK IN THE P BOX TO FINISH'] : kind === 'motorway' ? ['MOTORWAY', '#1d4ed8', '#ffffff', 'LIMIT 110 · KEEP LEFT · SIGNAL!'] : kind === 'works' ? ['ROADWORKS', '#2a1a00', '#fbbf24', 'RIGHT LANE CLOSED · LIMIT 60'] : ['CHECKPOINT', '#06222a', '#22d3ee'];
   const banner = new THREE.Mesh(new THREE.BoxGeometry(2 * ROAD_W + 1.8, 1.4, 0.3), kind === 'finish' ? new THREE.MeshStandardMaterial({ map: TEX.check, emissive: 0x333333 }) : new THREE.MeshStandardMaterial({ map: signTex(...sign), emissive: 0xffffff, emissiveMap: signTex(...sign), emissiveIntensity: 0.8 }));
   banner.position.y = 7.2; g.add(banner);
   let bayD = 0;
-  if (kind === 'shop') { // the parking spot you have to stop in
-    bayD = LANES[3];
+  if (kind === 'shop' || kind === 'park') { // the parking spot you have to stop in
+    bayD = kind === 'park' ? LANES[0] : LANES[3];
     const bay = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 8), new THREE.MeshBasicMaterial({ map: parkTex(), transparent: true }));
     bay.rotation.x = -Math.PI / 2; bay.position.set(-bayD, 0.04, 0); g.add(bay);
   }
@@ -1348,6 +1379,318 @@ function makeGate(s, kind) {
 // =====================================================================
 //  SCORE, POPUPS, MISSIONS
 // =====================================================================
+// =====================================================================
+//  TALKING (police, angry drivers, the driving examiner)
+// =====================================================================
+function startTalk(who, name, lines, done, hold = true) {
+  run.talk = { who, name, lines, i: 0, t: 0, done, hold };
+  showTalk();
+}
+function showTalk() {
+  const T = run.talk; $('talk').hidden = false;
+  $('talkWho').textContent = T.who; $('talkName').textContent = T.name; $('talkText').textContent = T.lines[T.i];
+  $('talkMore').textContent = T.hold ? (IS_TOUCH ? 'Tap to carry on' : 'Press Space or Enter to carry on') : '';
+}
+function hideTalk() { $('talk').hidden = true; }
+function nextTalk() {
+  const T = run && run.talk; if (!T) return;
+  T.i++; T.t = 0;
+  if (T.i >= T.lines.length) { run.talk = null; hideTalk(); if (T.done) T.done(); }
+  else showTalk();
+}
+function talkTick(dt) {
+  const T = run.talk; T.t += dt;
+  const need = 1.4 + T.lines[T.i].length * 0.05; // long lines stay up longer
+  if (T.t > need * (T.hold ? 1.6 : 1)) nextTalk();
+}
+
+// =====================================================================
+//  ROAD RAGE: block or cut up a driver and they come after you
+// =====================================================================
+function rageTex() {
+  if (!TEX.rage) TEX.rage = canvasTex(128, 128, (x, w) => {
+    x.clearRect(0, 0, w, w);
+    x.fillStyle = '#ef4444'; x.beginPath(); x.arc(64, 64, 56, 0, 7); x.fill();
+    x.lineWidth = 6; x.strokeStyle = '#7f1d1d'; x.stroke();
+    x.strokeStyle = '#2b0505'; x.lineWidth = 9; x.lineCap = 'round';
+    x.beginPath(); x.moveTo(30, 40); x.lineTo(56, 52); x.moveTo(98, 40); x.lineTo(72, 52); x.stroke(); // cross eyebrows
+    x.fillStyle = '#2b0505'; x.beginPath(); x.arc(46, 62, 7, 0, 7); x.arc(82, 62, 7, 0, 7); x.fill();
+    x.beginPath(); x.arc(64, 100, 20, Math.PI * 1.15, Math.PI * 1.85); x.stroke(); // frown
+    x.fillStyle = '#fff'; x.font = '900 30px Arial'; x.fillText('!!', 100, 30);
+  }, 1, 1);
+  return TEX.rage;
+}
+function rageSprite() { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: rageTex(), transparent: true, depthTest: false })); sp.scale.set(1.8, 1.8, 1); sp.position.y = 3.4; sp.renderOrder = 5; return sp; }
+function rageTick(dt) {
+  if (run.duo || run.mode === 'test' || run.talk) return;
+  let angry = null;
+  for (const a of agents) if (a.angry) angry = a;
+  if (angry) {
+    const gap = car.s - angry.s;
+    if (angry.crashed) { calmAngry(angry); addScore(400, '😆 THE ANGRY DRIVER CRASHED! +400', '#3ddc97'); return; }
+    if (gap > 160) { calmAngry(angry); run.rageEscapes = (run.rageEscapes || 0) + 1; addScore(600, '😅 YOU GOT AWAY! +600', '#3ddc97'); return; }
+    if (angry.rageT > 45) { calmAngry(angry); pop('😮‍💨 The angry driver gave up', '#bfdbfe'); return; }
+    // they caught you: they come right up to your car and shout at you
+    if (Math.abs(gap) < 7 && Math.abs(angry.d - car.d) < 4.2 && car.vf < 9) angry.catchT = (angry.catchT || 0) + dt; else angry.catchT = 0;
+    if (angry.catchT > 1.4) {
+      angry.v = 0; car.vx = car.vz = 0;
+      A.horn(); bigMsg('😡 CAUGHT!', '#ff3b3b', 1200);
+      startTalk('😡', 'ANGRY DRIVER', [pick(['OI! YOU!', 'HEY! STOP RIGHT THERE!', 'WHAT DO YOU THINK YOU WERE DOING?!']), pick(['You cut right in front of me! I nearly crashed!', 'You were blocking me the whole way!', "You don't own the road, you know!"]), pick(["I'm going to kick your bumper! 🦶", 'Look what you made me do! *KICKS YOUR CAR*', "Hmph! There's a dent in your car now!"])], () => {
+        damage(22, 'car'); shake = Math.max(shake, 0.5); A.bump();
+        calmAngry(angry); angry.base = rand(26, 30); pop('🚗💨 The angry driver drove off', '#bfdbfe');
+      });
+    }
+    return;
+  }
+  for (const a of agents) {
+    if (a.kind !== 'traffic' || a.crashed) continue;
+    const ds = car.s - a.s, dd = Math.abs(car.d - a.d), want = a.base || a.v, close = a.len + car.model.len;
+    const same = dd < 2.2 && ds > 0 && ds < close + 6;
+    // cutting in: you swerve into their lane just in front of them
+    if (same && !a.sameLane && ds < close + 4 && !car.wreck) { a.annoy = (a.annoy || 0) + 1.3; if (a.annoy < 2.4) pop('😠 You cut them up!', '#ffb347'); }
+    a.sameLane = same;
+    // blocking: sitting in front of them, much slower than they want to go
+    if (same && want - car.vf > 3) a.annoy = (a.annoy || 0) + dt * (0.8 + (want - car.vf) / 6);
+    else if (a.annoy) a.annoy = Math.max(0, a.annoy - dt * 0.2);
+    if (a.annoy > 0.9 && !a.honked) { a.honked = true; A.horn(); setTimeout(() => A.horn(), 220); pop('📢 HONK HONK!', '#ffb347'); }
+    if (a.annoy < 0.3) a.honked = false;
+    if (a.annoy > 2.6 && run.time > (run.nextRage || 0)) { makeAngry(a); break; }
+  }
+}
+function makeAngry(a) {
+  a.angry = true; a.rageT = 0; a.catchT = 0; a.blink = 0; a.pendingLane = null;
+  a.rageSpr = rageSprite(); a.model.group.add(a.rageSpr);
+  run.rages = (run.rages || 0) + 1;
+  bigMsg('😡 ROAD RAGE!', '#ff3b3b', 1600); A.horn(); setTimeout(() => A.horn(), 260); setTimeout(() => A.horn(), 520);
+  pop("You made a driver REALLY angry! Get away!", '#ff6b6b');
+}
+function calmAngry(a) {
+  a.angry = false; a.annoy = 0; a.honked = false; a.catchT = 0;
+  if (a.rageSpr) { a.model.group.remove(a.rageSpr); a.rageSpr = null; }
+  run.nextRage = run.time + rand(12, 20);
+}
+function angryAI(a, dt) {
+  if (run.talk) { a.v = damp(a.v, 0, 4, dt); return; }
+  a.rageT += dt;
+  const gap = car.s - a.s, top = Math.min(car.stats.top * 0.8, 200 / KMH);
+  let want = clamp(car.vf + 5 + gap * 0.12, 6, top);
+  if (gap < -4) want = Math.max(0, car.vf - 5); // went past you: drop back behind
+  a.think = (a.think || 0) - dt;
+  if (a.think <= 0) { a.think = 0.25; a.targetD = Math.abs(gap) < 40 ? clamp(car.d, -6.4, 6.4) : bestLane(a, 40); }
+  for (const o of agents) { if (o === a) continue; const ds = o.s - a.s; if (ds > 0 && ds < 12 && Math.abs(o.d - a.d) < 2.2) want = Math.min(want, o.v - 1); }
+  a.v = damp(a.v, want, want > a.v ? 0.9 : 2.5, dt);
+  a.d = moveTo(a.d, a.targetD, 3.6 * dt);
+  a.blink = Math.sin(a.rageT * 9) > 0 ? 1 : 0; // flashing lights at you
+  if (Math.random() < dt * 0.7) A.horn();
+}
+
+// =====================================================================
+//  POLICE PULL-OVERS (Police Chase): stop and get told off, or run for it
+// =====================================================================
+function startPullover() {
+  const kmh = car.vf * KMH;
+  const why = kmh > 150 ? 'speed' : run.hits > (run.hitsAtPull || 0) ? 'crash' : run.nearMiss > (run.nmAtPull || 0) + 2 ? 'weave' : pick(['light', 'speed', 'weave']);
+  const p = spawnAgent('police', car.s - 55, car.d, Math.max(18, car.vf), { type: 'police', paint: '#111827' });
+  p.pull = true;
+  run.pull = { cop: p, t: 0, stopped: 0, why, kmh: Math.round(Math.max(kmh, 135)) };
+  run.hitsAtPull = run.hits; run.nmAtPull = run.nearMiss;
+  bigMsg('🚓 PULL OVER!', '#60a5fa', 1800); A.horn();
+}
+function pullAI(a, dt) {
+  const gap = car.s - a.s, stopping = run.pull && run.pull.stopped > 0;
+  let want = clamp(car.vf + (gap - (stopping ? 11 : 14)) * 0.6, 0, 300 / KMH);
+  if (car.vf < 2 && gap < 13) want = 0;
+  for (const o of agents) { if (o === a) continue; const ds = o.s - a.s; if (ds > 0 && ds < 12 && Math.abs(o.d - a.d) < 2.2) want = Math.min(want, o.v - 1); }
+  a.targetD = Math.abs(gap) < 40 ? car.d : bestLane(a, 40);
+  a.v = damp(a.v, Math.max(0, want), want > a.v ? 1.2 : 3, dt);
+  a.d = moveTo(a.d, a.targetD, 3.5 * dt);
+}
+function leaveAI(a, dt) { a.targetD = LANES[2]; a.v = damp(a.v, Math.max(40, car.vf + 12), 0.6, dt); a.d = moveTo(a.d, a.targetD, 2.5 * dt); }
+function pullTick(dt) {
+  const P = run.pull; if (!P || run.talk) return;
+  P.t += dt;
+  const gap = car.s - P.cop.s, onLeft = Math.abs(car.d - LANES[0]) < 1.7;
+  if (P.cop.crashed) { run.pull = null; P.cop.pull = false; bigMsg('🚨 NOW THEY ARE ALL AFTER YOU!', '#60a5fa', 1800); spawnPoliceWave(); return; }
+  if (onLeft && car.vf < 1.2 && gap > 0 && gap < 70) {
+    P.stopped += dt;
+    if (P.stopped > 1.2) {
+      run.tickets = (run.tickets || 0) + 1;
+      const first = run.tickets === 1, fine = first ? 0 : 50 * run.tickets;
+      const reasons = { speed: [`Do you know how fast you were going? ${P.kmh} km/h!`, 'That is WAY over the speed limit, young driver.'], crash: ['You have been bumping into other cars all the way down this road!', 'Somebody could have been hurt.'], weave: ['You were zig-zagging in and out of the traffic like a racing driver!', 'This is a road, not a race track.'], light: ['One of your brake lights is broken.', "And your car is covered in scratches! Get that sorted."] };
+      startTalk('👮', 'POLICE OFFICER', ['Good afternoon. Thank you for pulling over.', ...reasons[P.why], first ? "As it's your first time, I'll let you off with a warning." : `That's a 🪙${fine} fine. Ticket number ${run.tickets}!`, 'Off you go now. And drive safely!'], () => {
+        run.fines = (run.fines || 0) + fine;
+        P.cop.pull = false; P.cop.leaving = true; run.pull = null;
+        addScore(300, first ? '👍 WARNING ONLY +300' : `🧾 FINED 🪙${fine}`, first ? '#3ddc97' : '#ffb347');
+        run.nextWave = rand(10, 14);
+      });
+    }
+  } else P.stopped = 0;
+  // ignored the police: it turns into a chase
+  if (!run.talk && run.pull && ((P.t > 14 && car.vf * KMH > 40) || gap > 220)) {
+    run.pull = null; P.cop.pull = false;
+    bigMsg('🚨 YOU DIDN\'T STOP!', '#60a5fa', 1800); spawnPoliceWave();
+  }
+}
+
+// =====================================================================
+//  DRIVING TEST (Driving Academy)
+// =====================================================================
+const TEST = {
+  zones: [[0, 330, 50], [330, 640, 30], [640, 1000, 50], [1000, 2450, 110], [2450, 2880, 60], [2880, 99999, 40]],
+  gates: [[380, -3.6], [420, 1.8], [460, -3.6], [500, 1.8], [540, -3.6], [580, 1.8]],
+  light: 830, join: 1000, works: [2450, 2880], park: 3150, maxMinor: 10,
+};
+const limitAt = (s) => { for (const z of TEST.zones) if (s >= z[0] && s < z[1]) return z[2]; return 50; };
+let cones = [];
+const coneGeo = new THREE.ConeGeometry(0.32, 0.9, 12), coneMat = new THREE.MeshStandardMaterial({ color: 0xff6a00, roughness: 0.6, emissive: 0x401800 });
+const coneBand = new THREE.CylinderGeometry(0.2, 0.25, 0.16, 12), bandMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x555555 });
+const coneBase = new THREE.BoxGeometry(0.62, 0.07, 0.62), coneBaseMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+function addCone(s, d) {
+  const g = new THREE.Group(); const c = new THREE.Mesh(coneGeo, coneMat); c.position.y = 0.5; c.castShadow = true; g.add(c);
+  const b = new THREE.Mesh(coneBand, bandMat); b.position.y = 0.55; g.add(b); const base = new THREE.Mesh(coneBase, coneBaseMat); base.position.y = 0.035; g.add(base);
+  const tmp = {}; roadToWorld(s, d, tmp); g.position.set(tmp.x, 0, tmp.z); g.rotation.y = tmp.h; scene.add(g);
+  cones.push({ s, d, g, hit: false });
+}
+function clearCones() { for (const c of cones) scene.remove(c.g); cones = []; }
+function addProp(s, build) { const g = new THREE.Group(), tmp = {}; roadToWorld(s, 0, tmp); build(g); g.position.set(tmp.x, 0, tmp.z); g.rotation.y = tmp.h; scene.add(g); gates.push({ s, kind: 'prop', g }); return g; }
+function limitTex(n) {
+  const k = 'lim' + n;
+  if (!TEX[k]) TEX[k] = canvasTex(256, 256, (x, w) => { x.clearRect(0, 0, w, w); x.fillStyle = '#fff'; x.beginPath(); x.arc(128, 128, 122, 0, 7); x.fill(); x.lineWidth = 28; x.strokeStyle = '#d61f1f'; x.beginPath(); x.arc(128, 128, 106, 0, 7); x.stroke(); x.fillStyle = '#111'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = `900 ${n > 99 ? 92 : 118}px Arial`; x.fillText(String(n), 128, 136); }, 1, 1);
+  return TEX[k];
+}
+const poleMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, metalness: 0.6, roughness: 0.4 });
+function speedSign(s, n) {
+  addProp(s, (g) => {
+    const m = new THREE.MeshBasicMaterial({ map: limitTex(n), transparent: true, side: THREE.DoubleSide });
+    for (const side of [-1, 1]) {
+      const x = side * (ROAD_W + 1.2);
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3, 6), poleMat); pole.position.set(x, 1.5, 0); g.add(pole);
+      const face = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), m); face.position.set(x, 3.6, -0.05); face.rotation.y = Math.PI; g.add(face);
+    }
+  });
+}
+const lampMats = { r: new THREE.MeshStandardMaterial({ color: 0x330000, emissive: 0xff2020, emissiveIntensity: 3 }), a: new THREE.MeshStandardMaterial({ color: 0x332200, emissive: 0xffaa00, emissiveIntensity: 0.05 }), g: new THREE.MeshStandardMaterial({ color: 0x002200, emissive: 0x20ff60, emissiveIntensity: 0.05 }) };
+function setLight(c) { lampMats.r.emissiveIntensity = c === 'r' ? 3 : 0.05; lampMats.a.emissiveIntensity = c === 'a' ? 3 : 0.05; lampMats.g.emissiveIntensity = c === 'g' ? 3 : 0.05; }
+function trafficLight(s) {
+  addProp(s, (g) => {
+    const dark = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5 });
+    for (const side of [-1, 1]) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.4, 7, 0.4), dark); p.position.set(side * (ROAD_W + 0.6), 3.5, 0); g.add(p); }
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(2 * ROAD_W + 1.6, 0.4, 0.4), dark); beam.position.y = 6.9; g.add(beam);
+    const lamp = new THREE.SphereGeometry(0.3, 14, 10);
+    for (const x of [-3.6, 3.6]) {
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.3, 0.5), dark); head.position.set(x, 5.5, 0); g.add(head);
+      [['r', 6.2], ['a', 5.5], ['g', 4.8]].forEach(([k, y]) => { const l = new THREE.Mesh(lamp, lampMats[k]); l.position.set(x, y, -0.3); g.add(l); });
+    }
+    const line = new THREE.Mesh(new THREE.PlaneGeometry(2 * EDGE, 0.6), new THREE.MeshBasicMaterial({ color: 0xf5f5f5 })); line.rotation.x = -Math.PI / 2; line.position.set(0, 0.04, -3); g.add(line);
+  });
+  setLight('r');
+}
+function setupTest() {
+  const T = run.test = { minors: [], over: false, task: 'Drive off', stepI: 0, lane: 0, ind: 0, indT: 0, overT: 0, speedCool: 0, slowT: 0, hogT: 0, skidT: 0, cool: {}, light: { s: TEST.light - 3, state: 'r', wait: 0 }, gatesDone: 0, joinChecked: false, failWhy: '' };
+  car.nitro = 0;
+  for (const z of TEST.zones) if (z[0] > 0 && z[0] < 4000) speedSign(z[0] - 12, z[2]);
+  speedSign(30, 50);
+  for (const [gs, gd] of TEST.gates) { addCone(gs, gd - 2.1); addCone(gs, gd + 2.1); }
+  T.gates = TEST.gates.map(([gs, gd]) => ({ s: gs, d: gd, done: false }));
+  trafficLight(TEST.light);
+  makeGate(TEST.join, 'motorway');
+  makeGate(TEST.works[0] - 60, 'works');
+  for (let s = TEST.works[0] - 30; s < TEST.works[1]; s += 12) addCone(s, s < TEST.works[0] ? 3.6 + (TEST.works[0] - s) / 30 * 2.2 : 3.6);
+  T.bay = makeGate(TEST.park, 'park');
+  T.steps = [
+    { s: 0, task: 'Drive off · limit 50', lines: ["Hello! I'm Mr Bramble, your driving examiner. 🧑‍🏫", 'Follow the speed limit signs and do what I say.', `Get fewer than ${TEST.maxMinor + 1} minor faults and NO serious faults to pass. Good luck!`] },
+    { s: 230, task: 'Weave through the cones · 30', lines: ['Cones ahead! Slow down to 30 and drive between each pair of cones.'] },
+    { s: 650, task: 'Stop at the red light', lines: ['Traffic lights ahead. If they are red, stop BEFORE the white line and wait for green.'] },
+    { s: 880, task: 'Join the motorway · 110', lines: ['Now we join the motorway. Speed up to match the traffic!', `Keep to the LEFT lane unless you're overtaking, and signal before changing lanes with ${IS_TOUCH ? 'the ⬅💡 💡➡ buttons' : 'Q (left) and E (right)'}.`] },
+    { s: 2330, task: 'Roadworks · limit 60', lines: ['Roadworks ahead! The right lane is closed and the limit drops to 60.'] },
+    { s: 2860, task: 'Park at the test centre', lines: ['Nearly done! The limit is 40 now. Pull into the green P box on the LEFT and stop.'] },
+  ];
+}
+function testFault(key, text, serious) {
+  const T = run.test; if (T.over) return;
+  if (serious) { failTest(text); return; }
+  if (T.cool[key] && run.time < T.cool[key]) return;
+  T.cool[key] = run.time + 4;
+  T.minors.push(text); pop('⚠️ ' + text, '#ffb347'); A.beep(false);
+  if (T.minors.length > TEST.maxMinor) failTest('That is too many minor faults.');
+}
+function failTest(why) {
+  const T = run.test; if (T.over) return; T.over = true; T.failWhy = why;
+  bigMsg('❌ SERIOUS FAULT', '#ff4f4f', 1600); A.crash(0.3);
+  startTalk('🧑‍🏫', 'MR BRAMBLE', ['Oh dear!', why, "I'm afraid you haven't passed this time.", "Don't worry, lots of people fail their first test. Have another go!"], () => { run.endReason = 'failed'; endRun(); });
+}
+function passTest() {
+  const T = run.test; if (T.over) return; T.over = true;
+  const n = T.minors.length;
+  bigMsg('🎓 TEST DONE!', '#4ade80', 1500); A.ding();
+  startTalk('🧑‍🏫', 'MR BRAMBLE', ['And stop. Lovely parking!', n ? `You got ${n} minor fault${n > 1 ? 's' : ''}, but that's OK.` : 'Not a single fault. Amazing driving!', "Congratulations, you've PASSED your driving test! 🎉 Here's your licence.", 'Every mode is open now. Have fun... and drive safely!'], () => {
+    run.firstPass = !save.passedTest; save.passedTest = true; run.endReason = 'passed'; persist(); endRun();
+  });
+}
+function testTick(dt) {
+  const T = run.test; if (T.over) return;
+  const kmh = Math.max(0, car.vf * KMH), lim = Math.max(limitAt(car.s), limitAt(car.s - 50)); // a little room to slow down after a new sign
+  // examiner instructions
+  const st = T.steps[T.stepI];
+  if (st && car.s >= st.s) { T.stepI++; T.task = st.task; startTalk('🧑‍🏫', 'MR BRAMBLE', st.lines, null, false); }
+  // speed limits
+  if (kmh > lim + 35) testFault('fast', `You were going WAY too fast: ${Math.round(kmh)} km/h in a ${lim} zone.`, true);
+  else if (kmh > lim + 4) { T.overT += dt; if (T.overT > 1.2) { testFault('speed', `Speeding: ${Math.round(kmh)} in a ${lim} zone`); T.overT = 0; } }
+  else T.overT = 0;
+  // cones: weave through each pair
+  for (const g of T.gates) if (!g.done && car.s > g.s) { g.done = true; if (Math.abs(car.d - g.d) > 1.9) testFault('gate' + g.s, 'Missed a cone gate'); else { T.gatesDone++; pop('✅ ' + T.gatesDone + '/' + T.gates.length, '#4ade80'); } }
+  for (const c of cones) if (!c.hit && Math.abs(c.s - car.s) < car.model.len + 0.35 && Math.abs(c.d - car.d) < car.model.wid + 0.35) {
+    c.hit = true; c.g.rotation.z = Math.sign(c.d - car.d || 1) * 1.45; c.g.position.y = 0.3; const tmp = {}; roadToWorld(c.s + 2.5, c.d + Math.sign(c.d - car.d || 1) * 0.9, tmp); c.g.position.x = tmp.x; c.g.position.z = tmp.z;
+    A.bump(); testFault('cone', 'Knocked over a cone');
+  }
+  // traffic light
+  const L = T.light;
+  if (L.state === 'r') {
+    const toLine = L.s - (car.s + car.model.len);
+    if (toLine < -0.5) testFault('red', 'You drove straight through a RED light!', true);
+    else if (toLine < 25 && car.vf < 0.8) { L.wait += dt; if (L.wait > 1.4 && L.state === 'r') { L.state = 'a'; setLight('a'); } }
+  } else if (L.state === 'a') { L.wait += dt; if (L.wait > 2.4) { L.state = 'g'; setLight('g'); pop('🟢 Green! Off you go', '#4ade80'); A.ding(); } }
+  // motorway rules
+  const onMotorway = car.s > TEST.join && car.s < TEST.works[1];
+  if (!T.joinChecked && car.s > TEST.join + 220) { T.joinChecked = true; if (kmh < 70) testFault('join', 'Too slow joining the motorway'); else pop('👍 Good joining speed', '#4ade80'); }
+  if (limitAt(car.s) === 110 && limitAt(car.s + 120) === 110 && car.s > TEST.join + 220 && kmh < 65 && laneFree(T.lane, car.s, 45, -1)) { T.slowT += dt; if (T.slowT > 4) { testFault('slow', 'Driving too slowly on the motorway'); T.slowT = 0; } } else T.slowT = 0;
+  if (onMotorway && T.lane > 0 && laneFree(T.lane - 1, car.s, 60, 25)) { T.hogT += dt; if (T.hogT > 4 && !T.hogTold) { T.hogTold = true; pop('↙ Move back to the LEFT lane', '#bfdbfe'); } if (T.hogT > 9) { testFault('hog', "Stayed out in the middle lanes: keep left unless overtaking"); T.hogT = 0; T.hogTold = false; } }
+  else { T.hogT = 0; T.hogTold = false; }
+  // lane changes need a signal first (from the motorway onwards)
+  let ln = -1; for (let i = 0; i < 4; i++) if (Math.abs(car.d - LANES[i]) < 0.9) ln = i;
+  if (ln >= 0 && ln !== T.lane) {
+    const dir = Math.sign(ln - T.lane);
+    if (car.s > TEST.join - 20 && T.ind !== dir) testFault('signal', "Didn't signal before changing lanes");
+    else if (car.s > TEST.join - 20) pop('👍 Nice signalling', '#4ade80');
+    T.lane = ln; T.ind = 0; // indicator cancels itself
+  }
+  if (T.ind) { T.indT += dt; if (T.indT > 9) T.ind = 0; }
+  // skidding about
+  if (car.drift > 0.4) { T.skidT += dt; if (T.skidT > 0.5) { testFault('skid', 'Skidding and drifting'); T.skidT = 0; } } else T.skidT = 0;
+  // parking at the test centre
+  const b = T.bay;
+  if (b) {
+    if (car.s > b.s - 200) for (const a of agents.slice()) if (Math.abs(a.s - b.s) < 40 && Math.abs(a.s - car.s) > 40) removeAgent(a);
+    if (Math.abs(car.s - b.s) < 3.4 && Math.abs(car.d - b.d) < 1.4 && Math.abs(car.vf) < 1.2) { T.parkT = (T.parkT || 0) + dt; if (T.parkT > 0.8) passTest(); }
+    else T.parkT = 0;
+    if (car.s > b.s + 30) { testFault('park', 'Drove past the test centre'); scene.remove(b.g); gates.splice(gates.indexOf(b), 1); T.bay = makeGate(car.s + 260, 'park'); pop('↩ Next test centre parking in 260 m', '#bfdbfe'); }
+  }
+}
+function signal(dir) {
+  if (!run || run.mode !== 'test' || !run.test) return;
+  const T = run.test; T.ind = T.ind === dir ? 0 : dir; T.indT = 0; A.beep(false);
+}
+function spawnTestTraffic() {
+  for (const a of agents.slice()) if (a.kind === 'traffic' && a.s > TEST.works[1] + 20 && Math.abs(a.s - car.s) > 60) removeAgent(a);
+  if (car.s < 820) return;
+  if (agents.filter((a) => a.kind === 'traffic').length >= (IS_TOUCH ? 9 : 12)) return;
+  const s = Math.random() < 0.75 || car.vf < 15 ? car.s + rand(160, 340) : car.s - rand(60, 90);
+  if (s < TEST.join + 20 || s > TEST.works[1] - 80) return;
+  const works = s > TEST.works[0] - 100, lane = randi(0, works ? 2 : 3);
+  if (!laneFree(lane, s, 30, 30)) return;
+  spawnAgent('traffic', s, LANES[lane], Math.min([rand(21, 25), rand(24, 28), rand(27, 30), rand(28, 30)][lane], limitAt(s) / KMH * 0.97));
+}
+
 function addScore(n, label, col) { run.score += Math.round(n); if (run.duo) car.score += Math.round(n); if (label) pop(run.duo ? `P${car.n} ${label}` : label, col); }
 function pop(text, col = '#fff') { const d = document.createElement('div'); d.className = 'pop'; d.textContent = text; d.style.color = col; $('pops').appendChild(d); setTimeout(() => d.remove(), 1400); while ($('pops').children.length > 4) $('pops').firstChild.remove(); }
 function bigMsg(text, col, ms = 900) { const b = $('bigMsg'); b.textContent = text; b.style.color = col; b.classList.add('on'); clearTimeout(bigMsg.t); bigMsg.t = setTimeout(() => b.classList.remove('on'), ms); }
@@ -1380,7 +1723,8 @@ function startRun() {
   if (!save.maps[save.map]) save.map = 'city';
   for (const a of agents.slice()) removeAgent(a); agents = [];
   for (const p of pickups) scene.remove(p.mesh); pickups = [];
-  for (const g of gates) scene.remove(g.g); gates = [];
+  for (const g of gates) scene.remove(g.g); gates = []; clearCones(); hideTalk();
+  if (!save.passedTest) { save.mode = 'test'; save.duo = false; }
   FX.add.clear(); FX.norm.clear();
   buildWorld(save.map);
   const duo = !!save.duo; car = car1; riders = duo ? [car1, car2] : [car1];
@@ -1391,9 +1735,12 @@ function startRun() {
     c.model = buildCar(carDef(save.sel).type, paint, { rims: cu.rims, glow: c.n === 1 ? cu.glow : null }); scene.add(c.model.group);
     c.stats = carStats(save.sel);
     Object.assign(c, { vx: 0, vz: 0, th: 0, steer: 0, s: 20, d: duo ? (c.n === 1 ? -1.8 : 1.8) : 1.8, idx: 0, nitro: c.stats.nitroCap, nitroOn: false, hp: 100, drift: 0, gear: 1, wreck: null, scrapeT: 0, camH: 0, pitch: 0, roll: 0, vf: 0, vl: 0, rpm: 0.2, score: 0, driftChain: 0, respawnT: 0 });
+    if (!duo && save.mode === 'test') c.d = LANES[0];
     placeCar(c, 0); c.idx = 10;
   }
   run = { duo, mode: duo ? 'endless' : save.mode, map: save.map, score: 0, coins: 0, nearMiss: 0, combo: 0, comboT: 0, topSpeed: 0, driftTime: 0, driftChain: 0, distKm: 0, escapes: 0, copsDown: 0, nitroTime: 0, checkpoints: 0, raceWin: 0, hits: 0, time: 0, bust: 0, heat: 0, wanted: false, nextWave: save.mode === 'police' ? 3 : 60, nextPick: 120, missionCoins: 0, missionsDone: [], endReason: '', finish: 4000, finishers: [], timeLeft: duo ? DUO_TIME : 35, nextCp: 900, startS: 20, nextFix: 600 };
+  Object.assign(run, { talk: null, pull: null, tickets: 0, fines: 0, nextRage: 8, rages: 0, rageEscapes: 0 });
+  if (run.mode === 'test') setupTest();
   if (run.mode === 'escape') { Object.assign(run, { onFire: true, repairs: 0, repairCoins: 0, fixT: 0, legStart: 20 }); run.bay = makeGate(1300, 'shop'); }
   for (const m of save.missions) m.doneThisRun = false;
   if (run.mode === 'race') {
@@ -1402,11 +1749,12 @@ function startRun() {
     makeGate(run.finish, 'finish');
   }
   if (run.mode === 'time') makeGate(run.nextCp, 'cp');
-  for (let k = 0; k < 10; k++) { const s = rand(80, 420), lane = randi(0, 3); if (laneFree(lane, s, 30, 30)) spawnAgent('traffic', s, LANES[lane], rand(15, 26)); }
+  if (run.mode !== 'test') for (let k = 0; k < 10; k++) { const s = rand(80, 420), lane = randi(0, 3); if (laneFree(lane, s, 30, 30)) spawnAgent('traffic', s, LANES[lane], rand(15, 26)); }
   ensureCL(1200); for (let i = 0; i < 8; i++) updateChunks(car.s);
   setState('countdown'); countdown = 3.4; run.lastC = 4;
   Music.on = true; Music.hype = 0.3; timeScale = targetTS = 1;
   A.set(A.eng, 0.12);
+  $('hint').textContent = run.mode === 'test' ? 'W / ↑ gas · A D steer · Space brake · Q / E signal left / right' : 'W / ↑ gas · A D steer · Space brake & drift · Shift NITRO';
   $('hint').hidden = IS_TOUCH || duo; setTimeout(() => { $('hint').hidden = true; }, 7000);
   $('bust').hidden = !(run.mode === 'police');
 }
@@ -1414,7 +1762,8 @@ function endRun() {
   if (state === 'over') return;
   const r = run;
   checkMissions();
-  const coinsEarned = r.coins + Math.floor(r.score / 60) + r.missionCoins + (r.mode === 'race' && r.place === 1 ? 500 : r.mode === 'race' && r.place === 2 ? 250 : r.mode === 'race' && r.place === 3 ? 120 : 0) + (r.repairCoins || 0);
+  hideTalk();
+  const coinsEarned = Math.max(0, r.coins + (r.mode === 'test' ? 0 : Math.floor(r.score / 60)) + r.missionCoins + (r.mode === 'race' && r.place === 1 ? 500 : r.mode === 'race' && r.place === 2 ? 250 : r.mode === 'race' && r.place === 3 ? 120 : 0) + (r.repairCoins || 0) + (r.firstPass ? 500 : r.endReason === 'passed' ? 100 : 0) - (r.fines || 0));
   save.coins += coinsEarned;
   const dist = Math.max(0, car.s - r.startS);
   save.bestDist = Math.max(save.bestDist || 0, dist);
@@ -1422,18 +1771,20 @@ function endRun() {
   const bk = r.mode + ':' + r.map, prev = save.best[bk] || { score: 0, dist: 0 }, isBest = r.score > prev.score;
   save.best[bk] = { score: Math.max(prev.score, r.score), dist: Math.max(prev.dist, Math.round(dist)) };
   rollMissions(); persist();
-  const titles = { wrecked: ['WRECKED!', 'Your car is a smoking heap of metal.'], busted: ['BUSTED!', 'The cops boxed you in. Off to jail!'], time: ["TIME'S UP!", 'So close to the next checkpoint!'], race: ['', ''], quit: ['RUN OVER', ''], burned: ['BURNT OUT!', 'The fire got your car before the repair shop.'] };
+  const titles = { wrecked: ['WRECKED!', 'Your car is a smoking heap of metal.'], busted: ['BUSTED!', 'The cops boxed you in. Off to jail!'], time: ["TIME'S UP!", 'So close to the next checkpoint!'], race: ['', ''], quit: ['RUN OVER', ''], burned: ['BURNT OUT!', 'The fire got your car before the repair shop.'], passed: ['🎓 YOU PASSED!', r.firstPass ? 'You got your driving licence! Every mode is unlocked now.' : 'Another perfect test. Still got it!'], failed: ['❌ TEST FAILED', (r.test && r.test.failWhy ? r.test.failWhy + ' ' : '') + 'Practise and try again!'], quitTest: ['TEST STOPPED', ''] };
   let title, text, good = false;
   if (r.endReason === 'race') { const ord = ['1st', '2nd', '3rd', '4th'][r.place - 1]; title = r.place === 1 ? '🏆 YOU WIN!' : `FINISHED ${ord}`; text = r.place === 1 ? 'First across the line. The streets are yours!' : 'Upgrade your car in the garage and try again!'; good = r.place === 1; }
-  else { [title, text] = titles[r.endReason] || titles.wrecked; }
+  else { [title, text] = titles[r.endReason] || titles.wrecked; if (r.endReason === 'passed') good = true; }
   if (r.mode === 'escape') text += ` Repairs: ${r.repairs}.`;
+  if (r.fines) text += ` Police fines: 🪙${r.fines}.`;
   if (r.duo) { const w = car1.score === car2.score ? 0 : car1.score > car2.score ? 1 : 2; title = w ? `🏆 PLAYER ${w} WINS!` : "🤝 IT'S A TIE!"; text = `Player 1: ${car1.score.toLocaleString()} points · Player 2: ${car2.score.toLocaleString()} points.`; good = true; }
   $('endTag').textContent = (r.duo ? '2 PLAYERS · ' : '') + MODES[r.mode].name.toUpperCase() + ' · ' + MAPS[r.map].name.toUpperCase();
   $('endTitle').textContent = title; $('endTitle').className = good ? 'good' : 'bad';
   $('endText').textContent = text + (isBest ? ' New high score!' : '');
   const mm = Math.floor(r.time / 60), ss = Math.floor(r.time % 60);
   $('endStats').innerHTML = [['Score', r.score], ['Distance', (dist / 1000).toFixed(2) + ' km'], ['Top speed', Math.round(r.topSpeed) + ' km/h'], ['Near misses', r.nearMiss], ['Drift', r.driftTime.toFixed(1) + ' s'], ['Coins', '+' + coinsEarned]].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
-  $('endMis').textContent = r.missionsDone.length ? '🎯 ' + r.missionsDone.join(' · ') : (r.mode === 'time' ? `Time ${mm}:${String(ss).padStart(2, '0')} · ${r.checkpoints} checkpoints` : '');
+  if (r.mode === 'test') $('endStats').innerHTML = [['Minor faults', r.test.minors.length + ' / ' + TEST.maxMinor], ['Cone gates', r.test.gatesDone + ' / ' + TEST.gates.length], ['Time', `${mm}:${String(ss).padStart(2, '0')}`], ['Top speed', Math.round(r.topSpeed) + ' km/h'], ['Licence', save.passedTest ? '🎓 Yes' : 'Not yet'], ['Coins', '+' + coinsEarned]].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
+  $('endMis').textContent = r.mode === 'test' ? (r.test.minors.length ? '⚠️ ' + r.test.minors.join(' · ') : '⭐ No minor faults!') : r.missionsDone.length ? '🎯 ' + r.missionsDone.join(' · ') : (r.mode === 'time' ? `Time ${mm}:${String(ss).padStart(2, '0')} · ${r.checkpoints} checkpoints` : '');
   if (good) A.fanfare(); else A.sad();
   Music.on = false; A.set(A.eng, 0); A.set(A.sir, 0); A.set(A.screech.g, 0); A.set(A.nos.g, 0); A.set(A.scrape.g, 0); A.set(A.wind.g, 0);
   setState('over');
@@ -1445,11 +1796,22 @@ function endRun() {
 function updateRun(dt, rdt, t) {
   run.time += dt;
   if (run.duo) { updateDuo(dt, rdt, t); return; }
+  if (run.talk) {
+    talkTick(dt);
+    if (run.talk && run.talk.hold) { // stopped for a chat: the world keeps going, you don't
+      car.vx = car.vz = 0; car.vf = car.vl = 0; car.nitroOn = false; car.drift = 0; car.throttle = 0; car.rpm = 0.2;
+      updateAgents(dt, t); updateChunks(car.s); checkPolice(dt); return;
+    }
+  }
   stepCar(dt);
-  spawnTraffic(); updateAgents(dt, t); playerCollisions(); nearMisses();
-  spawnPickups(); updatePickups(dt, t);
+  if (run.mode === 'test') spawnTestTraffic(); else spawnTraffic();
+  updateAgents(dt, t); playerCollisions(); nearMisses();
+  if (state !== 'playing') return;
+  if (run.mode !== 'test') { spawnPickups(); updatePickups(dt, t); }
   updateChunks(car.s);
-  checkPolice(dt);
+  checkPolice(dt); if (state !== 'playing') return;
+  rageTick(dt);
+  if (run.mode === 'test') { testTick(dt); if (state !== 'playing') return; }
   // drift scoring
   if (car.drift > 0) { run.driftTime += dt; run.driftChain += dt * car.drift; if (Math.random() < 0.8) for (const w of car.model.wheels) if (!w.front) { const p = new V3(); w.g.getWorldPosition(p); FX.norm.spawn({ x: p.x, y: 0.3, z: p.z, vx: rand(-.5, .5), vy: rand(.5, 1.5), vz: rand(-.5, .5), life: rand(.8, 1.4), size: .5, size1: 2.2, c0: world.rainK > 0.5 ? C.water : C.smoke, a: 0.4 }); } }
   else if (run.driftChain > 0.6) { const pts = Math.round(run.driftChain * 120); addScore(pts, `DRIFT +${pts}`, '#ff2e63'); run.driftChain = 0; }
@@ -1463,7 +1825,7 @@ function updateRun(dt, rdt, t) {
   // damage smoke
   if (car.hp < 50 && Math.random() < (car.hp < 25 ? 0.7 : 0.3)) { const fx = car.pos.x + Math.sin(car.th) * car.model.len * 0.6, fz = car.pos.z + Math.cos(car.th) * car.model.len * 0.6; FX.norm.spawn({ x: fx, y: 1, z: fz, vx: car.vx * 0.9, vy: 1.5, vz: car.vz * 0.9, life: 1.2, size: .4, size1: 1.6, c0: car.hp < 25 ? C.dark : C.smoke, a: .45 }); if (car.hp < 25 && Math.random() < 0.3) FX.add.spawn({ x: fx, y: 0.9, z: fz, vx: car.vx * 0.9, vy: 2, vz: car.vz * 0.9, life: .3, size: .4, size1: .1, c0: C.fire, c1: C.fire2 }); }
   // car fixers: show up now and then when the car is hurt (not in Quick Escape)
-  if (run.mode !== 'escape') {
+  if (run.mode !== 'escape' && run.mode !== 'test') {
     const fx = gates.find((x) => x.kind === 'fix');
     if (!fx && car.hp < 60 && car.s > run.nextFix) { makeGate(car.s + 450, 'fix'); pop('🔧 Car fixer ahead!', '#ff9f1c'); }
     if (fx && car.s > fx.s) { car.hp = 100; addScore(100, '🔧 CAR FIXED!', '#ff9f1c'); A.ding(); scene.remove(fx.g); gates.splice(gates.indexOf(fx), 1); run.nextFix = car.s + rand(900, 1600); }
@@ -1629,10 +1991,16 @@ function updateHUD() {
     else { big = '✅ Fixed ×' + run.repairs; small = 'Keep driving… it might catch fire again!'; }
     $('modeBig').style.color = !b || run.fixT ? '#4ade80' : car.hp < 30 ? '#ff4f4f' : '#ffb347';
   }
+  else if (run.mode === 'test') { const T = run.test, lim = limitAt(car.s); big = T.task; small = `⚠️ Minor faults: ${T.minors.length} / ${TEST.maxMinor}`; $('modeBig').style.color = '#fff'; $('limit').textContent = lim; $('limit').classList.toggle('over', kmh > lim + 2); $('indL').classList.toggle('on', T.ind < 0); $('indR').classList.toggle('on', T.ind > 0); }
+  else if (run.pull) { big = '🚓 PULL OVER!'; small = Math.abs(car.d - LANES[0]) < 1.7 ? 'Now STOP the car' : 'Move to the LEFT lane and stop'; $('modeBig').style.color = '#60a5fa'; }
   else if (run.mode === 'police' || run.wanted) { big = run.wanted ? '🚨'.repeat(Math.max(1, run.heat)) : '😎'; small = run.wanted ? 'Lose the cops! Escapes: ' + run.escapes : 'Next wave incoming…'; }
   else { big = ''; small = MAPS[run.map].name; }
   $('modeBig').textContent = big; $('modeSmall').textContent = small;
   $('nav').hidden = !(run.mode === 'escape' && run.bay);
+  $('limit').hidden = $('ind').hidden = run.mode !== 'test';
+  const ang = agents.find((a) => a.angry), ap = $('alertPill');
+  ap.hidden = !ang;
+  if (ang) { const g = Math.round(car.s - ang.s); ap.textContent = g >= 0 ? `😡 ANGRY DRIVER ${g} m behind you! Get away!` : '😡 ANGRY DRIVER right next to you!'; }
   if (run.mode === 'escape' && run.bay) {
     roadToWorld(run.bay.s, run.bay.d, NAV); const want = Math.atan2(NAV.x - car.pos.x, NAV.z - car.pos.z);
     let rel = want - car.th; rel = Math.atan2(Math.sin(rel), Math.cos(rel));
@@ -1729,6 +2097,7 @@ function setBody() {
   $('touch').hidden = !(IS_TOUCH && (state === 'playing' || state === 'countdown'));
   document.body.classList.toggle('playing', inGame);
   const duoOn = inGame && !!(run && run.duo); document.body.classList.toggle('duoOn', duoOn);
+  document.body.classList.toggle('testOn', inGame && !!(run && run.mode === 'test'));
   $('split').hidden = $('duo1').hidden = $('duo2').hidden = !duoOn;
   document.body.classList.toggle('tilt', save.settings.steer === 'tilt');
   document.body.classList.toggle('autogas', !!save.settings.autoGas);
@@ -1738,11 +2107,11 @@ function bankTxt() { document.querySelectorAll('.bankTxt').forEach((e) => { e.te
 function renderTitle() {
   bankTxt();
   for (const k of Object.keys(MAPS)) if (MAPS[k].unlock && (save.bestDist || 0) >= MAPS[k].unlock.dist) save.maps[k] = true;
-  $('modes').innerHTML = Object.entries(MODES).map(([k, m]) => `<button class="opt" data-mode="${k}" aria-pressed="${save.mode === k}"><div class="em">${m.em}</div><b>${m.name}</b><div class="sub">${m.sub}</div></button>`).join('');
+  $('modes').innerHTML = Object.entries(MODES).map(([k, m]) => { const lock = k !== 'test' && !save.passedTest; return `<button class="opt ${lock ? 'locked' : ''}" data-mode="${k}" aria-pressed="${save.mode === k}"><div class="em">${lock ? '🔒' : k === 'test' && save.passedTest ? '🎓' : m.em}</div><b>${m.name}</b><div class="sub">${lock ? 'Pass the Driving Test first' : k === 'test' && save.passedTest ? 'Passed! Take it again' : m.sub}</div></button>`; }).join('');
   $('maps').innerHTML = Object.entries(MAPS).map(([k, m]) => { const open = !!save.maps[k]; return `<button class="opt ${open ? '' : 'locked'}" data-map="${k}" aria-pressed="${save.map === k}"><div class="em">${open ? m.em : '🔒'}</div><b>${m.name}</b><div class="sub">${open ? (k === 'city' ? 'Day to night' : k === 'desert' ? 'Sandstorms' : 'Always raining') : `🔒 ${m.unlock.dist / 1000} km or 🪙${m.unlock.coins}`}</div></button>`; }).join('');
   $('players').innerHTML = [[false, '👤 1 PLAYER'], [true, '👥 2 PLAYERS']].map(([v, l]) => `<button class="ghost" data-duo="${v}" aria-pressed="${!!save.duo === v}" style="${!!save.duo === v ? 'background:#ff2e63;border-color:#ff2e63' : ''}">${l}</button>`).join('');
   const b = save.best[save.mode + ':' + save.map];
-  $('titleNote').textContent = save.duo ? (IS_TOUCH ? '2 players needs a keyboard: P1 W A S D, P2 arrow keys.' : '2-minute Highway Rush battle! P1: W A S D + Left Shift · P2: arrows + Right Shift') : b ? `Best: ${b.score.toLocaleString()} points · ${(b.dist / 1000).toFixed(1)} km` : 'Dodge traffic, drift, hit NITRO!';
+  $('titleNote').textContent = !save.passedTest ? '🎓 Welcome to the Driving Academy! Pass your Driving Test to unlock every mode.' : save.duo ? (IS_TOUCH ? '2 players needs a keyboard: P1 W A S D, P2 arrow keys.' : '2-minute Highway Rush battle! P1: W A S D + Left Shift · P2: arrows + Right Shift') : b ? `Best: ${b.score.toLocaleString()} points · ${(b.dist / 1000).toFixed(1)} km` : 'Dodge traffic, drift, hit NITRO!';
   if (showCar && showCar !== null && save.sel !== showCar.id) { showroomCar(save.sel); showCar.id = save.sel; }
 }
 function renderGarage() {
@@ -1779,6 +2148,8 @@ window.addEventListener('keydown', (e) => {
   if (e.repeat) return;
   if (e.code === 'KeyM') { A.init(); save.settings.sound = !save.settings.sound; persist(); A.apply(); }
   if (e.code === 'KeyC' && (state === 'playing' || state === 'countdown')) cycleCam();
+  if (state === 'playing' && run && run.talk && run.talk.hold && run.talk.t > 0.5 && (e.code === 'Space' || e.code === 'Enter')) nextTalk();
+  if (state === 'playing' && (e.code === 'KeyQ' || e.code === 'KeyE')) signal(e.code === 'KeyQ' ? -1 : 1);
   if (state === 'playing' && (e.code === 'Escape' || e.code === 'KeyP')) pause();
   else if (state === 'paused' && (e.code === 'Escape' || e.code === 'KeyP')) resume();
 });
@@ -1793,6 +2164,9 @@ function hold(id, key) {
 }
 hold('tLeft', 'left'); hold('tRight', 'right'); hold('tGas', 'gas'); hold('tBrake', 'brake'); hold('tNitro', 'nitro');
 $('tCam').addEventListener('pointerdown', (e) => { e.preventDefault(); cycleCam(); });
+$('tIndL').addEventListener('pointerdown', (e) => { e.preventDefault(); signal(-1); });
+$('tIndR').addEventListener('pointerdown', (e) => { e.preventDefault(); signal(1); });
+$('talk').addEventListener('pointerdown', (e) => { e.preventDefault(); if (state === 'playing' && run && run.talk && run.talk.t > 0.4) nextTalk(); });
 let tiltZero = null;
 function onTilt(e) {
   if (e.beta == null) return;
@@ -1813,18 +2187,18 @@ function cycleCam() { camMode = (camMode + 1) % 3; save.settings.cam = camMode; 
 function pause() { if (state !== 'playing') return; setState('paused'); A.set(A.eng, 0); A.set(A.sir, 0); Music.on = false; }
 function resume() { setState('playing'); last = performance.now(); A.init(); Music.on = save.settings.music; }
 function toTitle() {
-  for (const a of agents.slice()) removeAgent(a); for (const p of pickups) scene.remove(p.mesh); pickups = []; for (const g of gates) scene.remove(g.g); gates = [];
+  for (const a of agents.slice()) removeAgent(a); for (const p of pickups) scene.remove(p.mesh); pickups = []; for (const g of gates) scene.remove(g.g); gates = []; clearCones(); hideTalk();
   A.set(A.eng, 0); A.set(A.sir, 0); A.set(A.rain.g, 0); A.set(A.sand.g, 0);
   showroomCar(save.sel); setState('title');
 }
 $('bPlay').addEventListener('click', () => { A.init(); startRun(); });
-$('modes').addEventListener('click', (e) => { const b = e.target.closest('[data-mode]'); if (!b) return; A.init(); save.mode = b.dataset.mode; persist(); A.beep(false); renderTitle(); });
+$('modes').addEventListener('click', (e) => { const b = e.target.closest('[data-mode]'); if (!b) return; A.init(); if (b.dataset.mode !== 'test' && !save.passedTest) { A.beep(false); $('titleNote').textContent = '🔒 Every driver needs a licence! Pass the Driving Test first.'; return; } save.mode = b.dataset.mode; persist(); A.beep(false); renderTitle(); });
 $('maps').addEventListener('click', (e) => {
   const b = e.target.closest('[data-map]'); if (!b) return; A.init(); const k = b.dataset.map, M = MAPS[k];
   if (!save.maps[k]) { if (save.coins >= M.unlock.coins) { save.coins -= M.unlock.coins; save.maps[k] = true; A.ding(); } else { A.beep(false); $('titleNote').textContent = `🔒 Drive ${M.unlock.dist / 1000} km in one run, or save 🪙${M.unlock.coins} to unlock ${M.name}.`; return; } }
   save.map = k; persist(); A.beep(false); renderTitle();
 });
-$('players').addEventListener('click', (e) => { const b = e.target.closest('[data-duo]'); if (!b) return; A.init(); save.duo = b.dataset.duo === 'true'; persist(); A.beep(false); renderTitle(); });
+$('players').addEventListener('click', (e) => { const b = e.target.closest('[data-duo]'); if (!b) return; A.init(); if (b.dataset.duo === 'true' && !save.passedTest) { A.beep(false); $('titleNote').textContent = '🔒 Pass the Driving Test first, then you can play with 2 players.'; return; } save.duo = b.dataset.duo === 'true'; persist(); A.beep(false); renderTitle(); });
 $('bGarage').addEventListener('click', () => { A.init(); garageIdx = Math.max(0, CARS.findIndex((c) => c.id === save.sel)); setState('garage'); });
 $('bMissions').addEventListener('click', () => { A.init(); setState('missions'); });
 $('bSettings').addEventListener('click', () => { A.init(); setState('settings'); });
@@ -1874,7 +2248,7 @@ function boot() {
   setState('title');
   requestAnimationFrame(frame);
 }
-window.__rrx = { roadH: (s) => frameAt(s).h, get state() { return state; }, car, car2, get riders() { return riders; }, get agents() { return agents; }, get run() { return run; }, get world() { return world; }, save, startRun, endRun, spawnPoliceWave, keys, input, damage,
+window.__rrx = { roadH: (s) => frameAt(s).h, get state() { return state; }, car, car2, get riders() { return riders; }, get agents() { return agents; }, get run() { return run; }, get world() { return world; }, save, startRun, endRun, spawnPoliceWave, keys, input, damage, startPullover, nextTalk, signal, makeAngry, get cones() { return cones; }, TEST, limitAt, placeCar,
   fast(sec) { if (state === 'countdown') { countdown = 0; setState('playing'); } const n = Math.round(sec * 60); for (let i = 0; i < n && state === 'playing'; i++) updateRun(1 / 60, 1 / 60, performance.now() / 1000); } };
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot, boot); else boot();
 })();
