@@ -38,7 +38,8 @@ void paintSun(Canvas canvas, double time) {
     canvas.drawPath(path, ray);
   }
 
-  canvas.drawCircle(Offset.zero, sunRadius * 1.15, blurPaint(const Color(0xAAFFC107), 30));
+  canvas.drawCircle(
+      Offset.zero, sunRadius * 1.15, blurPaint(const Color(0xAAFFC107), 30));
   final r = sunRadius + math.sin(time * 3) * 3;
   final rect = Rect.fromCircle(center: Offset.zero, radius: r);
   canvas.drawCircle(
@@ -93,12 +94,15 @@ Color? _atmosphere(String name) {
   }
 }
 
-void _blob(Canvas canvas, Offset c, double rx, double ry, Color color, {double blur = 0}) {
+void _blob(Canvas canvas, Offset c, double rx, double ry, Color color,
+    {double blur = 0}) {
   final paint = blur > 0 ? blurPaint(color, blur) : (Paint()..color = color);
-  canvas.drawOval(Rect.fromCenter(center: c, width: rx * 2, height: ry * 2), paint);
+  canvas.drawOval(
+      Rect.fromCenter(center: c, width: rx * 2, height: ry * 2), paint);
 }
 
-void _craters(Canvas canvas, Offset c, double r, Color base, int seed, int count) {
+void _craters(
+    Canvas canvas, Offset c, double r, Color base, int seed, int count) {
   final rnd = math.Random(seed);
   for (var i = 0; i < count; i++) {
     final a = rnd.nextDouble() * math.pi * 2;
@@ -106,11 +110,13 @@ void _craters(Canvas canvas, Offset c, double r, Color base, int seed, int count
     final cr = r * (0.05 + rnd.nextDouble() * 0.12);
     final p = c + Offset(math.cos(a) * d, math.sin(a) * d);
     canvas.drawCircle(p, cr, Paint()..color = darker(base, 0.25));
-    canvas.drawCircle(p + Offset(-cr * 0.2, -cr * 0.2), cr * 0.7, Paint()..color = darker(base, 0.12));
+    canvas.drawCircle(p + Offset(-cr * 0.2, -cr * 0.2), cr * 0.7,
+        Paint()..color = darker(base, 0.12));
   }
 }
 
-void _bands(Canvas canvas, Offset c, double r, List<Color> colors, {double blur = 1}) {
+void _bands(Canvas canvas, Offset c, double r, List<Color> colors,
+    {double blur = 1}) {
   final n = colors.length;
   for (var i = 0; i < n; i++) {
     final top = c.dy - r + (i / n) * 2 * r;
@@ -145,7 +151,8 @@ void _rings(Canvas canvas, Planet p, {required bool back}) {
   canvas.save();
   canvas.translate(c.dx, c.dy);
   canvas.rotate(tilt);
-  canvas.clipRect(Rect.fromLTRB(-r * 3, back ? -r * 3 : 0, r * 3, back ? 0 : r * 3));
+  canvas.clipRect(
+      Rect.fromLTRB(-r * 3, back ? -r * 3 : 0, r * 3, back ? 0 : r * 3));
   canvas.scale(1, flat);
   for (final ring in rings) {
     canvas.drawCircle(
@@ -159,11 +166,13 @@ void _rings(Canvas canvas, Planet p, {required bool back}) {
   canvas.restore();
 }
 
-void paintPlanet(Canvas canvas, Planet p, {required bool visited, double time = 0}) {
+void paintPlanet(Canvas canvas, Planet p,
+    {required bool visited, double time = 0}) {
   final c = p.position;
   final r = p.radius;
   final toSun = -c;
-  final light = toSun.distance == 0 ? const Offset(-1, 0) : toSun / toSun.distance;
+  final light =
+      toSun.distance == 0 ? const Offset(-1, 0) : toSun / toSun.distance;
   final rect = Rect.fromCircle(center: c, radius: r);
 
   final air = _atmosphere(p.name);
@@ -189,7 +198,11 @@ void paintPlanet(Canvas canvas, Planet p, {required bool visited, double time = 
       _craters(canvas, c, r, p.color, 1, 14);
     case 'Venus':
       for (var i = 0; i < 5; i++) {
-        _blob(canvas, c + Offset(math.sin(i * 1.7) * r * 0.3, (i - 2) * r * 0.32), r * 0.9, r * 0.12,
+        _blob(
+            canvas,
+            c + Offset(math.sin(i * 1.7) * r * 0.3, (i - 2) * r * 0.32),
+            r * 0.9,
+            r * 0.12,
             i.isEven ? const Color(0x55FFF3D6) : const Color(0x44B8874A),
             blur: r * 0.08);
       }
@@ -206,57 +219,87 @@ void paintPlanet(Canvas canvas, Planet p, {required bool visited, double time = 
       for (var i = 0; i < 6; i++) {
         final y = (i - 2.5) * r * 0.32;
         final x = ((i * 0.37 + spin) % 1.0 - 0.5) * r * 2;
-        _blob(canvas, c + Offset(x, y), r * 0.35, r * 0.06, const Color(0xCCFFFFFF), blur: r * 0.04);
+        _blob(canvas, c + Offset(x, y), r * 0.35, r * 0.06,
+            const Color(0xCCFFFFFF),
+            blur: r * 0.04);
       }
     case 'Moon':
-      _blob(canvas, c + Offset(-r * 0.25, -r * 0.2), r * 0.35, r * 0.28, const Color(0x66505055),
+      _blob(canvas, c + Offset(-r * 0.25, -r * 0.2), r * 0.35, r * 0.28,
+          const Color(0x66505055),
           blur: r * 0.1);
-      _blob(canvas, c + Offset(r * 0.2, r * 0.25), r * 0.25, r * 0.2, const Color(0x55505055),
+      _blob(canvas, c + Offset(r * 0.2, r * 0.25), r * 0.25, r * 0.2,
+          const Color(0x55505055),
           blur: r * 0.1);
       _craters(canvas, c, r, p.color, 2, 8);
     case 'Mars':
-      _blob(canvas, c + Offset(r * 0.1, r * 0.05), r * 0.45, r * 0.22, const Color(0x667A2E14),
+      _blob(canvas, c + Offset(r * 0.1, r * 0.05), r * 0.45, r * 0.22,
+          const Color(0x667A2E14),
           blur: r * 0.12);
-      _blob(canvas, c + Offset(-r * 0.3, -r * 0.3), r * 0.25, r * 0.15, const Color(0x557A2E14),
+      _blob(canvas, c + Offset(-r * 0.3, -r * 0.3), r * 0.25, r * 0.15,
+          const Color(0x557A2E14),
           blur: r * 0.1);
-      _blob(canvas, c + Offset(0, -r * 0.92), r * 0.4, r * 0.16, const Color(0xEEFFFFFF),
+      _blob(canvas, c + Offset(0, -r * 0.92), r * 0.4, r * 0.16,
+          const Color(0xEEFFFFFF),
           blur: r * 0.05);
     case 'Jupiter':
-      _bands(canvas, c, r, const [
-        Color(0xFF9C7550),
-        Color(0xFFE9D6B4),
-        Color(0xFFC08F5E),
-        Color(0xFFF3E6CC),
-        Color(0xFFB27A4C),
-        Color(0xFFEFDDBD),
-        Color(0xFFC9996A),
-        Color(0xFFE8D2AD),
-        Color(0xFFA27652),
-      ], blur: r * 0.04);
-      _blob(canvas, c + Offset(r * 0.3, r * 0.32), r * 0.22, r * 0.12, const Color(0xFFF0C7A0));
-      _blob(canvas, c + Offset(r * 0.3, r * 0.32), r * 0.17, r * 0.09, const Color(0xFFBF5A36));
+      _bands(
+          canvas,
+          c,
+          r,
+          const [
+            Color(0xFF9C7550),
+            Color(0xFFE9D6B4),
+            Color(0xFFC08F5E),
+            Color(0xFFF3E6CC),
+            Color(0xFFB27A4C),
+            Color(0xFFEFDDBD),
+            Color(0xFFC9996A),
+            Color(0xFFE8D2AD),
+            Color(0xFFA27652),
+          ],
+          blur: r * 0.04);
+      _blob(canvas, c + Offset(r * 0.3, r * 0.32), r * 0.22, r * 0.12,
+          const Color(0xFFF0C7A0));
+      _blob(canvas, c + Offset(r * 0.3, r * 0.32), r * 0.17, r * 0.09,
+          const Color(0xFFBF5A36));
     case 'Saturn':
-      _bands(canvas, c, r, const [
-        Color(0xFFC9AE78),
-        Color(0xFFE8D4A6),
-        Color(0xFFD9BF8A),
-        Color(0xFFF1E3BE),
-        Color(0xFFDCC392),
-        Color(0xFFEBD9AF),
-        Color(0xFFC7AA74),
-      ], blur: r * 0.05);
+      _bands(
+          canvas,
+          c,
+          r,
+          const [
+            Color(0xFFC9AE78),
+            Color(0xFFE8D4A6),
+            Color(0xFFD9BF8A),
+            Color(0xFFF1E3BE),
+            Color(0xFFDCC392),
+            Color(0xFFEBD9AF),
+            Color(0xFFC7AA74),
+          ],
+          blur: r * 0.05);
     case 'Uranus':
-      _blob(canvas, c + Offset(0, -r * 0.4), r * 0.9, r * 0.25, const Color(0x33FFFFFF), blur: r * 0.15);
+      _blob(canvas, c + Offset(0, -r * 0.4), r * 0.9, r * 0.25,
+          const Color(0x33FFFFFF),
+          blur: r * 0.15);
     case 'Neptune':
-      _blob(canvas, c + Offset(-r * 0.1, -r * 0.35), r * 0.7, r * 0.06, const Color(0x88E8EAF6), blur: r * 0.05);
-      _blob(canvas, c + Offset(r * 0.2, r * 0.3), r * 0.6, r * 0.05, const Color(0x66E8EAF6), blur: r * 0.05);
-      _blob(canvas, c + Offset(-r * 0.25, r * 0.05), r * 0.2, r * 0.12, const Color(0xFF1A237E));
+      _blob(canvas, c + Offset(-r * 0.1, -r * 0.35), r * 0.7, r * 0.06,
+          const Color(0x88E8EAF6),
+          blur: r * 0.05);
+      _blob(canvas, c + Offset(r * 0.2, r * 0.3), r * 0.6, r * 0.05,
+          const Color(0x66E8EAF6),
+          blur: r * 0.05);
+      _blob(canvas, c + Offset(-r * 0.25, r * 0.05), r * 0.2, r * 0.12,
+          const Color(0xFF1A237E));
     case 'Pluto':
-      _blob(canvas, c + Offset(-r * 0.4, -r * 0.2), r * 0.4, r * 0.3, const Color(0x668D5B3A), blur: r * 0.1);
+      _blob(canvas, c + Offset(-r * 0.4, -r * 0.2), r * 0.4, r * 0.3,
+          const Color(0x668D5B3A),
+          blur: r * 0.1);
       final heart = Path()
         ..moveTo(c.dx + r * 0.15, c.dy + r * 0.6)
-        ..cubicTo(c.dx - r * 0.5, c.dy + r * 0.2, c.dx - r * 0.2, c.dy - r * 0.3, c.dx + r * 0.15, c.dy)
-        ..cubicTo(c.dx + r * 0.5, c.dy - r * 0.3, c.dx + r * 0.8, c.dy + r * 0.2, c.dx + r * 0.15, c.dy + r * 0.6)
+        ..cubicTo(c.dx - r * 0.5, c.dy + r * 0.2, c.dx - r * 0.2,
+            c.dy - r * 0.3, c.dx + r * 0.15, c.dy)
+        ..cubicTo(c.dx + r * 0.5, c.dy - r * 0.3, c.dx + r * 0.8,
+            c.dy + r * 0.2, c.dx + r * 0.15, c.dy + r * 0.6)
         ..close();
       canvas.drawPath(heart, Paint()..color = const Color(0xFFFFF8EE));
   }
@@ -304,11 +347,15 @@ class SpacePainter extends CustomPainter {
     final shake = Offset(math.sin(game.time * 80) * shakeAmount,
         math.cos(game.time * 70) * shakeAmount);
 
-    canvas.save();
-    canvas.translate(
-        size.width / 2 - cam.dx + shake.dx, size.height / 2 - cam.dy + shake.dy);
+    // Zoom out on small screens (phones) so you can see what's coming.
+    final zoom = (size.shortestSide / 700).clamp(0.6, 1.0);
 
-    final view = size.longestSide;
+    canvas.save();
+    canvas.translate(size.width / 2 + shake.dx, size.height / 2 + shake.dy);
+    canvas.scale(zoom);
+    canvas.translate(-cam.dx, -cam.dy);
+
+    final view = size.longestSide / zoom;
     if (cam.distance < view + 1200) paintSun(canvas, game.time);
     paintLabel(canvas, 'THE SUN ☀️', const Offset(0, sunRadius + 30), size: 18);
 
@@ -341,13 +388,15 @@ class SpacePainter extends CustomPainter {
           Paint()..color = const Color(0x553E2723));
     }
     if ((cam.dx - 2575).abs() < view) {
-      paintLabel(canvas, '⚠️ ASTEROID BELT ⚠️', Offset(2575, cam.dy - size.height / 2 + 140),
+      paintLabel(canvas, '⚠️ ASTEROID BELT ⚠️',
+          Offset(2575, cam.dy - size.height / 2 / zoom + 140),
           size: 16, color: Colors.orangeAccent);
     }
 
     for (final p in planets) {
       if ((p.position - cam).distance > view + p.radius * 4) continue;
-      paintPlanet(canvas, p, visited: game.visited.contains(p.name), time: game.time);
+      paintPlanet(canvas, p,
+          visited: game.visited.contains(p.name), time: game.time);
     }
 
     // Our rocket (blinks after a crash)
@@ -375,9 +424,12 @@ class SpacePainter extends CustomPainter {
 
     canvas.drawRRect(
         RRect.fromRectAndRadius(
-            Rect.fromLTRB(left - 12, y - 14, right + 12, y + 12), const Radius.circular(10)),
+            Rect.fromLTRB(left - 12, y - 14, right + 12, y + 12),
+            const Radius.circular(10)),
         Paint()..color = Colors.black54);
-    canvas.drawLine(Offset(left, y), Offset(right, y),
+    canvas.drawLine(
+        Offset(left, y),
+        Offset(right, y),
         Paint()
           ..color = Colors.white24
           ..strokeWidth = 2);

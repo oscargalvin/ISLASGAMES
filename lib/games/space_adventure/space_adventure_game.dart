@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -31,6 +32,10 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
   AudioPlayer? _music;
   bool _musicStarted = false;
   bool _muted = false;
+
+  /// True once the player touches the screen, so the hints talk about the
+  /// on-screen buttons instead of the keyboard.
+  bool _usingTouch = false;
 
   static final _gameKeys = <LogicalKeyboardKey>[
     LogicalKeyboardKey.arrowLeft,
@@ -90,16 +95,21 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
     final dt = ((elapsed - _last).inMicroseconds / 1e6).clamp(0.0, 0.05);
     _last = elapsed;
     controls
-      ..left = _held([LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.keyA], 'left')
-      ..right =
-          _held([LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.keyD], 'right')
+      ..left =
+          _held([LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.keyA], 'left')
+      ..right = _held(
+          [LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.keyD], 'right')
       ..up = _held([LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.keyW], 'up')
-      ..down = _held([LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.keyS], 'down');
+      ..down = _held(
+          [LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.keyS], 'down');
     setState(() => game.update(dt, controls));
   }
 
   bool _onKey(KeyEvent event) {
-    if (event is KeyDownEvent) _startMusic();
+    if (event is KeyDownEvent) {
+      _startMusic();
+      _usingTouch = false;
+    }
     final key = event.logicalKey;
     final isEnter = key == LogicalKeyboardKey.enter ||
         key == LogicalKeyboardKey.numpadEnter ||
@@ -120,42 +130,65 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
     return Scaffold(
       backgroundColor: Colors.black,
       body: Listener(
-        onPointerDown: (_) => _startMusic(),
+        onPointerDown: (event) {
+          _startMusic();
+          if (event.kind == PointerDeviceKind.touch) _usingTouch = true;
+        },
         child: LayoutBuilder(
-        builder: (context, box) {
-          final wide = box.maxWidth > 760;
-          return Stack(
-            children: [
-              Positioned.fill(child: _scene(wide)),
-              ..._overlays(box, wide),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: SafeArea(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton.filledTonal(
-                        tooltip: _muted ? 'Music on' : 'Music off',
-                        onPressed: _toggleMusic,
-                        icon: Icon(_muted ? Icons.music_off : Icons.music_note),
-                      ),
-                      const SizedBox(width: 6),
-                      IconButton.filledTonal(
-                        tooltip: 'Back to games',
-                        onPressed: () => Navigator.of(context).maybePop(),
-                        icon: const Icon(Icons.close),
-                      ),
-                    ],
+          builder: (context, box) {
+            final wide = box.maxWidth > 760;
+            _narrow = box.maxWidth < 600;
+            return Stack(
+              children: [
+                Positioned.fill(child: _scene(wide)),
+                ..._overlays(box, wide),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: SafeArea(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton.filledTonal(
+                          tooltip: _muted ? 'Music on' : 'Music off',
+                          onPressed: _toggleMusic,
+                          icon:
+                              Icon(_muted ? Icons.music_off : Icons.music_note),
+                        ),
+                        const SizedBox(width: 6),
+                        IconButton.filledTonal(
+                          tooltip: 'Back to games',
+                          onPressed: () => Navigator.of(context).maybePop(),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
-      ),
+              ],
+            );
+          },
+        ),
       ),
     );
+  }
+
+  /// Phone-sized screen: lift the hints above the on-screen buttons.
+  bool _narrow = false;
+
+  /// Swaps keyboard hints for touch ones when the player is using a phone.
+  String _hint(String text) {
+    if (!_usingTouch) return text;
+    return text
+        .replaceAll('Use the arrow keys', 'Use the arrow buttons')
+        .replaceAll('use the arrow keys', 'use the arrow buttons')
+        .replaceAll('Press ENTER to get back in your rocket',
+            'Tap Blast off to get back in your rocket')
+        .replaceAll('Press ENTER to land again', 'Tap Land to land again')
+        .replaceAll('Press ENTER to land', 'Tap Land to land')
+        .replaceAll('Press UP', 'Tap ⬆️')
+        .replaceAll('press A really quickly five times',
+            'tap the timer really quickly five times');
   }
 
   // ------------------------------------------------------------- scenery
@@ -216,13 +249,21 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
       case Phase.countdown:
         return [
           Center(
-            child: Text(
-              game.countdown > 0 ? '${game.countdown.ceil()}' : 'LIFT OFF! 🚀',
-              style: const TextStyle(
-                fontSize: 110,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                shadows: [Shadow(blurRadius: 16, color: Colors.black87)],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  game.countdown > 0
+                      ? '${game.countdown.ceil()}'
+                      : 'LIFT OFF! 🚀',
+                  style: const TextStyle(
+                    fontSize: 110,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    shadows: [Shadow(blurRadius: 16, color: Colors.black87)],
+                  ),
+                ),
               ),
             ),
           ),
@@ -234,44 +275,57 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
             left: 16,
             right: 16,
             child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                decoration: _panelDecoration(),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Time until you reach space',
-                        style: TextStyle(color: Colors.white70, fontSize: 15)),
-                    Text(game.flightClock,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 52,
-                            fontWeight: FontWeight.w900,
-                            fontFeatures: [FontFeature.tabularFigures()])),
-                    const SizedBox(height: 4),
-                    Text(game.flightFact,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white, fontSize: 17)),
-                    if (game.hasWon)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 6),
-                        child: Text('🤫 Psst... press A five times really fast!',
-                            style: TextStyle(
-                                color: Colors.amberAccent,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700)),
-                      ),
-                  ],
+              child: GestureDetector(
+                // Phones have no A key, so tapping the timer works too.
+                onTap: () => setState(game.pressSecretKey),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                  decoration: _panelDecoration(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('Time until you reach space',
+                          style:
+                              TextStyle(color: Colors.white70, fontSize: 15)),
+                      Text(game.flightClock,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 52,
+                              fontWeight: FontWeight.w900,
+                              fontFeatures: [FontFeature.tabularFigures()])),
+                      const SizedBox(height: 4),
+                      Text(game.flightFact,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 17)),
+                      if (game.hasWon)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                              _usingTouch
+                                  ? '🤫 Psst... tap this box five times really fast!'
+                                  : '🤫 Psst... press A five times really fast!',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  color: Colors.amberAccent,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700)),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
           Positioned(
-            left: 0,
-            right: 0,
-            bottom: 24,
+            left: 16,
+            right: 16,
+            bottom: _narrow ? 130 : 24,
             child: Center(
-                child: _bubble('⬅️ ➡️  Use the arrow keys to steer your rocket')),
+                child: _bubble(_usingTouch
+                    ? '⬅️ ➡️  Tap the arrows to steer your rocket'
+                    : '⬅️ ➡️  Use the arrow keys to steer your rocket')),
           ),
           _touchPad(arrowsOnly: true),
         ];
@@ -281,7 +335,7 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
           Positioned(
             left: 16,
             right: 16,
-            bottom: 150,
+            bottom: _narrow ? 200 : 150,
             child: Center(child: _spacePrompt()),
           ),
           _touchPad(),
@@ -305,7 +359,7 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
           Positioned(
             left: 16,
             right: 16,
-            bottom: 150,
+            bottom: _narrow ? 200 : 150,
             child: Center(child: _bubble(bubble, dim: dim)),
           ),
           _touchPad(enterLabel: 'Blast off'),
@@ -348,11 +402,11 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       decoration: _panelDecoration(),
       child: Text(
-        text,
+        _hint(text),
         textAlign: TextAlign.center,
         style: TextStyle(
           color: dim ? Colors.white70 : Colors.white,
-          fontSize: 18,
+          fontSize: _narrow ? 16 : 18,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -389,12 +443,13 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
                 textStyle:
                     const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
               ),
-              onPressed: game.readyToLaunch ? () => setState(game.launch) : null,
+              onPressed:
+                  game.readyToLaunch ? () => setState(game.launch) : null,
               child: Text(game.readyToLaunch
                   ? '🚀 LAUNCH!'
                   : 'Finish the jobs first ($done/$total)'),
             ),
-            if (game.readyToLaunch)
+            if (game.readyToLaunch && !_usingTouch)
               const Padding(
                 padding: EdgeInsets.only(top: 6),
                 child: Text('...or press ENTER', textAlign: TextAlign.center),
@@ -477,11 +532,11 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
     return Positioned(
       top: 12,
       left: 12,
-      child: SafeArea(child: _hud()),
+      child: SafeArea(child: _hud(_narrow ? 210 : 270)),
     );
   }
 
-  Widget _hud() {
+  Widget _hud(double width) {
     final hp = game.health.clamp(0.0, 100.0);
     final Color hpColor = hp > 60
         ? Colors.greenAccent
@@ -492,7 +547,7 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
     final info = game.surface;
     final onSurface = game.scenePhase == Phase.surface;
     return Container(
-      width: 270,
+      width: width,
       padding: const EdgeInsets.all(12),
       decoration: _panelDecoration(),
       child: Column(
@@ -532,7 +587,8 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
               ),
             ),
           const SizedBox(height: 8),
-          Text('🪐 Places explored: ${game.visited.length}/${game.placesToVisit}',
+          Text(
+              '🪐 Places explored: ${game.visited.length}/${game.placesToVisit}',
               style: const TextStyle(color: Colors.white70)),
           if (onSurface && info != null)
             Text(
@@ -555,41 +611,46 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
         color: tint,
         alignment: Alignment.center,
         padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 80)),
-            Text(title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 36,
-                    fontWeight: FontWeight.w900)),
-            const SizedBox(height: 12),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 520),
-              child: Text(text,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(emoji, style: TextStyle(fontSize: _narrow ? 60 : 80)),
+              Text(title,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white, fontSize: 20)),
-            ),
-            const SizedBox(height: 8),
-            Text(
-                'You explored ${game.visited.length} of ${game.placesToVisit} places.',
-                style: const TextStyle(color: Colors.white70, fontSize: 16)),
-            const SizedBox(height: 24),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
-                textStyle:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: _narrow ? 28 : 36,
+                      fontWeight: FontWeight.w900)),
+              const SizedBox(height: 12),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: Text(text,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white, fontSize: 20)),
               ),
-              onPressed: () => setState(game.reset),
-              child: Text(button),
-            ),
-            const SizedBox(height: 8),
-            const Text('...or press ENTER',
-                style: TextStyle(color: Colors.white70)),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                  'You explored ${game.visited.length} of ${game.placesToVisit} places.',
+                  style: const TextStyle(color: Colors.white70, fontSize: 16)),
+              const SizedBox(height: 24),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
+                  textStyle: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.w800),
+                ),
+                onPressed: () => setState(game.reset),
+                child: Text(button),
+              ),
+              if (!_usingTouch) ...[
+                const SizedBox(height: 8),
+                const Text('...or press ENTER',
+                    style: TextStyle(color: Colors.white70)),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -605,8 +666,8 @@ class _SpaceAdventureGameState extends State<SpaceAdventureGame>
         onPointerUp: (_) => setState(() => _touch.remove(name)),
         onPointerCancel: (_) => setState(() => _touch.remove(name)),
         child: Container(
-          width: 52,
-          height: 52,
+          width: 60,
+          height: 60,
           margin: const EdgeInsets.all(3),
           decoration: BoxDecoration(
             color: Colors.white.withAlpha(down ? 110 : 45),

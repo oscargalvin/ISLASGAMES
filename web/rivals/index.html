@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Islas Rivals</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0d0f12; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #fff; }
+  body { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  canvas { display: block; }
+  .hud { position: fixed; pointer-events: none; }
+  #cross { left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; }
+  #cross::before, #cross::after { content: ""; position: absolute; background: rgba(255,255,255,.9); box-shadow: 0 0 2px #000; }
+  #cross::before { left: 10px; top: 0; width: 2px; height: 22px; clip-path: polygon(0 0,100% 0,100% 35%,0 35%,0 65%,100% 65%,100% 100%,0 100%); }
+  #cross::after { top: 10px; left: 0; height: 2px; width: 22px; clip-path: polygon(0 0,35% 0,35% 100%,0 100%,0 0,65% 0,100% 0,100% 100%,65% 100%); }
+  #hit { left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; opacity: 0; transition: opacity .15s; }
+  #hit::before, #hit::after { content: ""; position: absolute; left: 14px; top: -2px; width: 2px; height: 34px; background: #fff; transform: rotate(45deg); clip-path: polygon(0 0,100% 0,100% 30%,0 30%,0 70%,100% 70%,100% 100%,0 100%); }
+  #hit::after { transform: rotate(-45deg); }
+  #hit.head::before, #hit.head::after { background: #ff3b30; }
+  #score { top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 0; font-weight: 800; font-size: 20px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,.5); }
+  #score div { padding: 6px 14px; }
+  #score .you { background: #1f6feb; } #score .mid { background: rgba(0,0,0,.6); font-size: 13px; padding-top: 10px; } #score .them { background: #d1242f; }
+  #health { left: 20px; bottom: 20px; width: 230px; }
+  #health .bar { height: 12px; background: rgba(0,0,0,.55); border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,.25); }
+  #health .fill { height: 100%; width: 100%; background: linear-gradient(90deg,#3fb950,#7ee787); transition: width .15s; }
+  #health .num { font-size: 30px; font-weight: 800; text-shadow: 0 2px 4px #000; }
+  #enemy { top: 52px; left: 50%; transform: translateX(-50%); width: 200px; text-align: center; font-size: 12px; font-weight: 700; text-shadow: 0 1px 3px #000; }
+  #enemy .bar { height: 6px; background: rgba(0,0,0,.55); border-radius: 3px; overflow: hidden; margin-top: 3px; }
+  #enemy .fill { height: 100%; width: 100%; background: #ff5a52; transition: width .15s; }
+  #ammo { right: 20px; bottom: 96px; text-align: right; font-weight: 800; text-shadow: 0 2px 4px #000; }
+  #ammo .n { font-size: 34px; } #ammo .w { font-size: 14px; opacity: .85; letter-spacing: 1px; text-transform: uppercase; }
+  #slots { right: 20px; bottom: 20px; display: flex; gap: 6px; pointer-events: auto; }
+  .slot { width: 62px; height: 62px; border-radius: 10px; background: rgba(0,0,0,.5); border: 2px solid rgba(255,255,255,.18); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; cursor: pointer; }
+  .slot b { font-size: 18px; line-height: 24px; letter-spacing: 1px; }
+  .slot i { font-style: normal; opacity: .6; font-size: 9px; }
+  .slot.on { border-color: #fff; background: rgba(255,255,255,.2); }
+  #banner { top: 30%; left: 0; right: 0; text-align: center; font-size: 44px; font-weight: 900; letter-spacing: 2px; text-shadow: 0 4px 16px rgba(0,0,0,.8); opacity: 0; transition: opacity .25s; }
+  #banner small { display: block; font-size: 18px; font-weight: 600; letter-spacing: 1px; opacity: .85; }
+  #hurt { inset: 0; box-shadow: inset 0 0 140px rgba(200,0,0,.0); transition: box-shadow .3s; }
+  #reload { left: 50%; top: 58%; transform: translateX(-50%); font-weight: 700; font-size: 14px; text-shadow: 0 1px 3px #000; opacity: 0; }
+  #back { position: fixed; left: 12px; top: 10px; z-index: 6; width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,.5); color: #fff; text-decoration: none; font-size: 22px; display: flex; align-items: center; justify-content: center; }
+  #menu { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at center, rgba(10,12,16,.55), rgba(5,6,8,.92)); z-index: 5; }
+  #menu .box { text-align: center; padding: 24px; max-width: 520px; }
+  #menu h1 { font-size: 54px; margin: 0; letter-spacing: 4px; font-weight: 900; }
+  #menu h1 span { color: #ff5a52; }
+  #menu p { opacity: .85; line-height: 1.5; }
+  #menu button { font: inherit; font-size: 22px; font-weight: 800; padding: 14px 48px; border-radius: 12px; border: 0; background: #ff5a52; color: #fff; cursor: pointer; letter-spacing: 2px; margin-top: 8px; }
+  #menu .keys { font-size: 13px; opacity: .7; margin-top: 18px; }
+  #joy { left: 26px; bottom: 120px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,.08); border: 2px solid rgba(255,255,255,.2); display: none; }
+  #joy .knob { position: absolute; left: 35px; top: 35px; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,.35); }
+  #jump { right: 30px; bottom: 170px; width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,.12); border: 2px solid rgba(255,255,255,.3); display: none; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; pointer-events: auto; }
+  body.touch #joy, body.touch #jump { display: flex; }
+  body.touch #joy { display: block; }
+  body.touch #health { bottom: 14px; left: 14px; width: 160px; } body.touch #health .num { font-size: 22px; }
+  body.touch #ammo { bottom: 86px; right: 14px; } body.touch #slots { right: 14px; bottom: 14px; }
+  body.touch .slot { width: 56px; height: 56px; }
+  body.touch #jump { bottom: 150px; }
+  #score { white-space: nowrap; }
+  #turn { display: none; position: fixed; top: 96px; left: 0; right: 0; text-align: center; font-size: 13px; font-weight: 700; opacity: .85; text-shadow: 0 1px 3px #000; pointer-events: none; }
+  @media (max-width: 560px) {
+    #score { font-size: 14px; } #score div { padding: 5px 8px; } #score .mid { font-size: 10px; padding-top: 7px; }
+    #enemy { top: 42px; width: 150px; }
+    body.touch .slot { width: 46px; height: 50px; font-size: 8px; } body.touch .slot b { font-size: 15px; }
+    body.touch #ammo { bottom: 74px; } body.touch #ammo .n { font-size: 24px; }
+    body.touch #health { bottom: 74px; width: 120px; }
+    body.touch #turn { display: block; }
+    #menu h1 { font-size: 40px; }
+  }
+</style>
+<script type="importmap">{ "imports": { "three": "./three.module.min.js" } }</script>
+</head>
+<body>
+<a id="back" href="../" title="Back to Islas Games">&#8592;</a>
+<div id="hurt" class="hud"></div>
+<div id="cross" class="hud"></div>
+<div id="hit" class="hud"></div>
+<div id="score" class="hud"><div class="you">YOU <span id="sy">0</span></div><div class="mid">FIRST TO 5</div><div class="them"><span id="st">0</span> RIVAL</div></div>
+<div id="enemy" class="hud">RIVAL<div class="bar"><div class="fill" id="ef"></div></div></div>
+<div id="health" class="hud"><div class="num" id="hn">100</div><div class="bar"><div class="fill" id="hf"></div></div></div>
+<div id="reload" class="hud">RELOADING</div>
+<div id="ammo" class="hud"><div class="n" id="an">30</div><div class="w" id="aw">Assault Rifle</div></div>
+<div id="slots" class="hud"></div>
+<div id="joy" class="hud"><div class="knob"></div></div>
+<div id="jump" class="hud">JUMP</div>
+<div id="banner" class="hud"></div>
+<div id="turn">Turn your phone sideways for the best view</div>
+<div id="menu"><div class="box">
+  <h1>ISLAS <span>RIVALS</span></h1>
+  <p>1v1 duel in the arena. Win 5 rounds to win the match.<br>Use cover, switch weapons and outplay your rival.</p>
+  <button id="play">PLAY</button>
+  <div class="keys" id="keys">WASD move · Mouse look · ENTER or click to shoot · R switch weapon · 1–4 pick weapon · Space jump · Shift sprint</div>
+</div></div>
+<script type="module" src="./rivals.js"></script>
+</body>
+</html>
