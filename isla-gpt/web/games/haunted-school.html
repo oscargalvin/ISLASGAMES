@@ -236,6 +236,7 @@ h2.bad { color: var(--bad); text-shadow: 0 0 16px rgba(255, 90, 106, .4), 2px 2p
 <div id="fade"><p id="fadeText"></p></div>
 <div id="rotate">Turn your device sideways… if you dare ↻</div>
 
+<script src="smooth.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
@@ -388,6 +389,7 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.2;
 renderer.shadowMap.enabled = !IS_TOUCH; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 $('stage').appendChild(renderer.domElement);
+if (window.SMOOTH) SMOOTH.attach(renderer);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x02030a);
 scene.fog = new THREE.FogExp2(0x03050c, 0.07);

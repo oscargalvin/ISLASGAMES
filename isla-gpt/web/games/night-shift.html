@@ -353,6 +353,7 @@ h2.good { color: var(--neon); text-shadow: 0 0 20px rgba(125, 255, 176, .5); }
 
 <div id="rotate">Turn your device sideways to start your shift ↻</div>
 
+<script src="smooth.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
@@ -625,6 +626,7 @@ const renderer = new THREE.WebGLRenderer({ antialias: !IS_TOUCH, powerPreference
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, IS_TOUCH ? 1.25 : 1.75));
 renderer.setSize(window.innerWidth, window.innerHeight);
 $('stage').appendChild(renderer.domElement);
+if (window.SMOOTH) SMOOTH.attach(renderer);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x020403);
 scene.fog = new THREE.FogExp2(0x030605, 0.035);
