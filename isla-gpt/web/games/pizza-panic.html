@@ -297,6 +297,7 @@ h3 { margin: 6px 0 0; font-family: var(--display); font-weight: 400; font-size: 
 
 <div id="rotate">Turn your phone sideways to deliver! ↻</div>
 
+<script src="smooth.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
@@ -475,6 +476,7 @@ renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.9;
 $('stage').appendChild(renderer.domElement);
+if (window.SMOOTH) SMOOTH.attach(renderer);
 const pmrem = new THREE.PMREMGenerator(renderer);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(64, window.innerWidth / window.innerHeight, 0.1, 900);

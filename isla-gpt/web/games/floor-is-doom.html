@@ -292,6 +292,7 @@ h2.bad { color: var(--bad); } h2.good { color: var(--gold); }
 
 <div id="rotate">Turn your device sideways to play ↻</div>
 
+<script src="smooth.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 /* three.js r128 post-processing (MIT licence): EffectComposer + UnrealBloomPass, inlined for the lava glow */
@@ -1409,6 +1410,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = IS_TOUCH ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
 $('stage').appendChild(renderer.domElement);
+if (window.SMOOTH) SMOOTH.attach(renderer, { onChange: (l, pr) => { if (composer && !IS_TOUCH) composer.setPixelRatio(pr); } });
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 400);
 const hemi = new THREE.HemisphereLight(0xffffff, 0x333333, 0.7); scene.add(hemi);

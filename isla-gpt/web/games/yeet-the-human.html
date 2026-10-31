@@ -302,6 +302,7 @@ button:focus-visible { outline: 3px solid var(--grape); outline-offset: 3px; }
 
 <div id="rotateMsg">Turn your device sideways for the best yeets ↻<br><br><button class="btn" id="rotateOk">Play anyway</button></div>
 
+<script src="smooth.js"></script>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js';
@@ -499,6 +500,7 @@ renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 $('stage').appendChild(renderer.domElement);
+if (window.SMOOTH) SMOOTH.attach(renderer);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1500);
 

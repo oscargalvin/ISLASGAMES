@@ -260,6 +260,7 @@ h2.gold { color: var(--glow); text-shadow: 0 0 24px rgba(255,204,77,.4); }
 
 <div id="rotate">Turn your device sideways to play ↻</div>
 
+<script src="smooth.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
@@ -676,6 +677,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = !IS_TOUCH;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 stage.appendChild(renderer.domElement);
+if (window.SMOOTH) SMOOTH.attach(renderer);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x020203);
 scene.fog = new THREE.FogExp2(0x020203, 0.062);
