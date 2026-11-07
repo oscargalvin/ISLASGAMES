@@ -122,9 +122,8 @@ void main() {
 
   test('winning unlocks the cheat code hint for the next game', () {
     final game = inSpace();
-    game.visited.addAll(planets
-        .where((p) => p.landing != LandingType.home)
-        .map((p) => p.name));
+    game.visited.addAll(
+        planets.where((p) => p.landing != LandingType.home).map((p) => p.name));
     run(game, 0.1);
     expect(game.phase, Phase.win);
     game.pressEnter();

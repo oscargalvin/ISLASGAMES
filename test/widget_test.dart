@@ -1,26 +1,68 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:islas_games/main.dart';
 
 void main() {
-  testWidgets('Home shows games and Tap Counter scores', (tester) async {
+  testWidgets('Perfect Puzzles lists the puzzles', (tester) async {
     await tester.pumpWidget(const IslasGamesApp());
-    expect(find.text('Islas Games'), findsOneWidget);
-
-    await tester.tap(find.text('Tap Counter'));
+    expect(find.text('SPACE ADVENTURE'), findsOneWidget);
+    expect(find.text('Tap Counter'), findsNothing);
+    await tester.ensureVisible(find.text('PERFECT PUZZLES'));
     await tester.pumpAndSettle();
-    expect(find.text('0'), findsOneWidget);
-
-    await tester.tap(find.text('Tap!'));
-    await tester.pump();
-    expect(find.text('1'), findsOneWidget);
+    await tester.tap(find.text('PERFECT PUZZLES'));
+    await tester.pumpAndSettle();
+    expect(find.text('Tutorial'), findsOneWidget);
+    expect(find.text('300 pieces'), findsOneWidget);
   });
 
-  testWidgets('Space Adventure opens on the launch pad', (tester) async {
+  testWidgets('archived games are hidden until the creator code is typed',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const IslasGamesApp());
-    await tester.tap(find.text('Space Adventure'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('Get your rocket ready! 🚀'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('WALK TO AUSTRALIA'), findsNothing);
+    expect(find.text('Archived games'), findsNothing);
+
+    await tester.longPress(find.text('Islas Games'));
+    await tester.pumpAndSettle();
+    for (final d in ['1', '2', '3']) {
+      await tester.tap(find.text(d));
+      await tester.pump();
+    }
+    await tester.tap(find.byIcon(Icons.check));
+    await tester.pumpAndSettle();
+    expect(find.text('WALK TO AUSTRALIA'), findsNothing);
+
+    await tester.longPress(find.text('Islas Games'));
+    await tester.pumpAndSettle();
+    for (final d in ['2', '0', '2', '6']) {
+      await tester.tap(find.text(d));
+      await tester.pump();
+    }
+    await tester.tap(find.byIcon(Icons.check));
+    await tester.pumpAndSettle();
+    expect(find.text('WALK TO AUSTRALIA'), findsOneWidget);
+    expect(find.text('ISLAS CHAT'), findsOneWidget);
+  });
+
+  testWidgets('Tapping the title 5 times opens the creator code pad',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(const IslasGamesApp());
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 5; i++) {
+      await tester.tap(find.text('Islas Games'));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.pumpAndSettle();
+    for (final d in ['2', '0', '2', '6']) {
+      await tester.tap(find.text(d));
+      await tester.pump();
+    }
+    await tester.tap(find.byIcon(Icons.check));
+    await tester.pumpAndSettle();
+    expect(find.text('WALK TO AUSTRALIA'), findsOneWidget);
   });
 }
