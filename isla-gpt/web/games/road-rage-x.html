@@ -509,7 +509,7 @@ $('stage').appendChild(renderer.domElement);
 if (window.SMOOTH) SMOOTH.attach(renderer);
 const pmrem = new THREE.PMREMGenerator(renderer);
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 1400), camera2 = new THREE.PerspectiveCamera(62, 1, 0.1, 1400);
+const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.3, 1400), camera2 = new THREE.PerspectiveCamera(62, 1, 0.3, 1400); // near 0.3 keeps the grass from flickering through the road far away
 scene.add(camera);
 const hemi = new THREE.HemisphereLight(0xffffff, 0x445544, 0.6); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.castShadow = true;
@@ -548,6 +548,19 @@ function makeTextures() {
     for (let i = 0; i < 2500; i++) { const v = randi(40, 80); x.fillStyle = `rgb(${v},${v},${v})`; const px = Math.random() < 0.5 ? Math.random() * (U(-7.2) - 3) : U(7.2) + 3 + Math.random() * (w - U(7.2)); x.fillRect(px, Math.random() * h, 1.5, 1.5); }
   });
   TEX.road.anisotropy = 8;
+  TEX.townRoad = canvasTex(256, 512, (x, w, h) => { // a town street: kerb gutters, white centre line, short lane dashes
+    x.fillStyle = '#34363b'; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 9000; i++) { const v = randi(36, 74); x.fillStyle = `rgb(${v},${v},${v + 2})`; x.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5); }
+    for (let i = 0; i < 6; i++) { x.fillStyle = 'rgba(20,20,22,.35)'; x.fillRect(Math.random() * w, Math.random() * h, randi(10, 40), randi(4, 14)); } // patched bits
+    x.fillStyle = 'rgba(0,0,0,.14)'; for (const u of [0.22, 0.42, 0.62, 0.82]) x.fillRect(u * w - 9, 0, 18, h);
+    const U = (d) => (d + 8.6) / 17.2 * w;
+    x.fillStyle = '#4a4c50'; x.fillRect(0, 0, U(-7.9), h); x.fillRect(U(7.9), 0, w, h); // gutters
+    x.fillStyle = '#e8e8e0'; x.fillRect(U(-7.2) - 1.5, 0, 3, h); x.fillRect(U(7.2) - 1.5, 0, 3, h);
+    x.fillRect(U(0) - 2, 0, 4, h * 0.6);
+    for (const d of [-3.6, 3.6]) x.fillRect(U(d) - 1.2, 0, 2.4, h * 0.18);
+  });
+  TEX.townRoad.anisotropy = 8;
+  TEX.pave = canvasTex(128, 128, (x, w) => { x.fillStyle = '#a8a59e'; x.fillRect(0, 0, w, w); for (let i = 0; i < 1500; i++) { const v = randi(150, 185); x.fillStyle = `rgb(${v},${v - 2},${v - 8})`; x.fillRect(Math.random() * w, Math.random() * w, 1.5, 1.5); } x.fillStyle = 'rgba(70,70,70,.45)'; for (let i = 0; i <= 4; i++) { x.fillRect(0, i * 32 - 1, w, 2); x.fillRect(i * 32 - 1, 0, 2, w); } });
   TEX.grass = canvasTex(256, 256, (x, w) => { x.fillStyle = '#4a6a2a'; x.fillRect(0, 0, w, w); for (let i = 0; i < 4000; i++) { x.fillStyle = `hsl(${randi(70, 110)},${randi(30, 50)}%,${randi(18, 34)}%)`; x.fillRect(Math.random() * w, Math.random() * w, 2, 2); } });
   TEX.sand = canvasTex(256, 256, (x, w) => { x.fillStyle = '#d29a5a'; x.fillRect(0, 0, w, w); for (let i = 0; i < 4000; i++) { x.fillStyle = `hsl(${randi(25, 35)},${randi(45, 60)}%,${randi(50, 66)}%)`; x.fillRect(Math.random() * w, Math.random() * w, 2, 2); } x.strokeStyle = 'rgba(120,70,30,.15)'; for (let i = 0; i < 20; i++) { x.beginPath(); const y = Math.random() * w; x.moveTo(0, y); x.bezierCurveTo(80, y + 10, 160, y - 10, w, y); x.stroke(); } });
   TEX.dark = canvasTex(256, 256, (x, w) => { x.fillStyle = '#16151c'; x.fillRect(0, 0, w, w); for (let i = 0; i < 3000; i++) { const v = randi(15, 40); x.fillStyle = `rgb(${v},${v},${v + 8})`; x.fillRect(Math.random() * w, Math.random() * w, 2, 2); } });
@@ -680,18 +693,100 @@ function bankGeo(s0, s1, side) { // grassy slope under a raised road
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setIndex(I); g.computeVertexNormals(); g.computeBoundingSphere(); return g;
 }
 const TMP = { x: 0, z: 0, h: 0 };
+// Driving Academy scenery: a real town (or a quiet practice street) instead of the highway.
+// SCENE.end is where the town stops and the motorway starts (Infinity = town all the way).
+let SCENE = null;
+function rebuildChunks(sA, sB) { // swap chunks in place (used when the town turns into motorway, or a driveway appears)
+  for (const [ci, g] of [...chunks]) { if ((ci + 1) * CHUNK < sA || ci * CHUNK > sB) continue; scene.remove(g); g.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); chunks.set(ci, buildChunk(ci)); }
+}
+function stripGeo(s0, s1, d0, d1, y0, y1) { // a ribbon along the road between two offsets (pavements, kerbs)
+  const n = Math.max(1, Math.round((s1 - s0) / STEP)), P = [], U = [], I = [];
+  for (let k = 0; k <= n; k++) { const s = s0 + (s1 - s0) * k / n, e = elev(s); frameAt(s); const rx = -Math.cos(F.h), rz = Math.sin(F.h); P.push(F.x + rx * d0, e + y0, F.z + rz * d0, F.x + rx * d1, e + y1, F.z + rz * d1); U.push(0, s / 3, Math.abs(d1 - d0) / 3, s / 3); if (k < n) { const a = k * 2; I.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); g.setIndex(I); g.computeVertexNormals(); g.computeBoundingSphere(); return g;
+}
+let PRISM = null;
+function prismGeo() { // unit roof: ridge along x, 1 wide, 1 deep, 1 tall, base at y=0
+  if (PRISM) return PRISM;
+  const v = [[-.5, 0, -.5], [.5, 0, -.5], [.5, 1, 0], [-.5, 1, 0], [-.5, 0, .5], [.5, 0, .5]], P = [];
+  const tri = (a, b, c) => P.push(...v[a], ...v[b], ...v[c]);
+  tri(0, 3, 2); tri(0, 2, 1); tri(4, 5, 2); tri(4, 2, 3); tri(0, 4, 3); tri(1, 2, 5); tri(0, 1, 5); tri(0, 5, 4);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.computeVertexNormals(); g.setAttribute('uv', new THREE.Float32BufferAttribute(new Array(P.length / 3 * 2).fill(0), 2));
+  return (PRISM = g);
+}
+function townChunk(grp, s0, s1, R, place) {
+  const close = SCENE.kind === 'close', PW = 3.2, M = world.mats;
+  const pave = new THREE.Mesh(stripGeo(s0, s1, -ROAD_W, -(ROAD_W + PW), 0.12, 0.12), M.pave); pave.receiveShadow = true; grp.add(pave);
+  const pave2 = new THREE.Mesh(stripGeo(s0, s1, ROAD_W, ROAD_W + PW, 0.12, 0.12), M.pave); pave2.receiveShadow = true; grp.add(pave2);
+  for (const side of [-1, 1]) grp.add(new THREE.Mesh(stripGeo(s0, s1, side * ROAD_W, side * ROAD_W, 0, 0.12), M.kerb));
+  const walls = [new GB(), new GB(), new GB(), new GB()], roofs = [new GB(), new GB()], glass = new GB(), doors = new GB(), hedge = new GB(), trim = new GB(), awn = new GB(), red = new GB(), posts = new GB(), lamps = new GB(), slab = new GB(), glowPts = [], glowCols = [];
+  const hole = (s, side) => SCENE.holes.some((h) => h.side === side && Math.abs(s - h.s) < h.r);
+  const Y = new V3(0, 1, 0), QQ = new THREE.Quaternion();
+  for (const side of [-1, 1]) {
+    let s = s0 + R() * 4;
+    while (s < s1) {
+      const shop = !close && R() < 0.3, w = close ? 8 + R() * 2.5 : shop ? 8 : 6.5 + R() * 1.5, gap = close ? 4.2 + R() * 2 : shop ? 0.2 : R() < 0.25 ? 3 : 0.15;
+      const sc = s + w / 2; if (sc + w / 2 > s1) break;
+      if (hole(sc, side)) { s += w + gap; continue; }
+      const e = elev(sc), garden = close ? 6 + R() * 2 : shop ? 0 : 2.5 + R() * 1.5, dep = 8 + R() * 2, h = shop ? 6.5 : close ? 5.2 + R() * 0.6 : 5.6 + R() * 1.4;
+      const dC = side * (ROAD_W + PW + garden + dep / 2), dF = side * (ROAD_W + PW + garden), p = place(sc, dC), px = p.x, pz = p.z, ph = p.h;
+      const at = (u, d) => place(sc + u, d);
+      walls[(R() * (shop ? 2 : 4)) | 0].box(px, (e + h) / 2, pz, w, e + h, dep, ph);
+      if (shop) { // flat roof, big window, stripy awning and a sign
+        trim.box(px, e + h + 0.2, pz, w + 0.2, 0.4, dep + 0.2, ph);
+        let q = at(0, dF - side * 0.06); glass.box(q.x, e + 1.5, q.z, w - 1.6, 2.2, 0.12, ph);
+        q = at(0, dF - side * 0.9); awn.box(q.x, e + 3.0, q.z, w - 0.4, 0.15, 1.8, ph);
+        q = at(0, dF - side * 0.08); trim.box(q.x, e + 3.9, q.z, w - 1, 0.8, 0.14, ph);
+        for (const u of [-w / 4, w / 4]) { q = at(u, dF - side * 0.06); glass.box(q.x, e + 4.9, q.z, 1.4, 1.2, 0.12, ph); }
+      } else { // pitched roof, chimney, windows, front door, hedge
+        const m = new THREE.Matrix4().compose(new V3(px, e + h, pz), QQ.setFromAxisAngle(Y, ph), new V3(w + 0.5, 2.4 + R() * 0.6, dep + 0.8));
+        roofs[(R() * 2) | 0].geo(prismGeo(), m);
+        const c = at(w * 0.3, dC + side * dep * 0.15); trim.box(c.x, e + h + 2.1, c.z, 0.7, 1.4, 0.7, ph);
+        for (const u of [-w / 4, w / 4]) { const q = at(u, dF - side * 0.06); glass.box(q.x, e + h - 1.6, q.z, 1.3, 1.2, 0.12, ph); }
+        let q = at(-w / 4, dF - side * 0.06); glass.box(q.x, e + 1.6, q.z, 1.6, 1.3, 0.12, ph);
+        q = at(w / 4, dF - side * 0.06); doors.box(q.x, e + 1.05, q.z, 1.0, 2.1, 0.12, ph);
+        // front garden: hedge with a gap for the path
+        const hd = side * (ROAD_W + PW + 0.35);
+        for (const [u0, u1] of [[-w / 2, w / 4 - 0.7], [w / 4 + 0.7, w / 2]]) { const l = u1 - u0; if (l < 0.3 || garden < 1) continue; const q2 = at((u0 + u1) / 2, hd); hedge.box(q2.x, e + 0.45, q2.z, l, 0.9, 0.6, ph); }
+        if (garden > 1) { q = at(w / 4, side * (ROAD_W + PW + garden / 2)); slab.box(q.x, e + 0.05, q.z, 1.1, 0.1, garden, ph); }
+        if (close && gap > 3.5) { q = at(w / 2 + gap / 2, side * (ROAD_W + PW + garden / 2)); slab.box(q.x, e + 0.05, q.z, 3.2, 0.1, garden + dep * 0.6, ph); } // driveway
+      }
+      s += w + gap;
+    }
+    // street lamps, trees, a postbox, and the odd bus stop
+    for (let ls = Math.ceil(s0 / 32) * 32 + (side > 0 ? 16 : 0); ls < s1; ls += 32) {
+      if (hole(ls, side)) continue;
+      const e = elev(ls), a = place(ls, side * (ROAD_W + 0.5)); posts.box(a.x, e + 3, a.z, 0.15, 6, 0.15, a.h);
+      const b = place(ls, side * (ROAD_W - 0.5)); posts.box((a.x + b.x) / 2, e + 5.95, (a.z + b.z) / 2, 0.1, 0.1, 1.1, a.h + Math.PI / 2);
+      lamps.box(b.x, e + 5.85, b.z, 0.5, 0.12, 0.3, a.h); glowPts.push(b.x, e + 5.7, b.z); glowCols.push(1, .85, .6);
+    }
+    for (let k = 0; k < (close ? 5 : 3); k++) {
+      const ts = s0 + R() * (s1 - s0); if (hole(ts, side)) continue;
+      const e = elev(ts), t = place(ts, side * (ROAD_W + PW - 0.8));
+      hedge.geo(world.geo.trunk, M4.compose(new V3(t.x, e + 1, t.z), Q.identity(), S1));
+      hedge.geo(world.geo.ball, M4.compose(new V3(t.x, e + 3.4 + R() * 0.6, t.z), Q.identity(), new V3(1 + R() * 0.3, 1 + R() * 0.4, 1 + R() * 0.3)));
+    }
+    if (R() < 0.4) { const ps = s0 + R() * (s1 - s0); if (!hole(ps, side)) { const e = elev(ps), q = place(ps, side * (ROAD_W + 1.4)); red.box(q.x, e + 0.6, q.z, 0.5, 1.2, 0.5, q.h); red.box(q.x, e + 1.25, q.z, 0.56, 0.12, 0.56, q.h); } }
+    if (!close && R() < 0.3) { const bs = s0 + 10 + R() * (s1 - s0 - 20); if (!hole(bs, side)) { const e = elev(bs), q = place(bs, side * (ROAD_W + PW - 0.4)); glass.box(q.x, e + 1.3, q.z, 3.4, 2.4, 0.08, q.h); trim.box(q.x, e + 2.6, q.z - 0, 3.6, 0.12, 1.4, q.h); const q2 = place(bs - 2.2, side * (ROAD_W + 0.4)); red.box(q2.x, e + 2.6, q2.z, 0.6, 0.6, 0.06, q2.h); posts.box(q2.x, e + 1.3, q2.z, 0.08, 2.6, 0.08, q2.h); } }
+  }
+  const add = (gb, mat, cast) => { if (gb.empty) return; const m = new THREE.Mesh(gb.build(), mat); m.castShadow = !!cast; m.receiveShadow = true; grp.add(m); };
+  walls.forEach((g, i) => add(g, M.walls[i], true)); roofs.forEach((g, i) => add(g, M.roofs[i], true));
+  add(glass, M.glass); add(doors, M.door); add(hedge, M.hedge, true); add(trim, M.trim); add(awn, M.awning); add(red, M.postbox); add(posts, M.post); add(lamps, M.lamp); add(slab, M.slab);
+  if (glowPts.length) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(glowPts, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(glowCols, 3)); grp.add(new THREE.Points(g, M.lampGlow)); }
+}
 function buildChunk(ci) {
   const s0 = ci * CHUNK, s1 = s0 + CHUNK, grp = new THREE.Group(), R = seeded(ci * 977 + world.seed);
-  const road = new THREE.Mesh(roadGeo(s0, s1), world.mats.road); road.receiveShadow = true; grp.add(road);
-  for (const side of [-1, 1]) { const r = new THREE.Mesh(railGeo(s0, s1, side), world.mats.rail); grp.add(r); }
+  const hw = SCENE ? clamp(SCENE.end, s0, s1) : s0; // town before hw, highway after
+  if (hw > s0) { const r = new THREE.Mesh(roadGeo(s0, hw), world.mats.townRoad); r.receiveShadow = true; grp.add(r); }
+  if (hw < s1) { const road = new THREE.Mesh(roadGeo(hw, s1), world.mats.road); road.receiveShadow = true; grp.add(road); for (const side of [-1, 1]) { const r = new THREE.Mesh(railGeo(hw, s1, side), world.mats.rail); grp.add(r); } }
   if (HILLS) { world.mats.bank = world.mats.bank || new THREE.MeshStandardMaterial({ color: 0x5a7a34, roughness: 1, side: THREE.DoubleSide }); for (const side of [-1, 1]) grp.add(new THREE.Mesh(bankGeo(s0, s1, side), world.mats.bank)); }
   const posts = new GB(), lamps = new GB(), b1 = new GB(), b2 = new GB(), nature = new GB(), neon = new GB(), glowPts = [], glowCols = [];
   const place = (s, d) => roadToWorld(s, d, TMP);
   // guard rail posts
-  for (let s = s0; s < s1; s += 6) for (const side of [-1, 1]) { const p = place(s, side * (ROAD_W + 0.25)); posts.box(p.x, 0.35 + elev(s), p.z, 0.12, 0.7, 0.12, p.h); }
+  if (hw > s0) townChunk(grp, s0, hw, R, place);
+  for (let s = hw; s < s1; s += 6) for (const side of [-1, 1]) { const p = place(s, side * (ROAD_W + 0.25)); posts.box(p.x, 0.35 + elev(s), p.z, 0.12, 0.7, 0.12, p.h); }
   // street lights
   const lampEvery = world.map === 'desert' ? 60 : 30;
-  for (let s = Math.ceil(s0 / lampEvery) * lampEvery; s < s1; s += lampEvery) for (const side of [-1, 1]) {
+  for (let s = Math.ceil(hw / lampEvery) * lampEvery; s < s1; s += lampEvery) for (const side of [-1, 1]) {
     if (world.map === 'desert' && side > 0) continue;
     const e = elev(s), p = place(s, side * (ROAD_W + 1.0)); posts.box(p.x, 4.5 + e, p.z, 0.18, 9, 0.18, p.h);
     const a = place(s, side * (ROAD_W - 1.2)); posts.box((p.x + a.x) / 2, 8.95 + e, (p.z + a.z) / 2, 0.12, 0.12, 2.3, p.h + Math.PI / 2);
@@ -702,13 +797,14 @@ function buildChunk(ci) {
       let d0 = 0;
       for (let s = s0 + R() * 10; s < s1; s += rand(14, 26) * (0.6 + R() * 0.6)) {
         const w = 8 + R() * 14, dep = 8 + R() * 14, h = (world.map === 'neon' ? 20 : 12) + R() * R() * 80, d = side * (ROAD_W + 9 + R() * 18 + dep / 2);
+        if (s < hw) continue;
         const p = place(s, d); (R() < 0.5 ? b1 : b2).box(p.x, h / 2, p.z, w, h, dep, p.h, 1 / 8);
         if (world.map === 'neon' && R() < 0.8) { const q = place(s, d - side * (dep / 2 + 0.2)); const nh = 1 + R() * 2; neon.box(q.x, h * (0.3 + R() * 0.6), q.z, w * 0.8, 0.25, 0.25, p.h, 0.25); if (R() < 0.5) neon.box(q.x, h * (0.2 + R() * 0.3), q.z, 0.25, nh * 4, 0.25, p.h); }
         d0++;
       }
     }
     // the odd tree in the city verge
-    if (world.map === 'city') for (let k = 0; k < 6; k++) { const s = s0 + R() * CHUNK, side = R() < 0.5 ? -1 : 1, p = place(s, side * (ROAD_W + 3 + R() * 4)); nature.geo(world.geo.trunk, M4.compose(new V3(p.x, 1, p.z), Q.identity(), S1)); nature.geo(world.geo.crown, M4.compose(new V3(p.x, 3.2 + R(), p.z), Q.identity(), new V3(1 + R() * 0.5, 1 + R() * 0.6, 1 + R() * 0.5))); }
+    if (world.map === 'city') for (let k = 0; k < 6; k++) { const s = s0 + R() * CHUNK, side = R() < 0.5 ? -1 : 1, p = place(s, side * (ROAD_W + 3 + R() * 4)); if (s < hw) continue; nature.geo(world.geo.trunk, M4.compose(new V3(p.x, 1, p.z), Q.identity(), S1)); nature.geo(world.geo.crown, M4.compose(new V3(p.x, 3.2 + R(), p.z), Q.identity(), new V3(1 + R() * 0.5, 1 + R() * 0.6, 1 + R() * 0.5))); }
   } else {
     // desert: mesas, rocks and cacti
     for (let k = 0; k < 9; k++) {
@@ -721,7 +817,7 @@ function buildChunk(ci) {
     for (let s = s0; s < s1; s += 40) { const p = place(s, ROAD_W + 6); posts.box(p.x, 4, p.z, 0.25, 8, 0.25, p.h); posts.box(p.x, 7.4, p.z, 0.15, 0.15, 2.2, p.h + Math.PI / 2); }
   }
   // occasional overhead sign / billboard
-  if (R() < 0.55) {
+  if (R() < 0.55 && hw < s0 + 20) {
     const s = s0 + 20 + R() * 80, side = R() < 0.5 ? -1 : 1, p = place(s, side * (ROAD_W + 6));
     const bb = new THREE.Mesh(world.geo.board, pick(world.mats.boards)); bb.position.set(p.x, 7, p.z); bb.rotation.y = p.h + Math.PI + (side > 0 ? 0.35 : -0.35); grp.add(bb);
     posts.box(p.x, 3, p.z, 0.4, 6, 0.4, p.h);
@@ -963,11 +1059,11 @@ function buildWorld(mapKey) {
   resetCL(M.curve);
   const groundTex = mapKey === 'desert' ? TEX.sand : mapKey === 'neon' ? TEX.dark : TEX.grass;
   groundTex.repeat.set(300, 300);
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), new THREE.MeshStandardMaterial({ map: groundTex, roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.position.y = -0.03; ground.receiveShadow = true; scene.add(ground);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), new THREE.MeshStandardMaterial({ map: groundTex, roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.position.y = -0.22; ground.receiveShadow = true; scene.add(ground);
   const backdrop = new THREE.Group(); scene.add(backdrop);
   if (mapKey === 'desert') for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, h = rand(40, 110); const mtn = new THREE.Mesh(new THREE.ConeGeometry(rand(80, 160), h, 6), new THREE.MeshStandardMaterial({ color: 0xa8643a, roughness: 1, flatShading: true })); mtn.position.set(Math.cos(a) * 650, h / 2 - 5, Math.sin(a) * 650); backdrop.add(mtn); }
   else for (let k = 0; k < 40; k++) { const a = k / 40 * Math.PI * 2 + rand(-.05, .05), h = rand(40, 180), w = rand(30, 70); const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), new THREE.MeshStandardMaterial({ color: mapKey === 'neon' ? 0x120a20 : 0x3a4458, roughness: 1, emissive: mapKey === 'neon' ? 0x200a30 : 0x000000 })); b.position.set(Math.cos(a) * 700, h / 2 - 5, Math.sin(a) * 700); backdrop.add(b); }
-  const roadMat = new THREE.MeshStandardMaterial({ map: TEX.road, roughness: 0.82, metalness: 0.0 });
+  const roadMat = new THREE.MeshStandardMaterial({ map: TEX.road, roughness: 0.82, metalness: 0.0, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
   const boards = [signTex('ROAD RAGE X', '#0b0b12', '#ff2e63', 'NITRO NOW'), signTex("ISLA & OSCAR'S", '#120a20', '#22d3ee', 'GAMES'), signTex('NITRO COLA', '#1a0505', '#ffd23f', 'DRINK FAST'), signTex('DRIVE SAFE', '#062012', '#a3e635', 'OR DON’T')].map((t) => new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.4, side: THREE.DoubleSide }));
   world = {
     map: mapKey, seed: randi(1, 99999), ground, backdrop, tod: M.tod, todSpeed: M.todSpeed,
@@ -982,10 +1078,19 @@ function buildWorld(mapKey) {
       nature: new THREE.MeshStandardMaterial({ vertexColors: false, color: mapKey === 'desert' ? 0xb0683a : 0x3a6a2a, roughness: 1, flatShading: true }),
       neon: new THREE.MeshStandardMaterial({ color: 0x000000, emissive: pick([0xff2e9a, 0x22d3ee, 0xa3e635, 0xffb020]), emissiveIntensity: 2.2 }),
       boards,
+      townRoad: new THREE.MeshStandardMaterial({ map: TEX.townRoad, roughness: 0.85, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }),
+      pave: new THREE.MeshStandardMaterial({ map: TEX.pave, roughness: 0.95 }), kerb: new THREE.MeshStandardMaterial({ color: 0xc8c6c0, roughness: 0.9, side: THREE.DoubleSide }),
+      walls: [0x9a4630, 0xc9b994, 0xb8b2a6, 0x7e3a2a].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.9 })),
+      roofs: [0x3a3d44, 0x6e2e22].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.8, side: THREE.DoubleSide })),
+      glass: new THREE.MeshStandardMaterial({ color: 0x223448, roughness: 0.15, metalness: 0.5, emissive: 0xffd88a, emissiveIntensity: 0 }),
+      door: new THREE.MeshStandardMaterial({ color: 0x173d6e, roughness: 0.6 }), hedge: new THREE.MeshStandardMaterial({ color: 0x2f5e22, roughness: 1, flatShading: true }),
+      trim: new THREE.MeshStandardMaterial({ color: 0xeeeeea, roughness: 0.7 }), awning: new THREE.MeshStandardMaterial({ color: 0xd9363e, roughness: 0.7 }),
+      postbox: new THREE.MeshStandardMaterial({ color: 0xc8102e, roughness: 0.5 }), slab: new THREE.MeshStandardMaterial({ color: 0x9a978f, roughness: 1 }),
     },
-    geo: { trunk: new THREE.CylinderGeometry(0.2, 0.3, 2, 6), crown: new THREE.ConeGeometry(1.6, 3.6, 7), mesa: new THREE.CylinderGeometry(0.85, 1, 1, 7), rock: new THREE.DodecahedronGeometry(1, 0), cactus: new THREE.CylinderGeometry(0.28, 0.3, 1, 8), board: new THREE.PlaneGeometry(8, 2.5) },
+    geo: { ball: new THREE.IcosahedronGeometry(1.7, 1), trunk: new THREE.CylinderGeometry(0.2, 0.3, 2, 6), crown: new THREE.ConeGeometry(1.6, 3.6, 7), mesa: new THREE.CylinderGeometry(0.85, 1, 1, 7), rock: new THREE.DodecahedronGeometry(1, 0), cactus: new THREE.CylinderGeometry(0.28, 0.3, 1, 8), board: new THREE.PlaneGeometry(8, 2.5) },
   };
   if (mapKey === 'desert') world.mats.nature.color.set(0xb0683a);
+  if (SCENE) { world.tod = 0.42; world.todSpeed = 0; world.weather = 'clear'; backdrop.scale.y = 0.4; }
   sampleTod(world.tod); refreshEnvMap(true);
   scene.fog = new THREE.FogExp2(ENV.hor.getHex(), 0.0026);
   for (let i = 0; i < RAIN_N; i++) resetDrop(i, 0, 0, true);
@@ -1010,7 +1115,7 @@ function updateEnvironment(dt, t) {
   scene.fog.color.copy(fogCol); scene.fog.density = 0.0026 + w.rainK * 0.0022 + w.sandK * 0.012;
   renderer.toneMappingExposure = 1.05 + N * 0.25;
   // night lighting
-  w.mats.lamp.emissiveIntensity = N * 2; w.mats.lampGlow.opacity = N * 0.9; w.mats.bld1.emissiveIntensity = w.mats.bld2.emissiveIntensity = N * 1.1;
+  w.mats.lamp.emissiveIntensity = N * 2; w.mats.glass.emissiveIntensity = N * 0.9; w.mats.lampGlow.opacity = N * 0.9; w.mats.bld1.emissiveIntensity = w.mats.bld2.emissiveIntensity = N * 1.1;
   for (const b of w.mats.boards) b.emissiveIntensity = 0.3 + N * 1.2;
   w.mats.road.roughness = 0.82 - w.rainK * 0.55; w.mats.road.metalness = w.rainK * 0.15; w.mats.road.envMapIntensity = 0.3 + w.rainK * 1.5;
   headL.intensity = clamp(N * 2.4 + w.sandK * 1.5 + w.rainK * 0.6, 0, 3);
@@ -1075,7 +1180,11 @@ function stepCar(dt) {
   vf = car.vx * fx + car.vz * fz; let vl = car.vx * rx + car.vz * rz;
   const gentle = run && run.mode === 'test'; // learner mode: the speed creeps up so it's easy to keep to the limit
   const top = gentle ? Math.min(S.top, 125 / KMH) : S.top * (car.nitroOn ? 1.32 * (0.9 + 0.1 * S.nitroPow) : 1);
-  if (throttle && vf >= -0.5) vf += S.accel * (gentle ? 0.38 : 1) * (car.nitroOn ? 1.7 * S.nitroPow : 1) * Math.max(0.08, 1 - Math.max(0, vf) / top) * dt;
+  // learner pedal: pressing GAS eases in over about a second, and the speed helper stops you creeping over the limit
+  car.pedal = throttle ? Math.min(1, (car.pedal || 0) + dt / 1.1) : 0;
+  const pedalK = gentle ? car.pedal * car.pedal : 1;
+  const helpK = gentle ? clamp((limitAt(car.s) - 1 - vf * KMH) / 9, 0, 1) : 1;
+  if (throttle && vf >= -0.5) vf += S.accel * (gentle ? (limitAt(car.s) >= 60 ? 0.3 : 0.17) * pedalK * helpK : 1) * (car.nitroOn ? 1.7 * S.nitroPow : 1) * Math.max(0.08, 1 - Math.max(0, vf) / top) * dt;
   if (vf > top) vf = damp(vf, top, 1.5, dt);
   if (brake) { if (vf > 0.5) { vf -= (handbrake ? 9 : gentle ? 13 : 26) * dt; car.revT = 0; } else if (!throttle) { car.revT = (car.revT || 0) + dt; if (car.revT > (gentle ? 1.2 : 0.3)) vf = Math.max(gentle ? -4 : -9, vf - 7 * dt); else vf = 0; } } // hold brake: stop, then reverse
   else car.revT = 0;
@@ -1093,10 +1202,20 @@ function stepCar(dt) {
   if (car.nitroOn) { car.nitro = Math.max(0, car.nitro - 26 * dt); run.nitroTime += dt; }
   else if (run.mode !== 'test') car.nitro = Math.min(S.nitroCap, car.nitro + (2 + car.drift * 10) * dt);
   // barriers
-  const lim = ROAD_W - car.model.wid - 0.05;
-  if (Math.abs(car.d) > lim) {
-    const side = Math.sign(car.d), h = CL.h[car.idx], rrx = -Math.cos(h), rrz = Math.sin(h);
-    const over = Math.abs(car.d) - lim; car.pos.x -= rrx * side * over; car.pos.z -= rrz * side * over; car.d = side * lim;
+  const lim = ROAD_W - car.model.wid - 0.05, DW = run && run.test && run.test.drive;
+  let limL = lim; // a driveway on the left lets you leave the road there
+  if (DW && (Math.abs(car.s - DW.s) < 1.7 || car.d < -lim)) {
+    limL = ROAD_W + 9.6;
+    const ds = car.s - DW.s;
+    if (car.d < -lim && Math.abs(ds) > 1.7) { // the low walls either side of the driveway
+      const sg = Math.sign(ds), o2 = Math.abs(ds) - 1.7, fr = frameAt(car.s), fx2 = Math.sin(fr.h), fz2 = Math.cos(fr.h);
+      car.pos.x -= fx2 * sg * o2; car.pos.z -= fz2 * sg * o2; car.s -= sg * o2;
+      const vs = car.vx * fx2 + car.vz * fz2; if (vs * sg > 0) { car.vx -= fx2 * vs; car.vz -= fz2 * vs; }
+    }
+  }
+  if (car.d > lim || car.d < -limL) {
+    const side = Math.sign(car.d), h = CL.h[car.idx], rrx = -Math.cos(h), rrz = Math.sin(h), L2 = side > 0 ? lim : limL;
+    const over = Math.abs(car.d) - L2; car.pos.x -= rrx * side * over; car.pos.z -= rrz * side * over; car.d = side * L2;
     const vd = car.vx * rrx + car.vz * rrz;
     if (vd * side > 0) {
       car.vx -= rrx * vd * 1.35; car.vz -= rrz * vd * 1.35; car.vx *= 0.985; car.vz *= 0.985;
@@ -1563,7 +1682,7 @@ const SIGNAL_KEYS = () => (IS_TOUCH ? 'the ⬅💡 and 💡➡ buttons' : 'Q (le
 const LESSONS = [
   { id: 'first', em: '🔑', name: 'First Drive', sub: 'Gas, brake, signals', limit: 30, max: 6, start: 0, obj: [
     { k: 'speed', v: 12, task: 'Press GAS gently to move off', say: () => ["Hi! I'm Mr Bramble, your driving instructor. 🧑‍🏫", 'This is your very own car! Let\'s learn how to drive it.', 'Press GAS gently to move off. The speed limit is 30, so take it easy!'] },
-    { k: 'drive', dist: 120, task: 'Keep under 30 km/h', say: () => ["Lovely! Tap the gas, don't hold it down, and keep under 30."] },
+    { k: 'drive', dist: 120, task: 'Keep under 30 km/h', say: () => ['Lovely! Your learner car speeds up nice and slowly, and its SPEED HELPER stops it going over the limit.', 'You still need to BRAKE for stops, and going downhill!'] },
     { k: 'lane', lane: 1, task: 'Signal RIGHT ➡ then move over', noSignal: false, say: () => [`Now signal RIGHT with ${IS_TOUCH ? 'the 💡➡ button' : 'E'}, then steer into the next lane.`] },
     { k: 'lane', lane: 0, task: 'Signal LEFT ⬅ then move back', say: () => [`Good! Now signal LEFT with ${IS_TOUCH ? 'the ⬅💡 button' : 'Q'} and move back into the left lane.`] },
     { k: 'stop', task: 'Stop at the STOP line', say: () => ['See the STOP sign? Brake gently and stop BEFORE the white line.'] },
@@ -1575,11 +1694,13 @@ const LESSONS = [
     { k: 'drive', dist: 450, task: 'Down the hill: stay under 30', say: () => ['Going DOWN a hill the car speeds up by itself. Use the brake to keep under 30!'] },
     { k: 'park', task: 'Park in the green P box', say: () => ['Nearly done. Park in the green P box on the left.'] },
   ] },
-  { id: 'parallel', em: '🅿️', name: 'Parallel Parking', sub: 'Park between two cars', limit: 20, max: 6, start: 1, parked: [0], parkedGap: 7.5, obj: [
+  { id: 'parallel', em: '🅿️', name: 'Parking Practice', sub: 'Gaps and driveways', scene: 'close', limit: 20, max: 6, start: 1, parked: [0], parkedGap: 7.5, obj: [
     { k: 'drive', dist: 50, task: 'Drive along slowly', say: () => ['Parallel parking! That means parking in a gap between two cars at the side of the road.'] },
     { k: 'parallel', task: 'Park in the gap between the cars', say: () => ['See the gap with the green P? Drive just past it, then HOLD BRAKE to reverse back into it.', 'Stop when your car is straight and inside the gap. Don\'t bump the other cars!'] },
     { k: 'lane', lane: 1, task: 'Signal RIGHT ➡ and pull out', say: () => ['Brilliant parking! Now signal right and pull back out into the road.'] },
     { k: 'parallel', task: 'One more! Park in the gap', say: () => ["Let's do one more for practice."] },
+    { k: 'lane', lane: 1, task: 'Signal RIGHT ➡ and pull out', say: () => ['Great! Signal right and pull out again.'] },
+    { k: 'driveway', task: 'Drive onto the driveway 🏠', say: () => ['Last one: the PRACTICE DRIVEWAY on the left!', 'Slow right down, steer LEFT into it and stop on the green P. Mind the little walls!'] },
   ] },
   { id: 'uturn', em: '↩️', name: 'U-Turns', sub: 'Turn right round', limit: 20, max: 6, start: 0, obj: [
     { k: 'drive', dist: 90, task: 'Drive along slowly', say: () => ['U-turns! That means turning the car right round to go back the other way.'] },
@@ -1681,6 +1802,18 @@ function makePerson(col) {
   scene.add(g); lessonBits.push(g); return g;
 }
 function placeBit(g, s, d, yaw = 0) { const tmp = {}; roadToWorld(s, d, tmp); g.position.set(tmp.x, elev(s), tmp.z); g.rotation.y = tmp.h + yaw; }
+function buildDriveway(g) { // local x = -d, so the left side of the road is +x
+  const M = world.mats, X0 = ROAD_W, box = (mat, x, y, z, sx, sy, sz) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; g.add(m); return m; };
+  box(M.slab, X0 + 5.8, 0.07, 0, 11.6, 0.14, 5.2);
+  const mark = new THREE.Mesh(new THREE.PlaneGeometry(3, 5), new THREE.MeshBasicMaterial({ map: parkTex(), transparent: true, opacity: 0.85 })); mark.rotation.x = -Math.PI / 2; mark.rotation.z = Math.PI / 2; mark.position.set(X0 + 6.5, 0.16, 0); g.add(mark);
+  for (const z of [-2.85, 2.85]) { box(M.walls[0], X0 + 7.4, 0.4, z, 8.4, 0.8, 0.3); box(M.trim, X0 + 7.4, 0.84, z, 8.5, 0.08, 0.4); }
+  box(M.walls[1], X0 + 16.4, 2.8, 0, 9.6, 5.6, 12);
+  const roof = new THREE.Mesh(prismGeo(), M.roofs[1]); roof.scale.set(12.6, 2.8, 10.4); roof.rotation.y = Math.PI / 2; roof.position.set(X0 + 16.4, 5.6, 0); g.add(roof);
+  box(M.trim, X0 + 11.55, 1.25, 0, 0.14, 2.5, 3.8); box(M.glass, X0 + 11.55, 4.1, -3, 0.12, 1.2, 1.4); box(M.glass, X0 + 11.55, 4.1, 3, 0.12, 1.2, 1.4); box(M.door, X0 + 11.55, 1.05, 4.2, 0.12, 2.1, 1);
+  const tex = signTex('PRACTICE DRIVEWAY', '#05230f', '#4ade80', 'DRIVE IN AND STOP ON THE P');
+  const sg = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 1.2), new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide })); sg.position.set(X0 + 2.6, 2.4, -3.4); sg.rotation.y = Math.PI; g.add(sg);
+  box(poleMat, X0 + 2.6, 0.9, -3.4, 0.1, 1.8, 0.1);
+}
 function startLane() { let ln = 0, best = 9; for (let i = 0; i < 4; i++) if (Math.abs(car.d - LANES[i]) < best) { best = Math.abs(car.d - LANES[i]); ln = i; } return ln; }
 function setupTest() {
   const L = LESSONS[run.lesson];
@@ -1755,6 +1888,20 @@ const OBJ = {
       return false;
     },
   },
+  driveway: {
+    start: (T, o) => {
+      T.noSignal = true; o.t = 0;
+      o.s = Math.round((car.s + 150) / STEP) * STEP; T.drive = o; T.skipS.push(o.s);
+      if (SCENE) { SCENE.holes.push({ s: o.s, side: -1, r: 12 }); rebuildChunks(o.s - 20, o.s + 20); }
+      o.g = addProp(o.s, buildDriveway); lessonBits.push(o.g);
+    },
+    tick: (T, o, kmh, dt) => {
+      for (const a of agents.slice()) if (a.kind === 'parked' && Math.abs(a.s - o.s) < 12) removeAgent(a);
+      if (Math.abs(car.s - o.s) < 1.8 && car.d < -(ROAD_W + 3.4) && Math.abs(car.vf) < 0.8) { o.t += dt; if (o.t > 0.8) { pop('🏠 PARKED ON THE DRIVE!', '#4ade80'); A.ding(); return true; } } else o.t = 0;
+      if (car.s > o.s + 35 && car.d > -ROAD_W) { testFault('miss' + o.s, 'Drove past the driveway'); scene.remove(o.g); pop('↩ Another driveway coming up', '#bfdbfe'); OBJ.driveway.start(T, o); }
+      return false;
+    },
+  },
   uturn: {
     start: (T, o) => { T.noSignal = true; o.s0 = car.s; },
     tick: (T, o, kmh, dt) => {
@@ -1816,7 +1963,7 @@ const OBJ = {
     },
   },
   motorway: {
-    start: (T, o) => { const s = car.s + 120; makeGate(s, 'motorway'); T.zones.push([s, 110]); speedSign(s - 12, 110); o.s = s; o.end = s + o.len; T.traffic = true; },
+    start: (T, o) => { const s = car.s + 200; if (SCENE) { SCENE.end = Math.round((s - 70) / STEP) * STEP; rebuildChunks(SCENE.end - 1, Infinity); } makeGate(s, 'motorway'); T.zones.push([s, 110]); speedSign(s - 12, 110); o.s = s; o.end = s + o.len; T.traffic = true; },
     tick: (T, o, kmh, dt) => {
       if (car.s > o.s) T.hog = true;
       if (!o.joinChecked && car.s > o.s + 220) { o.joinChecked = true; if (kmh < 70) testFault('join', 'Too slow joining the motorway'); else pop('👍 Good joining speed', '#4ade80'); }
@@ -2041,8 +2188,9 @@ function startRun() {
   if (!save.passedTest) { save.mode = 'test'; save.duo = false; }
   if (save.mode === 'test') save.lesson = clamp(save.lesson || 0, 0, Math.min(save.academy || 0, LESSONS.length - 1));
   HILLS = save.mode === 'test' && !save.duo ? LESSONS[save.lesson].hills || null : null;
+  SCENE = save.mode === 'test' && !save.duo ? { kind: LESSONS[save.lesson].scene || 'town', end: Infinity, holes: [] } : null;
   FX.add.clear(); FX.norm.clear();
-  buildWorld(save.map);
+  buildWorld(SCENE ? 'city' : save.map);
   const duo = !!save.duo; car = car1; riders = duo ? [car1, car2] : [car1];
   for (const c of [car1, car2]) if (c.model) { scene.remove(c.model.group); c.model = null; }
   const cu = custom(save.sel);
@@ -2574,7 +2722,7 @@ function boot() {
   setState('title');
   requestAnimationFrame(frame);
 }
-window.__rrx = { roadH: (s) => frameAt(s).h, get state() { return state; }, car, car2, get riders() { return riders; }, get agents() { return agents; }, get run() { return run; }, get world() { return world; }, save, startRun, endRun, spawnPoliceWave, keys, input, damage, startPullover, nextTalk, signal, makeAngry, get cones() { return cones; }, LESSONS, limitAt, placeCar, elev, get hills() { return HILLS; },
+window.__rrx = { roadH: (s) => frameAt(s).h, nextObj, get scenery() { return SCENE; }, get state() { return state; }, car, car2, get riders() { return riders; }, get agents() { return agents; }, get run() { return run; }, get world() { return world; }, save, startRun, endRun, spawnPoliceWave, keys, input, damage, startPullover, nextTalk, signal, makeAngry, get cones() { return cones; }, LESSONS, limitAt, placeCar, elev, get hills() { return HILLS; },
   fast(sec) { if (state === 'countdown') { countdown = 0; setState('playing'); } const n = Math.round(sec * 60); for (let i = 0; i < n && state === 'playing'; i++) updateRun(1 / 60, 1 / 60, performance.now() / 1000); } };
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot, boot); else boot();
 })();
