@@ -9,6 +9,8 @@ void main() {
     await tester.pumpWidget(const IslasGamesApp());
     expect(find.text('SPACE ADVENTURE'), findsOneWidget);
     expect(find.text('Tap Counter'), findsNothing);
+    await tester.ensureVisible(find.text('PERFECT PUZZLES'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('PERFECT PUZZLES'));
     await tester.pumpAndSettle();
     expect(find.text('Tutorial'), findsOneWidget);

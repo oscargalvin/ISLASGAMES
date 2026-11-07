@@ -8,6 +8,7 @@ import '../games/rivals/rivals_game.dart';
 import '../games/sand_drawing/sand_drawing_game.dart';
 import '../games/space_adventure/space_adventure_game.dart';
 import '../games/tic_tac_toe/tic_tac_toe_game.dart';
+import '../games/web_page_game.dart';
 import '../games/world_walk/world_walk_game.dart';
 
 /// Colours and fonts of the games shelf.
@@ -78,10 +79,19 @@ class GameEntry {
 /// The games everyone sees. Add new games here.
 final List<GameEntry> games = [
   GameEntry(
+    title: 'Hotel Hustle',
+    tagline: 'Run your hotel all the way to five stars.',
+    badge: 'Tycoon',
+    isNew: true,
+    picture: 'assets/icons/hotel.png',
+    background: const Color(0xFF14213D),
+    builder: (_) => const WebPageGame(
+        path: 'hotel-hustle/index.html', title: 'Hotel Hustle'),
+  ),
+  GameEntry(
     title: 'Islas Rivals',
     tagline: 'Win a 1v1 duel in the arena.',
     badge: 'Shooter',
-    isNew: true,
     picture: 'assets/icons/rivals.png',
     background: const Color(0xFF6E8BA8),
     builder: (_) => const RivalsGame(),
@@ -208,9 +218,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onTitleTap() {
     final now = DateTime.now();
-    _titleTaps = now.difference(_lastTitleTap).inMilliseconds < 800
-        ? _titleTaps + 1
-        : 1;
+    _titleTaps =
+        now.difference(_lastTitleTap).inMilliseconds < 800 ? _titleTaps + 1 : 1;
     _lastTitleTap = now;
     if (_titleTaps >= 5) {
       _titleTaps = 0;
@@ -270,7 +279,8 @@ class ArchivedGamesScreen extends StatelessWidget {
         },
       ),
       title: const ShelfTitle(first: 'Archived ', second: 'Games'),
-      subtitle: "🔒 Only you can see these. They're hidden from the home screen "
+      subtitle:
+          "🔒 Only you can see these. They're hidden from the home screen "
           'but not gone, so you can play them, make them better and put them back out.',
       games: archivedGames,
     );
