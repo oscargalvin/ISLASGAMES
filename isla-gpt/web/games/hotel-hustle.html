@@ -1,0 +1,1975 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HOTEL HUSTLE</title>
+<meta name="theme-color" content="#14213d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+/* Hotel Hustle: a cream, gold and navy hotel tycoon. Everything is in this one file. */
+:root {
+  --navy: #14213d;
+  --navy2: #1d2f55;
+  --navy3: #2b416e;
+  --gold: #c9a227;
+  --gold2: #e6c76a;
+  --gold3: #f6e7b4;
+  --cream: #faf5e9;
+  --cream2: #f2e9d5;
+  --cream3: #e7dbc0;
+  --ink: #18213a;
+  --muted: #6f6b5e;
+  --good: #2f8f5b;
+  --bad: #c0392b;
+  --warn: #d98c1f;
+  --serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  --sans: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  --r: 14px;
+  color-scheme: light;
+}
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--navy); color: var(--ink); }
+body { font-family: var(--sans); font-size: 14px; -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--gold2); outline-offset: 2px; }
+.em { font-family: var(--emoji); font-style: normal; line-height: 1; }
+
+/* ---------- layout ---------- */
+#app { position: fixed; inset: 0; display: flex; flex-direction: column; }
+#topbar { flex: none; display: flex; align-items: center; gap: 10px; padding: calc(8px + env(safe-area-inset-top, 0px)) calc(12px + env(safe-area-inset-right, 0px)) 8px calc(12px + env(safe-area-inset-left, 0px)); background: linear-gradient(180deg, #172647, var(--navy)); color: var(--cream); border-bottom: 2px solid var(--gold); z-index: 5; }
+.brand { display: flex; flex-direction: column; line-height: 1.05; min-width: 0; }
+.brand b { font-family: var(--serif); font-weight: 800; font-size: 18px; letter-spacing: .08em; color: var(--gold2); white-space: nowrap; }
+.brand span { font-size: 12px; color: #c9cfdf; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+.spacer { flex: 1; }
+.stat { display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,.07); border: 1px solid rgba(230,199,106,.35); font-weight: 700; white-space: nowrap; }
+.stat small { font-weight: 500; color: #b9c0d4; }
+#hudMoney.neg { color: #ff9a8c; }
+.stars { color: var(--gold2); letter-spacing: 1px; }
+.stars .off { color: rgba(230,199,106,.28); }
+.off { opacity: .3; }
+.stars .off { opacity: 1; }
+.tbtn { display: inline-grid; place-items: center; min-width: 36px; height: 34px; padding: 0 10px; border-radius: 10px; border: 1px solid rgba(230,199,106,.45); background: rgba(255,255,255,.06); color: var(--cream); font-weight: 700; }
+.tbtn:hover { background: rgba(230,199,106,.18); }
+.tbtn.on { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+.speeds { display: flex; gap: 4px; }
+#main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 410px; }
+#sceneWrap { position: relative; min-height: 0; overflow: hidden; }
+#panel { min-height: 0; display: flex; flex-direction: column; background: var(--cream); border-left: 2px solid var(--gold); }
+#tabs { flex: none; display: flex; gap: 2px; padding: 6px 6px 0; background: var(--cream2); border-bottom: 1px solid var(--cream3); overflow-x: auto; scrollbar-width: none; }
+#tabs::-webkit-scrollbar { display: none; }
+.tab { position: relative; flex: 1 0 auto; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 8px 7px; border: 0; border-radius: 10px 10px 0 0; background: transparent; color: var(--muted); font-size: 12px; font-weight: 700; }
+.tab .em { font-size: 18px; }
+.tab.on { background: var(--cream); color: var(--navy); box-shadow: inset 0 3px 0 var(--gold); }
+.tab .cnt { position: absolute; top: 2px; right: 4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--bad); color: #fff; font-size: 11px; line-height: 18px; text-align: center; }
+#panelBody { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 12px calc(20px + env(safe-area-inset-bottom, 0px)); -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+
+@media (max-width: 860px) {
+  #main { grid-template-columns: 1fr; grid-template-rows: minmax(190px, 42%) minmax(0, 1fr); }
+  #panel { border-left: 0; border-top: 2px solid var(--gold); }
+  .brand span { max-width: 110px; }
+  .hideS { display: none !important; }
+  .tab { font-size: 11px; padding: 5px 6px 6px; }
+}
+@media (max-width: 520px) {
+  #topbar { gap: 6px; padding-left: calc(8px + env(safe-area-inset-left, 0px)); padding-right: calc(8px + env(safe-area-inset-right, 0px)); flex-wrap: wrap; row-gap: 6px; }
+  .brand b { font-size: 15px; }
+  .stat { padding: 4px 8px; font-size: 13px; }
+  .tbtn { min-width: 32px; height: 30px; padding: 0 7px; }
+  .hideXS { display: none !important; }
+}
+
+/* ---------- panel content ---------- */
+h2.ph { font-family: var(--serif); font-weight: 800; color: var(--navy); font-size: 20px; margin: 4px 0 10px; display: flex; align-items: center; gap: 8px; }
+h3.sh { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; display: flex; align-items: center; gap: 8px; }
+h3.sh::after { content: ""; flex: 1; height: 1px; background: var(--cream3); }
+h3.sh:first-child { margin-top: 0; }
+.card { background: #fff; border: 1px solid var(--cream3); border-radius: var(--r); padding: 10px 12px; margin-bottom: 8px; box-shadow: 0 1px 0 rgba(20,33,61,.04); animation: pop .25s ease-out; }
+@keyframes pop { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
+.card.hot { border-color: #f0b8ae; background: #fff8f6; }
+.card.gold { border-color: var(--gold2); background: linear-gradient(180deg, #fffdf6, #fff8e4); }
+.row { display: flex; align-items: center; gap: 10px; }
+.row.top { align-items: flex-start; }
+.grow { flex: 1; min-width: 0; }
+.av { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-family: var(--emoji); font-size: 22px; background: var(--cream2); border: 2px solid var(--cream3); }
+.av.vip { border-color: var(--gold); background: var(--gold3); }
+.t1 { font-weight: 700; color: var(--navy); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.t2 { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.tag { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--cream2); color: var(--navy2); vertical-align: 1px; }
+.tag.gold { background: var(--gold3); color: #7a5b00; }
+.tag.red { background: #fde3df; color: var(--bad); }
+.tag.green { background: #dff3e7; color: var(--good); }
+.tag.blue { background: #e0e8f7; color: var(--navy2); }
+.btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.b { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 34px; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--navy); background: var(--navy); color: var(--cream); font-weight: 700; font-size: 13px; transition: transform .08s, filter .15s; }
+.b:hover { filter: brightness(1.15); }
+.b:active { transform: scale(.96); }
+.b.gold { background: linear-gradient(180deg, var(--gold2), var(--gold)); border-color: #a8851a; color: var(--navy); }
+.b.ghost { background: #fff; color: var(--navy); border-color: var(--cream3); }
+.b.red { background: #fff; color: var(--bad); border-color: #efc3bc; }
+.b.sm { min-height: 28px; padding: 3px 9px; font-size: 12px; border-radius: 8px; }
+.b.wide { width: 100%; }
+.b:disabled, .b.dis { opacity: .45; cursor: not-allowed; filter: grayscale(.4); transform: none; }
+.bar { position: relative; height: 6px; border-radius: 3px; background: var(--cream2); overflow: hidden; margin-top: 6px; }
+.bar > i { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--gold); border-radius: 3px; transition: width .3s linear; }
+.bar.g > i { background: var(--good); }
+.bar.r > i { background: var(--bad); }
+.bar.n > i { background: var(--navy3); }
+.empty { text-align: center; color: var(--muted); padding: 14px 8px; border: 1px dashed var(--cream3); border-radius: var(--r); font-size: 13px; }
+.kv { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 13px; }
+.kv .v { font-weight: 700; text-align: right; }
+.kv .tot { border-top: 1px solid var(--cream3); padding-top: 4px; font-weight: 700; }
+.pos { color: var(--good); } .neg { color: var(--bad); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.big { font-family: var(--serif); font-size: 30px; font-weight: 800; color: var(--navy); line-height: 1; }
+.lvl { color: var(--gold); letter-spacing: 2px; }
+.lvl .off { color: var(--cream3); }
+.price { display: flex; align-items: center; gap: 6px; }
+.price b { min-width: 58px; text-align: center; font-size: 15px; }
+.req { display: flex; gap: 8px; align-items: center; padding: 3px 0; font-size: 13px; }
+.req .ok { color: var(--good); font-weight: 700; } .req .no { color: var(--bad); font-weight: 700; }
+.rv-stars { color: var(--gold); letter-spacing: 1px; }
+.mgr { display: flex; align-items: center; gap: 8px; }
+.toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; color: var(--navy); }
+.toggle input { width: 18px; height: 18px; accent-color: var(--gold); }
+canvas.chart { width: 100%; height: 150px; display: block; background: #fff; border: 1px solid var(--cream3); border-radius: var(--r); }
+.note { font-size: 12px; color: var(--muted); margin: 4px 0 0; }
+
+/* ---------- the hotel scene ---------- */
+#scene { position: absolute; inset: 0; overflow: hidden; background: #87b6e0; transition: background 1s linear; }
+#sky { position: absolute; inset: 0; }
+#sunmoon { position: absolute; width: 46px; height: 46px; border-radius: 50%; margin: -23px 0 0 -23px; transition: left .5s linear, top .5s linear, background .8s; }
+.starfield { position: absolute; inset: 0; transition: opacity 2s; background-image: radial-gradient(1.4px 1.4px at 12% 18%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 33% 9%, #fff 50%, transparent 51%), radial-gradient(1.6px 1.6px at 58% 22%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 72% 12%, #fff 50%, transparent 51%), radial-gradient(1.3px 1.3px at 88% 28%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 46% 34%, #fff 50%, transparent 51%), radial-gradient(1.2px 1.2px at 6% 40%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 95% 6%, #fff 50%, transparent 51%); }
+.cloud { position: absolute; width: 120px; height: 34px; border-radius: 40px; background: rgba(255,255,255,.85); filter: blur(.5px); animation: drift linear infinite; }
+.cloud::before, .cloud::after { content: ""; position: absolute; border-radius: 50%; background: inherit; }
+.cloud::before { width: 54px; height: 50px; left: 18px; top: -24px; }
+.cloud::after { width: 44px; height: 40px; left: 58px; top: -16px; }
+@keyframes drift { from { transform: translateX(-180px); } to { transform: translateX(calc(100vw + 60px)); } }
+#world { position: absolute; left: 50%; bottom: 0; width: 760px; transform-origin: 50% 100%; }
+.skyline { position: absolute; bottom: 44px; background: #5d7ea3; opacity: .45; border-radius: 2px 2px 0 0; transition: background 1s; }
+.street { position: absolute; left: -400px; right: -400px; bottom: 0; height: 44px; background: #3b4252; border-top: 6px solid #cfc6b0; }
+.street::after { content: ""; position: absolute; left: 0; right: 0; top: 20px; height: 3px; background: repeating-linear-gradient(90deg, #f3e3a0 0 26px, transparent 26px 56px); opacity: .8; }
+.car { position: absolute; bottom: 4px; font-family: var(--emoji); font-size: 22px; animation: carR linear infinite; }
+.car.l { bottom: 20px; animation-name: carL; }
+@keyframes carR { from { transform: translateX(-120px) scaleX(-1); } to { transform: translateX(1000px) scaleX(-1); } }
+@keyframes carL { from { transform: translateX(1000px); } to { transform: translateX(-120px); } }
+.tree { position: absolute; bottom: 44px; font-family: var(--emoji); font-size: 30px; }
+.lamp { position: absolute; bottom: 44px; width: 4px; height: 54px; background: #2c3445; }
+.lamp::before { content: ""; position: absolute; top: -6px; left: -6px; width: 16px; height: 8px; border-radius: 8px 8px 2px 2px; background: #2c3445; }
+.lamp::after { content: ""; position: absolute; top: 2px; left: -4px; width: 12px; height: 6px; border-radius: 50%; background: #ffe9a0; opacity: 0; box-shadow: 0 0 18px 8px rgba(255,220,120,.6); transition: opacity 1s; }
+.night .lamp::after { opacity: 1; }
+
+#building { position: absolute; bottom: 44px; left: 199px; width: 362px; }
+.roof { position: relative; height: 48px; background: linear-gradient(180deg, #1b2b4f, var(--navy)); border-radius: 6px 6px 0 0; border-bottom: 3px solid var(--gold); display: grid; place-items: center; }
+.roof::before { content: ""; position: absolute; left: 10px; right: 10px; top: -8px; height: 8px; background: var(--navy2); border-radius: 4px 4px 0 0; }
+.sign { font-family: var(--serif); font-weight: 800; color: var(--gold2); letter-spacing: .18em; font-size: 17px; text-shadow: 0 0 8px rgba(230,199,106,.5); text-align: center; line-height: 1; }
+.sign small { display: block; font-family: var(--sans); letter-spacing: 2px; font-size: 10px; margin-top: 3px; }
+.night .sign { text-shadow: 0 0 10px rgba(255,214,110,.95), 0 0 22px rgba(255,214,110,.6); }
+.rooftop { position: absolute; left: 30px; right: 30px; bottom: 100%; height: 40px; margin-bottom: 8px; }
+.rooftop .deck { position: absolute; inset: auto 0 0; height: 10px; background: #a07b3b; border-radius: 3px; }
+.rooftop .lights { position: absolute; left: 0; right: 0; top: 4px; height: 12px; border-top: 2px dotted var(--gold2); border-radius: 50%; }
+.night .rooftop .lights { filter: drop-shadow(0 0 4px #ffd36e); }
+.rooftop .things { position: absolute; left: 0; right: 0; bottom: 8px; display: flex; justify-content: space-around; font-family: var(--emoji); font-size: 20px; }
+.floors { background: var(--cream2); border-left: 6px solid var(--navy); border-right: 6px solid var(--navy); }
+.floor { position: relative; height: 58px; display: flex; gap: 6px; padding: 6px 8px 0; border-bottom: 3px solid var(--cream3); background: linear-gradient(180deg, #f5ecd8, #eadfc4); }
+.floor .fl { position: absolute; left: -26px; top: 18px; width: 18px; text-align: center; font-size: 10px; font-weight: 700; color: #fff; background: var(--navy3); border-radius: 4px; }
+.rm { position: relative; flex: 1; height: 46px; padding: 0; border: 2px solid #8a6f3a; border-radius: 5px 5px 2px 2px; background: #9cc3e4; overflow: hidden; display: block; transition: background .4s, box-shadow .3s; }
+.rm:hover { box-shadow: 0 0 0 2px var(--gold2); }
+.rm.sel { box-shadow: 0 0 0 3px var(--gold); }
+.rm .glass { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,.55) 0 18%, transparent 19% 40%, rgba(255,255,255,.25) 41% 48%, transparent 49%); }
+.rm .cur { position: absolute; top: 0; bottom: 0; width: 34%; background: repeating-linear-gradient(90deg, #b5394f 0 4px, #9f2b41 4px 8px); transition: width .5s; }
+.rm .cur.l { left: 0; } .rm .cur.r { right: 0; }
+.rm .ico { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -54%); font-family: var(--emoji); font-size: 20px; z-index: 1; filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+.rm .num { position: absolute; left: 3px; bottom: 1px; font-size: 9px; font-weight: 700; color: rgba(20,33,61,.8); z-index: 1; background: rgba(255,255,255,.7); padding: 0 3px; border-radius: 3px; }
+.rm .pb { position: absolute; left: 3px; right: 3px; bottom: 2px; height: 4px; border-radius: 2px; background: rgba(0,0,0,.25); z-index: 2; }
+.rm .pb i { position: absolute; inset: 0 auto 0 0; width: 0; background: #7cf0a4; border-radius: 2px; }
+.rm.st-clean .cur { width: 14%; }
+.rm.st-occupied { background: #ffd98a; }
+.rm.st-occupied .cur { width: 26%; }
+.night .rm.st-occupied { background: #ffcc5c; box-shadow: 0 0 14px rgba(255,205,92,.7); }
+.night .rm.st-clean { background: #36507a; }
+.rm.st-dirty { background: #c8b28c; }
+.rm.st-dirty .cur { width: 44%; filter: saturate(.4); }
+.rm.st-cleaning { background: #c9e9d3; }
+.rm.issue { animation: blink 1s steps(2) infinite; border-color: var(--bad); }
+@keyframes blink { 50% { box-shadow: 0 0 0 3px rgba(192,57,43,.6); } }
+.rm.deluxe { border-color: #b6922c; border-width: 3px; }
+.rm.suite { border-color: var(--gold); border-width: 3px; box-shadow: inset 0 0 0 2px #fff3c4; }
+.rm .tp { position: absolute; right: 2px; top: 1px; font-size: 9px; z-index: 1; color: #7a5b00; }
+.rm.st-cleaning .ico { animation: scrub .6s ease-in-out infinite alternate; }
+@keyframes scrub { from { transform: translate(-70%, -54%) rotate(-12deg); } to { transform: translate(-30%, -54%) rotate(12deg); } }
+.sparkle { position: absolute; font-family: var(--emoji); font-size: 18px; pointer-events: none; animation: spark .9s ease-out forwards; z-index: 6; }
+@keyframes spark { from { transform: scale(.4); opacity: 1; } to { transform: scale(1.5) translateY(-10px); opacity: 0; } }
+
+.ground { position: relative; height: 96px; background: linear-gradient(180deg, #efe4cc, #e4d6b6); border-left: 6px solid var(--navy); border-right: 6px solid var(--navy); display: flex; }
+.lobby { position: relative; flex: 1.35; border-right: 4px solid var(--navy); background: linear-gradient(180deg, #fbf3e0 0 62%, #d9c49a 62%); overflow: hidden; }
+.lobby .chand { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-family: var(--emoji); font-size: 16px; }
+.night .lobby .chand { filter: drop-shadow(0 0 6px #ffd36e); }
+.door { position: absolute; left: 8px; bottom: 0; width: 44px; height: 64px; border: 3px solid var(--gold); border-bottom: 0; border-radius: 22px 22px 0 0; background: linear-gradient(90deg, #a9cbe6 0 48%, var(--gold) 48% 52%, #a9cbe6 52%); }
+.awning { position: absolute; left: 2px; bottom: 64px; width: 56px; height: 10px; background: var(--navy); border-radius: 4px; border-bottom: 2px solid var(--gold); }
+.desk { position: absolute; right: 12px; bottom: 0; width: 64px; height: 30px; background: linear-gradient(180deg, var(--navy2), var(--navy)); border-top: 4px solid var(--gold); border-radius: 4px 4px 0 0; }
+.desk .bell { position: absolute; right: 6px; top: -16px; font-family: var(--emoji); font-size: 12px; }
+.desk .clerk { position: absolute; left: 18px; top: -30px; font-family: var(--emoji); font-size: 24px; }
+.queue { position: absolute; left: 60px; right: 80px; bottom: 2px; height: 40px; display: flex; flex-direction: row-reverse; gap: 1px; align-items: flex-end; }
+.qg { position: relative; padding: 0; border: 0; background: none; font-family: var(--emoji); font-size: 24px; line-height: 1; animation: walkin .7s ease-out; transition: transform .2s; }
+.qg:hover { transform: translateY(-3px); }
+.qg .mood { position: absolute; left: 50%; top: -6px; transform: translateX(-50%); width: 18px; height: 4px; border-radius: 2px; background: rgba(0,0,0,.2); overflow: hidden; }
+.qg .mood i { position: absolute; inset: 0 auto 0 0; background: var(--good); }
+.qg.angry { animation: shake .4s ease-in-out infinite; }
+@keyframes walkin { from { transform: translateX(-90px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes shake { 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+.qmore { font-size: 11px; font-weight: 700; color: var(--navy); background: var(--gold3); border-radius: 8px; padding: 1px 5px; align-self: center; }
+.depart { position: absolute; right: 80px; top: 6px; display: flex; gap: 2px; }
+.depart button { padding: 0; border: 0; background: none; font-family: var(--emoji); font-size: 18px; animation: bob 1s ease-in-out infinite alternate; }
+@keyframes bob { to { transform: translateY(-3px); } }
+.resto { position: relative; flex: 1; background: linear-gradient(180deg, #fff4dd 0 60%, #b8875a 60%); overflow: hidden; }
+.resto .rsign { position: absolute; top: 4px; left: 0; right: 0; text-align: center; font-family: var(--serif); font-weight: 800; font-size: 11px; color: var(--navy); letter-spacing: .1em; }
+.resto .tables { position: absolute; left: 6px; right: 6px; bottom: 6px; display: flex; justify-content: space-around; font-family: var(--emoji); font-size: 18px; }
+.resto .chef { position: absolute; right: 6px; top: 18px; font-family: var(--emoji); font-size: 18px; }
+.resto .chef.busy { animation: bob .4s ease-in-out infinite alternate; }
+.resto .diners { position: absolute; left: 6px; top: 20px; font-family: var(--emoji); font-size: 15px; letter-spacing: -2px; }
+.annex { position: absolute; bottom: 44px; width: 150px; display: flex; flex-direction: column-reverse; gap: 0; }
+.annex.left { left: 44px; }
+.annex.right { left: 566px; }
+.fac { position: relative; height: 66px; border: 4px solid var(--navy); border-bottom-width: 0; background: linear-gradient(180deg, #f8efdb, #eadcbc); border-radius: 6px 6px 0 0; overflow: hidden; padding: 0; text-align: center; display: block; width: 100%; }
+.fac + .fac { border-radius: 6px 6px 0 0; }
+.fac .fn { position: absolute; top: 3px; left: 0; right: 0; font-family: var(--serif); font-weight: 800; font-size: 11px; color: var(--navy); letter-spacing: .08em; }
+.fac .fi { position: absolute; left: 0; right: 0; bottom: 6px; font-family: var(--emoji); font-size: 20px; letter-spacing: 2px; }
+.fac .fl2 { position: absolute; right: 4px; top: 3px; font-size: 9px; color: var(--gold); }
+.fac.build { border-style: dashed; border-color: #8a8a8a; background: repeating-linear-gradient(45deg, rgba(255,255,255,.35) 0 10px, rgba(255,255,255,.15) 10px 20px); opacity: .85; }
+.fac.build .fn { color: #555; }
+.fac:hover { filter: brightness(1.05); }
+.pool { position: relative; height: 70px; border-top: 4px solid #e5dccb; background: #e9e0cb; padding: 0; border-left: 0; border-right: 0; border-bottom: 0; width: 100%; display: block; }
+.pool .water { position: absolute; left: 10px; right: 10px; top: 14px; bottom: 8px; border-radius: 8px; border: 3px solid #fff; background: linear-gradient(180deg, #4fc3e8, #1e88c9); overflow: hidden; }
+.pool .water::before { content: ""; position: absolute; inset: -20px; background: repeating-linear-gradient(115deg, rgba(255,255,255,.28) 0 6px, transparent 6px 22px); animation: waves 3s linear infinite; }
+@keyframes waves { to { transform: translateX(44px); } }
+.pool .swim { position: absolute; left: 14px; right: 14px; top: 22px; display: flex; justify-content: space-around; font-family: var(--emoji); font-size: 16px; }
+.pool .swim span { animation: bob 1.2s ease-in-out infinite alternate; }
+.pool .umb { position: absolute; top: -18px; font-family: var(--emoji); font-size: 22px; }
+.pool .fn { position: absolute; left: 0; right: 0; bottom: -1px; font-size: 9px; font-weight: 700; color: var(--navy); }
+.pool.build .water { background: repeating-linear-gradient(45deg, #cfc5b0 0 10px, #ddd4c0 10px 20px); border-style: dashed; border-color: #999; }
+.pool.build .water::before { display: none; }
+.pop { position: absolute; z-index: 8; pointer-events: none; font-weight: 800; font-size: 15px; color: #1e7a45; text-shadow: 0 1px 0 #fff, 0 0 4px #fff; animation: floatup 1.4s ease-out forwards; white-space: nowrap; }
+.pop.bad { color: var(--bad); }
+@keyframes floatup { from { transform: translate(-50%, 0); opacity: 1; } to { transform: translate(-50%, -46px); opacity: 0; } }
+#mgrBar { position: absolute; left: 10px; bottom: 10px; z-index: 4; display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 10px; border-radius: 12px; background: rgba(20,33,61,.88); color: var(--cream); border: 1px solid var(--gold); font-size: 12px; max-width: calc(100% - 20px); }
+#mgrBar .bar { width: 70px; margin: 0; background: rgba(255,255,255,.2); }
+#mgrBar button { border: 0; background: rgba(255,255,255,.15); color: #fff; border-radius: 6px; padding: 2px 6px; font-size: 11px; }
+#pausedTag { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); z-index: 4; padding: 10px 22px; border-radius: 14px; background: rgba(20,33,61,.85); color: var(--gold2); font-family: var(--serif); font-weight: 800; font-size: 26px; letter-spacing: .2em; border: 2px solid var(--gold); pointer-events: none; }
+#eventTag { position: absolute; right: 10px; top: 10px; z-index: 4; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; pointer-events: none; }
+#eventTag span { background: rgba(250,245,233,.92); color: var(--navy); border: 1px solid var(--gold); border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
+
+/* ---------- toasts & modals ---------- */
+#toasts { position: fixed; z-index: 60; left: 50%; top: calc(64px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; width: min(440px, calc(100% - 24px)); }
+.toast { pointer-events: auto; display: flex; gap: 8px; align-items: center; width: 100%; padding: 8px 12px; border-radius: 12px; background: var(--cream); color: var(--ink); border: 1px solid var(--gold); box-shadow: 0 8px 24px rgba(0,0,0,.25); font-weight: 500; animation: tin .3s cubic-bezier(.2,1.3,.4,1); }
+.toast.out { animation: tout .3s ease-in forwards; }
+.toast .em { font-size: 20px; }
+.toast.bad { border-color: var(--bad); background: #fff3f0; }
+.toast.good { border-color: var(--good); }
+@keyframes tin { from { transform: translateY(-14px) scale(.96); opacity: 0; } }
+@keyframes tout { to { transform: translateY(-10px); opacity: 0; } }
+#modalBg { position: fixed; inset: 0; z-index: 80; background: rgba(10,16,32,.62); display: grid; place-items: center; padding: 16px; animation: fade .2s; backdrop-filter: blur(2px); }
+@keyframes fade { from { opacity: 0; } }
+#modal { width: min(500px, 100%); max-height: calc(100% - 20px); overflow-y: auto; background: var(--cream); border: 2px solid var(--gold); border-radius: 20px; padding: 20px; box-shadow: 0 24px 60px rgba(0,0,0,.45); animation: mup .28s cubic-bezier(.2,1.3,.4,1); }
+@keyframes mup { from { transform: translateY(20px) scale(.96); opacity: 0; } }
+#modal h2 { font-family: var(--serif); font-weight: 800; color: var(--navy); margin: 0 0 6px; font-size: 24px; }
+#modal p { margin: 6px 0; line-height: 1.45; }
+#modal .mi { font-family: var(--emoji); font-size: 44px; text-align: center; margin-bottom: 4px; }
+#modal .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+#modal .acts .b { flex: 1 1 140px; min-height: 42px; }
+.slot { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--cream3); background: #fff; border-radius: 12px; margin-bottom: 8px; }
+.input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--cream3); font: inherit; font-size: 16px; background: #fff; color: var(--ink); }
+.help li { margin: 4px 0; line-height: 1.4; }
+.confetti { position: fixed; z-index: 90; top: -20px; width: 10px; height: 14px; pointer-events: none; animation: fall linear forwards; }
+@keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
+
+/* ---------- title screen ---------- */
+#title { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 20px; overflow-y: auto; background: radial-gradient(circle at 50% 0%, #2b416e 0, transparent 60%), linear-gradient(180deg, #14213d, #0b1428); color: var(--cream); }
+.tcard { width: min(460px, 100%); text-align: center; }
+.tlogo { font-family: var(--serif); font-weight: 800; font-size: clamp(44px, 11vw, 74px); line-height: .95; letter-spacing: .06em; color: var(--gold2); text-shadow: 0 4px 0 #0b1428, 0 0 30px rgba(230,199,106,.35); }
+.tlogo small { display: block; font-size: .32em; letter-spacing: .5em; color: var(--cream); margin-top: 10px; text-shadow: none; }
+.tstars { font-size: 24px; color: var(--gold2); letter-spacing: 6px; margin: 10px 0 4px; }
+.tsub { color: #c3cadc; margin: 0 0 22px; }
+.tbuild { position: relative; height: 120px; margin: 0 auto 22px; width: 220px; }
+.tbuild .tb { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 130px; height: 110px; background: var(--cream2); border: 5px solid var(--gold); border-bottom: 0; border-radius: 8px 8px 0 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px; }
+.tbuild .tb i { background: #ffd98a; border-radius: 2px; animation: twinkle 3s ease-in-out infinite; }
+.tbuild .tb i:nth-child(3n) { animation-delay: 1s; background: #36507a; }
+.tbuild .tb i:nth-child(5n) { animation-delay: 2s; }
+@keyframes twinkle { 50% { background: #36507a; } }
+.tmenu { display: flex; flex-direction: column; gap: 10px; }
+.tmenu .b { min-height: 48px; font-size: 16px; border-radius: 14px; }
+.tmenu .b.ghost { background: transparent; color: var(--cream); border-color: rgba(230,199,106,.5); }
+.tfoot { margin-top: 20px; font-size: 12px; color: #8f98b2; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <div class="brand"><b>HOTEL HUSTLE</b><span id="hudName">The Grand Isla</span></div>
+    <div class="stat" title="Day and time"><span class="em" id="hudSun">☀️</span><span id="hudDay">Day 1</span><small id="hudClock">8:00 am</small></div>
+    <div class="spacer"></div>
+    <div class="stat" title="Money"><span class="em">💰</span><span id="hudMoney">$0</span></div>
+    <div class="stat hideXS" title="Guest rating"><span class="em">💬</span><span id="hudRating">3.0</span></div>
+    <div class="stat" title="Hotel stars"><span class="stars" id="hudStars">★</span></div>
+    <button class="tbtn" id="pauseBtn" title="Pause (Space)" aria-label="Pause">❚❚</button>
+    <div class="speeds"><button class="tbtn on" data-speed="1" title="Normal speed (1)">1×</button><button class="tbtn" data-speed="2" title="Fast (2)">2×</button><button class="tbtn" data-speed="4" title="Super fast (3)">4×</button></div>
+    <button class="tbtn" id="menuBtn" title="Menu: save, load, help" aria-label="Menu">☰</button>
+  </header>
+  <div id="main">
+    <section id="sceneWrap">
+      <div id="scene">
+        <div id="sky"><div class="starfield" id="starfield"></div><div id="sunmoon"></div></div>
+        <div id="world"></div>
+      </div>
+      <div id="eventTag"></div>
+      <div id="mgrBar"></div>
+      <div id="pausedTag" hidden>PAUSED</div>
+    </section>
+    <aside id="panel">
+      <nav id="tabs" role="tablist"></nav>
+      <div id="panelBody"></div>
+    </aside>
+  </div>
+</div>
+<div id="toasts" aria-live="polite"></div>
+<div id="modalBg" hidden><div id="modal" role="dialog" aria-modal="true"></div></div>
+<div id="title">
+  <div class="tcard">
+    <div class="tbuild"><div class="tb"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+    <div class="tlogo">HOTEL<br>HUSTLE<small>ISLA &amp; OSCAR'S GAMES</small></div>
+    <div class="tstars">★★★★★</div>
+    <p class="tsub">Turn a tired 10-room hotel into a five-star palace.</p>
+    <div class="tmenu" id="tmenu"></div>
+    <div class="tfoot">Your games save on this device.</div>
+  </div>
+</div>
+<script>
+'use strict';
+(() => {
+/* =====================================================================
+   HELPERS
+   ===================================================================== */
+const $ = (s) => document.querySelector(s);
+const rnd = (a, b) => a + Math.random() * (b - a);
+const ri = (a, b) => Math.floor(rnd(a, b + 1));
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const chance = (p) => Math.random() < p;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const money = (n) => (n < 0 ? '-' : '') + '$' + Math.abs(Math.round(n)).toLocaleString('en-US');
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clock = (m) => { const h = Math.floor(m / 60) % 24, mm = Math.floor(m % 60); return `${h % 12 === 0 ? 12 : h % 12}:${String(mm).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}`; };
+const starStr = (n, max = 5) => '★'.repeat(n) + `<span class="off">${'★'.repeat(Math.max(0, max - n))}</span>`;
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} },
+};
+
+/* =====================================================================
+   GAME DATA
+   ===================================================================== */
+const MIN_PER_SEC = 3;          // game minutes per real second at 1x
+const DAY_START = 6 * 60;       // each day starts at 6am
+const ROOMS_PER_FLOOR = 5;
+
+const ROOM_TYPES = {
+  standard: { name: 'Standard', base: 90, cost: 0, star: 1, comfort: 0, icon: '🛏️' },
+  deluxe: { name: 'Deluxe', base: 165, cost: 2500, star: 1, comfort: 8, icon: '🛋️' },
+  suite: { name: 'Suite', base: 330, cost: 7500, star: 3, comfort: 16, icon: '👑' },
+};
+const TYPE_ORDER = ['standard', 'deluxe', 'suite'];
+
+const FAC = {
+  restaurant: { name: 'Restaurant', icon: '🍽️', cost: [0, 6000, 16000], star: [1, 2, 3], upkeep: 55, mood: 3, fee: 0, desc: 'Guests order meals. Each level unlocks fancier dishes.' },
+  gym: { name: 'Gym', icon: '🏋️', cost: [5000, 6000, 10000], star: [1, 2, 4], upkeep: 45, mood: 4, fee: 12, desc: 'Business travellers and athletes love a workout.' },
+  parking: { name: 'Car Park', icon: '🅿️', cost: [4000, 5000, 8000], star: [1, 2, 3], upkeep: 30, mood: 2, fee: 15, desc: 'More guests can reach you. Drivers pay for a space each night.' },
+  pool: { name: 'Swimming Pool', icon: '🏊', cost: [12000, 10000, 16000], star: [2, 3, 4], upkeep: 110, mood: 6, fee: 18, desc: 'Families and tourists flock to hotels with a pool.' },
+  bar: { name: 'Rooftop Bar', icon: '🍸', cost: [8000, 7000, 12000], star: [2, 3, 4], upkeep: 80, mood: 4, fee: 24, desc: 'Cocktails with a view. Couples and VIPs spend big here.' },
+  spa: { name: 'Spa', icon: '💆', cost: [18000, 14000, 20000], star: [3, 4, 5], upkeep: 160, mood: 8, fee: 70, desc: 'Luxury treatments. Needs Spa Therapists to run.' },
+  conference: { name: 'Conference Hall', icon: '🎤', cost: [15000, 12000, 18000], star: [3, 4, 5], upkeep: 90, mood: 2, fee: 0, desc: 'Companies book meetings here for big daily income.' },
+};
+const FAC_ORDER = ['restaurant', 'gym', 'parking', 'pool', 'bar', 'spa', 'conference'];
+
+const ROLES = {
+  receptionist: { name: 'Receptionist', icon: '💁', wage: 85, star: 1, desc: 'Checks guests in and out for you.' },
+  housekeeper: { name: 'Housekeeper', icon: '🧹', wage: 70, star: 1, desc: 'Cleans rooms after guests leave.' },
+  chef: { name: 'Chef', icon: '🍳', wage: 115, star: 1, desc: 'Cooks restaurant orders.' },
+  waiter: { name: 'Waiter', icon: '🍷', wage: 60, star: 1, desc: 'Delivers food to tables and rooms.' },
+  maintenance: { name: 'Maintenance', icon: '🔧', wage: 95, star: 1, desc: 'Fixes breakdowns and keeps rooms looking new.' },
+  concierge: { name: 'Concierge', icon: '🛎️', wage: 110, star: 2, desc: 'Handles complaints and keeps guests happy.' },
+  therapist: { name: 'Spa Therapist', icon: '💆', wage: 125, star: 3, desc: 'Runs spa treatments (needs a Spa).' },
+};
+const ROLE_ORDER = ['receptionist', 'housekeeper', 'chef', 'waiter', 'maintenance', 'concierge', 'therapist'];
+const TRAITS = [
+  ['Hard-working', 'energy'], ['Cheerful', 'morale'], ['Speedy', 'speed'], ['Careful', 'quality'], ['Reliable', 'none'], ['Charming', 'charm'],
+];
+
+const MENU = [
+  { id: 'pancakes', name: 'Pancake Stack', icon: '🥞', price: 12, time: 12, lvl: 1 },
+  { id: 'sandwich', name: 'Club Sandwich', icon: '🥪', price: 15, time: 14, lvl: 1 },
+  { id: 'salad', name: 'Caesar Salad', icon: '🥗', price: 14, time: 10, lvl: 1 },
+  { id: 'burger', name: 'Classic Burger', icon: '🍔', price: 18, time: 18, lvl: 1 },
+  { id: 'pizza', name: 'Margherita Pizza', icon: '🍕', price: 17, time: 20, lvl: 1 },
+  { id: 'steak', name: 'Sirloin Steak', icon: '🥩', price: 36, time: 25, lvl: 2 },
+  { id: 'salmon', name: 'Grilled Salmon', icon: '🐟', price: 31, time: 22, lvl: 2 },
+  { id: 'pasta', name: 'Truffle Pasta', icon: '🍝', price: 26, time: 18, lvl: 2 },
+  { id: 'cake', name: 'Chocolate Lava Cake', icon: '🍫', price: 13, time: 12, lvl: 2 },
+  { id: 'lobster', name: 'Lobster Thermidor', icon: '🦞', price: 68, time: 30, lvl: 3 },
+  { id: 'sushi', name: 'Sushi Platter', icon: '🍣', price: 54, time: 25, lvl: 3 },
+  { id: 'champagne', name: 'Champagne', icon: '🍾', price: 85, time: 5, lvl: 3 },
+  { id: 'tasting', name: "Chef's Tasting Menu", icon: '🍽️', price: 110, time: 40, lvl: 3 },
+];
+const FOOD_COST = 0.32;
+
+const KINDS = {
+  business: { label: 'Business traveller', em: ['🤵', '👩', '👨'], budget: 1.15, nights: [1, 2], want: [0.45, 0.45, 0.1], likes: ['gym', 'restaurant', 'conference', 'parking'], spend: 1, w: 26, star: 1, car: 0.5 },
+  tourist: { label: 'Tourist', em: ['🧑', '👱', '👩', '🧔', '👨'], budget: 0.9, nights: [1, 3], want: [0.6, 0.35, 0.05], likes: ['pool', 'restaurant', 'bar'], spend: 0.9, w: 26, star: 1, car: 0.3 },
+  family: { label: 'Family', em: ['👪'], budget: 0.95, nights: [2, 4], want: [0.4, 0.5, 0.1], likes: ['pool', 'restaurant', 'parking'], spend: 1.2, w: 18, star: 1, car: 0.8 },
+  couple: { label: 'Couple', em: ['💑'], budget: 1.2, nights: [1, 3], want: [0.25, 0.5, 0.25], likes: ['spa', 'bar', 'pool', 'restaurant'], spend: 1.2, w: 16, star: 1, car: 0.4 },
+  backpacker: { label: 'Backpacker', em: ['🧑', '👦', '👧'], budget: 0.6, nights: [1, 2], want: [1, 0, 0], likes: ['bar'], spend: 0.6, w: 12, star: 1, car: 0 },
+  senior: { label: 'Retired couple', em: ['👴', '👵'], budget: 1.05, nights: [2, 4], want: [0.3, 0.55, 0.15], likes: ['restaurant', 'spa', 'parking'], spend: 1, w: 10, star: 1, car: 0.6 },
+  athlete: { label: 'Athlete', em: ['🏃', '🚴'], budget: 1.1, nights: [1, 3], want: [0.3, 0.5, 0.2], likes: ['gym', 'pool', 'spa'], spend: 1, w: 6, star: 2, car: 0.3 },
+  vip: { label: 'VIP guest', em: ['🕺', '💃', '🤴', '👸'], budget: 2.2, nights: [1, 3], want: [0, 0.3, 0.7], likes: ['spa', 'bar', 'restaurant', 'pool'], spend: 2, w: 4, star: 3, car: 0.7 },
+};
+const FIRST = ['Olivia', 'Liam', 'Amelia', 'Noah', 'Isla', 'Oscar', 'Ava', 'Leo', 'Mia', 'Arthur', 'Sofia', 'Jack', 'Grace', 'Theo', 'Zara', 'Omar', 'Priya', 'Hugo', 'Freya', 'Mateo', 'Aisha', 'Ethan', 'Chloe', 'Yuki', 'Ivy', 'Kai', 'Elena', 'Ravi', 'Lucy', 'Felix', 'Nora', 'Samuel', 'Hana', 'Diego', 'Maya', 'Finn', 'Ruby', 'Ali', 'Layla', 'Max', 'Rosa', 'Ben', 'Esme', 'Tom', 'Anya', 'Marcus', 'Lola', 'Ibrahim', 'Clara', 'Jonas'];
+const LAST = ['Smith', 'Patel', 'Jones', 'Garcia', 'Chen', 'Brown', 'Kowalski', 'Okafor', 'Nguyen', 'Murphy', 'Rossi', 'Silva', 'Taylor', 'Khan', 'Müller', 'Dubois', 'Tanaka', 'Wilson', 'Evans', 'Novak', 'Hughes', 'Larsen', 'Moreno', 'Ahmed', 'Walsh', 'Kim', 'Clarke', 'Haddad', 'Fischer', 'Byrne', 'Costa', 'Ward', 'Ito', 'Reid', 'Mensah', 'Price', 'Lopez', 'Sato', 'Bell', 'Ortiz'];
+
+const STAR_REQ = {
+  2: { rating: 3.3, guests: 25, rooms: 10, staff: 3, deluxe: 2, suite: 0, fac: { restaurant: 1 } },
+  3: { rating: 3.7, guests: 80, rooms: 20, staff: 6, deluxe: 4, suite: 0, fac: { restaurant: 2, gym: 1 } },
+  4: { rating: 4.1, guests: 180, rooms: 30, staff: 10, deluxe: 6, suite: 2, fac: { restaurant: 2, gym: 1, pool: 1, bar: 1 } },
+  5: { rating: 4.5, guests: 350, rooms: 40, staff: 15, deluxe: 8, suite: 5, fac: { restaurant: 3, gym: 2, pool: 2, bar: 1, spa: 1, conference: 1 } },
+};
+const INSPECTION_FEE = 500;
+
+const ISSUES = {
+  ac: { text: "The air conditioning isn't working!", label: 'Broken air con', icon: '🥵', repair: true },
+  shower: { text: 'There is no hot water in the shower.', label: 'Cold shower', icon: '🚿', repair: true },
+  tv: { text: 'The TV won\'t turn on.', label: 'Broken TV', icon: '📺', repair: true },
+  leak: { text: 'Water is dripping from the ceiling!', label: 'Leaking pipe', icon: '💧', repair: true },
+  noise: { text: 'The room next door is so noisy!', label: 'Noisy neighbours', icon: '🔊', repair: false },
+  wifi: { text: 'The Wi-Fi keeps dropping out.', label: 'Slow Wi-Fi', icon: '📶', repair: false },
+  dusty: { text: 'My room looks tired and dusty.', label: 'Shabby room', icon: '🕸️', repair: false },
+  cold: { text: 'My food arrived cold!', label: 'Cold food', icon: '🥶', repair: false },
+};
+
+const NOTES = {
+  quickCheckin: [8, 'Check-in was quick and friendly.'],
+  upgraded: [10, 'We got a free upgrade. Amazing!'],
+  luxury: [6, 'The room was gorgeous.'],
+  goodValue: [6, 'Great value for money.'],
+  fastFood: [6, 'Room service arrived super fast.'],
+  greatFood: [6, 'The food was delicious.'],
+  pool: [5, 'Loved the swimming pool!'],
+  gym: [3, 'Great gym, I worked out every day.'],
+  spa: [7, 'The spa was pure bliss.'],
+  bar: [4, 'Amazing cocktails at the rooftop bar.'],
+  conference: [3, 'Our meeting went perfectly.'],
+  parking: [2, 'Easy parking right next door.'],
+  handled: [8, 'The staff fixed our problem straight away.'],
+  concierge: [4, 'The concierge was so helpful.'],
+  quickOut: [3, 'Checking out was a breeze.'],
+  longWait: [-14, 'We waited ages at reception.'],
+  downgraded: [-15, "We didn't get the room we wanted."],
+  slowFood: [-12, 'Our food order never arrived.'],
+  coldFood: [-6, 'The food was cold.'],
+  broken: [-10, 'Things were broken in our room.'],
+  ignored: [-14, 'Nobody cared about our complaint.'],
+  overpriced: [-10, 'Way too expensive for what you get.'],
+  shabby: [-8, 'The room looked tired and worn.'],
+  missing: [-4, 'Wish they had more facilities.'],
+  lateOut: [-8, 'Checking out took forever.'],
+  noise: [-6, 'It was really noisy at night.'],
+  power: [-6, 'There was a power cut during our stay.'],
+};
+
+const MARKETING = [
+  { id: 'flyers', name: 'Flyers around town', icon: '📰', cost: 300, days: 2, boost: 0.2, star: 1 },
+  { id: 'social', name: 'Social media ads', icon: '📱', cost: 900, days: 3, boost: 0.35, star: 1 },
+  { id: 'travel', name: 'Travel website listing', icon: '🌍', cost: 2200, days: 5, boost: 0.45, star: 2 },
+  { id: 'tv', name: 'TV advert', icon: '📺', cost: 5500, days: 4, boost: 0.8, star: 3 },
+];
+
+/* =====================================================================
+   STATE
+   ===================================================================== */
+let S = null;        // the whole saved game
+let ui = { tab: 'desk', selRoom: null, modal: null, title: true, sound: store.get('hh-sound') !== '0', pointer: false };
+let uid = 1;
+const nid = () => S.nextId++;
+
+function newGame(name) {
+  S = {
+    v: 1, name: (name || 'The Grand Isla').slice(0, 28), nextId: 1,
+    day: 1, minute: 8 * 60, speed: 1, paused: false,
+    money: 6000, stars: 1, guestsServed: 0, rating: 3, reviews: [],
+    rooms: [], floors: 2, prices: { standard: 90, deluxe: 165, suite: 330 },
+    fac: { restaurant: 1, gym: 0, parking: 0, pool: 0, bar: 0, spa: 0, conference: 0 },
+    guests: [], staff: [], candidates: [], orders: [], complaints: [],
+    manager: null, bills: [], autopay: false, loan: 0, marketing: [],
+    effects: [], event: null, eventAt: -1, inspection: null, debtDays: 0,
+    today: blankDay(), history: [], won: false, menuOff: [],
+    tips: { first: true },
+  };
+  for (let f = 0; f < 2; f++) for (let i = 0; i < ROOMS_PER_FLOOR; i++) addRoom(f, i);
+  S.rooms[0].condition = 74; S.rooms[3].condition = 66; S.rooms[7].condition = 70;
+  rollCandidates();
+  planEvent();
+}
+function blankDay() {
+  return { rev: { rooms: 0, food: 0, facilities: 0, other: 0 }, exp: { wages: 0, food: 0, bills: 0, upkeep: 0, marketing: 0, repairs: 0, interest: 0, other: 0 }, capex: 0, guests: 0, left: 0, reviews: [], checkins: 0 };
+}
+function addRoom(floor, idx, type = 'standard') {
+  const r = { id: nid(), floor, idx, label: `${floor + 1}0${idx + 1}`, type, decor: 1, state: 'clean', condition: ri(78, 92), guestId: null, issue: null, job: null };
+  S.rooms.push(r);
+  return r;
+}
+const roomById = (id) => S.rooms.find((r) => r.id === id);
+const guestById = (id) => S.guests.find((g) => g.id === id);
+const staffById = (id) => S.staff.find((s) => s.id === id);
+const abs = () => (S.day - 1) * 1440 + S.minute;
+const hour = () => Math.floor(S.minute / 60);
+const effect = (k) => S.effects.find((e) => e.key === k);
+const staffOf = (role) => S.staff.filter((s) => s.role === role && !s.sick);
+const maxFloors = () => [0, 5, 6, 7, 8, 10][S.stars];
+const floorCost = () => Math.round(8000 * Math.pow(1.32, S.floors - 2) / 100) * 100;
+const facCount = () => FAC_ORDER.reduce((n, k) => n + (k === 'restaurant' ? 0 : (S.fac[k] ? 1 : 0)), 0);
+function fairPrice(type) {
+  const avgDecor = (() => { const rs = S.rooms.filter((r) => r.type === type); return rs.length ? rs.reduce((a, r) => a + r.decor, 0) / rs.length : 1; })();
+  return Math.round(ROOM_TYPES[type].base * (1 + 0.22 * (S.stars - 1)) * (1 + 0.06 * (avgDecor - 1)) * (1 + 0.03 * facCount()) / 5) * 5;
+}
+function typesInHotel() { return TYPE_ORDER.filter((t) => S.rooms.some((r) => r.type === t)); }
+
+/* =====================================================================
+   SOUND (tiny synth, no files)
+   ===================================================================== */
+let actx = null;
+function beep(kind) {
+  if (!ui.sound) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    const seq = { ding: [[1320, 0, .12], [1760, .09, .2]], cash: [[880, 0, .07], [1175, .06, .07], [1568, .12, .16]], bad: [[220, 0, .2], [180, .15, .25]], click: [[660, 0, .04]], star: [[523, 0, .15], [659, .12, .15], [784, .24, .15], [1047, .36, .4]], pop: [[990, 0, .06]] }[kind] || [[600, 0, .05]];
+    const t0 = actx.currentTime;
+    seq.forEach(([f, d, len]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = kind === 'bad' ? 'sawtooth' : 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0 + d); g.gain.exponentialRampToValueAtTime(kind === 'bad' ? 0.05 : 0.12, t0 + d + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + len);
+      o.connect(g); g.connect(actx.destination); o.start(t0 + d); o.stop(t0 + d + len + 0.05);
+    });
+  } catch (e) {}
+}
+
+/* =====================================================================
+   GUESTS
+   ===================================================================== */
+function makeGuest(kindKey, opts = {}) {
+  const k = KINDS[kindKey];
+  const avail = typesInHotel();
+  let want;
+  if (opts.want) want = opts.want;
+  else {
+    const r = Math.random(); want = r < k.want[0] ? 'standard' : r < k.want[0] + k.want[1] ? 'deluxe' : 'suite';
+    if (!avail.includes(want)) want = avail.filter((t) => TYPE_ORDER.indexOf(t) <= TYPE_ORDER.indexOf(want)).pop() || 'standard';
+  }
+  const g = {
+    id: nid(), kind: kindKey, name: opts.name || `${pick(FIRST)} ${pick(LAST)}`, em: opts.em || pick(k.em),
+    want, nights: opts.nights || ri(k.nights[0], k.nights[1]), budget: k.budget * rnd(0.85, 1.25),
+    mood: 68 + ri(-6, 6), status: 'queue', arrived: abs(), patience: opts.patience || ri(70, 120),
+    roomId: null, checkoutDay: 0, leaveMin: 0, bill: [], notes: {}, car: chance(k.car), used: {}, discount: false,
+    vip: !!opts.vip || kindKey === 'vip', inspector: !!opts.inspector, critic: !!opts.critic, celebrity: !!opts.celebrity, by: null,
+  };
+  if (g.inspector) { g.name = opts.name; g.mood -= 6; g.patience = 80; }
+  return g;
+}
+function addNote(g, key) {
+  if (g.notes[key]) return;
+  g.notes[key] = 1;
+  g.mood = clamp(g.mood + NOTES[key][0], 0, 100);
+}
+function nudge(g, d) { g.mood = clamp(g.mood + d, 0, 100); }
+
+function demandPerDay() {
+  const rooms = S.rooms.length;
+  let d = (3 + rooms * 0.62) * (0.55 + (S.rating / 5) * 0.65) * (1 + 0.12 * (S.stars - 1));
+  d *= 1 + S.marketing.reduce((a, m) => a + MARKETING.find((x) => x.id === m.id).boost, 0);
+  if (S.fac.parking) d *= 1 + 0.07 * S.fac.parking;
+  // price: cheaper than fair = more demand
+  const types = typesInHotel();
+  const ratio = types.reduce((a, t) => a + S.prices[t] / fairPrice(t), 0) / types.length;
+  d *= clamp(1.75 - 0.75 * ratio, 0.25, 1.5);
+  if (effect('festival')) d *= 1.5;
+  if (effect('storm')) d *= 0.55;
+  if (effect('viral')) d *= 1.3;
+  return d;
+}
+function spawnArrivals() {
+  const h = hour();
+  if (h < 9 || h >= 23) return;
+  const weight = h >= 12 && h < 20 ? 1.3 : h >= 20 ? 0.6 : 0.8; // averages about 1 across 9am-11pm
+  const p = (demandPerDay() / (14 * 60)) * weight;
+  if (chance(p)) {
+    const pool = Object.entries(KINDS).filter(([, k]) => S.stars >= k.star);
+    let tot = pool.reduce((a, [, k]) => a + k.w, 0), r = Math.random() * tot, key = pool[0][0];
+    for (const [kk, k] of pool) { r -= k.w; if (r <= 0) { key = kk; break; } }
+    if (effect('heatwave') && chance(0.3)) key = 'family';
+    arrive(makeGuest(key));
+  }
+}
+function arrive(g) {
+  if (S.guests.filter((x) => x.status === 'queue').length >= 12 && !g.inspector && !g.celebrity) return; // lobby is full, they walk past
+  S.guests.push(g);
+  if (g.inspector) toast('🧐', `The hotel inspector ${g.name} has arrived! Check them in to your best room.`, 'good');
+  else if (g.celebrity) toast('🌟', `${g.name} is at the front desk!`, 'good');
+}
+function bestRoomFor(g) {
+  const free = S.rooms.filter((r) => r.state === 'clean' && !r.issue && !r.guestId);
+  if (!free.length) return null;
+  const wi = TYPE_ORDER.indexOf(g.want);
+  const byFit = (r) => { const ti = TYPE_ORDER.indexOf(r.type); return (ti === wi ? 0 : ti > wi ? 10 + (ti - wi) : 30 + (wi - ti)) - r.condition / 200 - r.decor / 20; };
+  if (g.inspector) return free.sort((a, b) => (TYPE_ORDER.indexOf(b.type) - TYPE_ORDER.indexOf(a.type)) || (b.condition + b.decor * 10 - a.condition - a.decor * 10))[0];
+  return free.sort((a, b) => byFit(a) - byFit(b))[0];
+}
+function freeRooms() { return S.rooms.filter((r) => r.state === 'clean' && !r.issue && !r.guestId); }
+
+function checkIn(g, room, byStaff) {
+  if (!g || g.status !== 'queue' || !room || room.state !== 'clean' || room.issue || room.guestId) return false;
+  const wi = TYPE_ORDER.indexOf(g.want), ti = TYPE_ORDER.indexOf(room.type);
+  const rateType = ti >= wi ? g.want : room.type;
+  const rate = g.groupRate || S.prices[rateType];
+  g.status = 'staying'; g.roomId = room.id; g.by = null;
+  room.state = 'occupied'; room.guestId = g.id;
+  g.checkoutDay = S.day + g.nights; g.leaveMin = ri(7 * 60, 11 * 60 + 30);
+  g.bill.push({ label: `${ROOM_TYPES[room.type].name} room ${room.label} × ${plural(g.nights, 'night')}`, amount: rate * g.nights, kind: 'rooms' });
+  if (g.car && S.fac.parking) { g.bill.push({ label: `Parking × ${plural(g.nights, 'night')}`, amount: FAC.parking.fee * g.nights, kind: 'facilities' }); addNote(g, 'parking'); }
+  const waited = abs() - g.arrived;
+  if (waited < 25) addNote(g, 'quickCheckin'); else if (waited > 75) addNote(g, 'longWait');
+  if (ti > wi) addNote(g, 'upgraded'); else if (ti < wi) addNote(g, 'downgraded');
+  // comfort, condition and value for money
+  nudge(g, ROOM_TYPES[room.type].comfort * 0.6 + (room.decor - 1) * 4 + (room.condition - 72) / 5);
+  if (room.type !== 'standard' && room.decor >= 2) addNote(g, 'luxury');
+  if (room.condition < 45) addNote(g, 'shabby');
+  const ratio = rate / fairPrice(rateType) / clamp(g.budget, 0.5, 2.5);
+  if (ratio > 1.35) addNote(g, 'overpriced'); else if (ratio < 0.9) addNote(g, 'goodValue');
+  nudge(g, -(S.stars - 1) * 3); // higher stars, higher expectations
+  const likes = KINDS[g.kind].likes;
+  if (likes.some((f) => !S.fac[f])) addNote(g, 'missing');
+  S.today.checkins++;
+  beep('ding');
+  pop(roomEl(room.id), '🔑', '');
+  toast(g.em, `${g.name} checked in to room ${room.label}${byStaff ? ` (by ${byStaff.name.split(' ')[0]})` : ''}.`);
+  if (ti < wi && chance(0.5)) addComplaint(g, 'downgraded');
+  if (g.critic) addOrder(g, true);
+  return true;
+}
+function checkOut(g, byStaff) {
+  if (!g || g.status !== 'checkout') return;
+  const room = roomById(g.roomId);
+  const waited = abs() - g.checkoutAt;
+  if (waited < 20) addNote(g, 'quickOut'); else if (waited > 90) addNote(g, 'lateOut');
+  let total = g.bill.reduce((a, b) => a + b.amount, 0);
+  let paidShare = 1;
+  if (g.mood < 15 && chance(0.5)) { paidShare = 0.5; toast('😠', `${g.name} refused to pay the full bill!`, 'bad'); }
+  const paid = Math.round(total * paidShare);
+  S.money += paid;
+  for (const b of g.bill) S.today.rev[b.kind] = (S.today.rev[b.kind] || 0) + b.amount * paidShare;
+  if (room) {
+    room.state = 'dirty'; room.guestId = null; room.condition = clamp(room.condition - ri(2, 5) - g.nights, 0, 100);
+    pop(roomEl(room.id), `+${money(paid)}`, '');
+  }
+  S.guestsServed++; S.today.guests++;
+  const rv = writeReview(g);
+  // remove the guest's leftover orders and complaints
+  S.orders = S.orders.filter((o) => o.guestId !== g.id);
+  S.complaints = S.complaints.filter((c) => c.guestId !== g.id);
+  S.guests = S.guests.filter((x) => x !== g);
+  beep('cash');
+  toast('💰', `${g.name} checked out and paid ${money(paid)}. ${'★'.repeat(rv.stars)}${byStaff ? '' : ''}`, 'good');
+  if (g.inspector) finishInspection(g, rv);
+}
+function guestLeaves(g, why) {
+  S.guests = S.guests.filter((x) => x !== g);
+  S.today.left++;
+  if (g.inspector) { S.inspection = null; toast('🧐', 'The inspector got tired of waiting and left. Inspection failed.', 'bad'); showModal({ icon: '🧐', title: 'Inspection failed', body: '<p>The hotel inspector waited too long at the front desk and walked out. You can request a new inspection when you are ready.</p>', acts: [['OK', 'gold', closeModal]] }); return; }
+  toast('😤', `${g.name} ${why}`, 'bad');
+  beep('bad');
+  if (chance(0.45)) {
+    const rv = { id: nid(), name: g.name, em: g.em, day: S.day, stars: chance(0.6) ? 1 : 2, title: 'Never even got a room', text: 'Stood in the lobby for ages and nobody helped us. We went somewhere else.', kind: g.kind };
+    pushReview(rv);
+  }
+}
+function writeReview(g) {
+  let mood = g.mood;
+  if (g.inspector) mood -= 4;
+  let stars = clamp(Math.round(mood / 20 + rnd(-0.35, 0.35) + 0.15), 1, 5);
+  const pos = Object.keys(g.notes).filter((k) => NOTES[k][0] > 0), neg = Object.keys(g.notes).filter((k) => NOTES[k][0] < 0);
+  const titles = { 5: ['Absolutely perfect!', 'Best hotel in town!', 'Five stars, no question', 'We will be back!'], 4: ['Really lovely stay', 'Great hotel', 'Very happy', 'Would recommend'], 3: ['It was okay', 'Not bad, not great', 'Average stay', 'Fine for a night'], 2: ['Disappointing', 'Expected more', 'Needs work', 'Not impressed'], 1: ['Never again!', 'Terrible stay', 'Avoid!', 'What a nightmare'] };
+  const parts = [];
+  const pp = pos.sort(() => Math.random() - 0.5), nn = neg.sort(() => Math.random() - 0.5);
+  if (stars >= 4) { parts.push(...pp.slice(0, 2).map((k) => NOTES[k][1])); if (nn[0]) parts.push('Only thing: ' + NOTES[nn[0]][1].charAt(0).toLowerCase() + NOTES[nn[0]][1].slice(1)); }
+  else if (stars === 3) { if (pp[0]) parts.push(NOTES[pp[0]][1]); if (nn[0]) parts.push('But ' + NOTES[nn[0]][1].charAt(0).toLowerCase() + NOTES[nn[0]][1].slice(1)); }
+  else { parts.push(...nn.slice(0, 2).map((k) => NOTES[k][1])); if (pp[0] && stars === 2) parts.push('At least: ' + NOTES[pp[0]][1].charAt(0).toLowerCase() + NOTES[pp[0]][1].slice(1)); }
+  if (!parts.length) parts.push(stars >= 4 ? 'Comfy bed and a nice room.' : stars === 3 ? 'Nothing special, but the bed was comfy.' : 'Not what we hoped for.');
+  const rv = { id: nid(), name: g.name, em: g.em, day: S.day, stars, title: pick(titles[stars]), text: parts.join(' '), kind: g.kind, inspector: g.inspector, critic: g.critic, celeb: g.celebrity };
+  if (g.critic) rv.title = (stars >= 4 ? 'Critic: ' : 'Critic: ') + rv.title;
+  pushReview(rv);
+  if (g.critic || g.celebrity) pushReview(Object.assign({}, rv, { id: nid() })); // their voice counts double
+  return rv;
+}
+function pushReview(rv) {
+  S.reviews.unshift(rv);
+  if (S.reviews.length > 80) S.reviews.length = 80;
+  S.today.reviews.push(rv.stars);
+  recalcRating();
+}
+function recalcRating() {
+  const recent = S.reviews.slice(0, 40);
+  const prior = 4, priorVal = 3;
+  S.rating = Math.round(((recent.reduce((a, r) => a + r.stars, 0) + prior * priorVal) / (recent.length + prior)) * 100) / 100;
+}
+
+/* =====================================================================
+   COMPLAINTS
+   ===================================================================== */
+function addComplaint(g, issue) {
+  if (!g || g.status !== 'staying') return;
+  if (S.complaints.some((c) => c.guestId === g.id && c.issue === issue)) return;
+  const def = ISSUES[issue] || { text: "We didn't get the room type we asked for.", label: 'Wrong room type', icon: '😒', repair: false };
+  S.complaints.push({ id: nid(), guestId: g.id, roomId: g.roomId, issue, text: def.text, label: def.label, icon: def.icon, repair: !!def.repair, at: abs(), limit: 120, by: null });
+  nudge(g, -4);
+  beep('bad');
+  toast(def.icon, `Complaint from room ${roomById(g.roomId) ? roomById(g.roomId).label : '?'}: ${def.label}`, 'bad');
+}
+function resolveComplaint(c, how, staff) {
+  const g = guestById(c.guestId);
+  S.complaints = S.complaints.filter((x) => x !== c);
+  if (!g) return;
+  if (how === 'apologise') { if (chance(0.55)) { nudge(g, 6); toast('🙏', `${g.name.split(' ')[0]} accepted your apology.`); } else { nudge(g, -5); toast('😒', `${g.name.split(' ')[0]} wasn't impressed by the apology.`, 'bad'); } }
+  if (how === 'meal') { spend(30, 'other'); nudge(g, 12); addNote(g, 'handled'); toast('🍰', `Sent ${g.name.split(' ')[0]} a free treat.`); }
+  if (how === 'discount') { const room = g.bill.filter((b) => b.kind === 'rooms').reduce((a, b) => a + b.amount, 0); g.bill.push({ label: '20% apology discount', amount: -Math.round(room * 0.2), kind: 'rooms' }); g.discount = true; nudge(g, 22); addNote(g, 'handled'); toast('💸', `Gave ${g.name.split(' ')[0]} 20% off their room.`); }
+  if (how === 'fixed') { nudge(g, 10); addNote(g, 'handled'); }
+  if (how === 'concierge') { nudge(g, 12); addNote(g, 'handled'); addNote(g, 'concierge'); toast('🛎️', `${staff.name.split(' ')[0]} calmed down ${g.name.split(' ')[0]}.`); }
+  beep('click');
+}
+function breakRoom(room, issue) {
+  if (room.issue) return;
+  room.issue = issue;
+  const g = room.guestId && guestById(room.guestId);
+  if (g) { addNote(g, 'broken'); addComplaint(g, issue); }
+}
+function repairRoom(room) {
+  if (!room.issue) return;
+  room.issue = null;
+  room.condition = clamp(room.condition + 6, 0, 100);
+  sparkle(room.id, '🔧');
+  const c = S.complaints.find((x) => x.roomId === room.id && x.repair);
+  if (c) resolveComplaint(c, 'fixed');
+  toast('🔧', `Room ${room.label} is fixed.`, 'good');
+}
+
+/* =====================================================================
+   RESTAURANT
+   ===================================================================== */
+function menuNow() { return MENU.filter((d) => d.lvl <= S.fac.restaurant && !S.menuOff.includes(d.id)); }
+function addOrder(g, critic) {
+  const menu = menuNow();
+  if (!menu.length) return;
+  const rich = g.budget * KINDS[g.kind].spend;
+  const sorted = menu.slice().sort((a, b) => a.price - b.price);
+  const dish = critic ? sorted[sorted.length - 1] : sorted[clamp(Math.floor(Math.random() * sorted.length * clamp(rich * 0.8, 0.3, 1)), 0, sorted.length - 1)];
+  const qty = g.kind === 'family' ? ri(2, 4) : g.kind === 'couple' || g.kind === 'senior' ? 2 : 1;
+  S.orders.push({ id: nid(), guestId: g.id, dish: dish.id, qty, status: 'new', at: abs(), readyAt: 0, job: 0, by: null, where: chance(0.5) ? 'room' : 'table', critic: !!critic });
+}
+function orderTotal(o) { const d = MENU.find((x) => x.id === o.dish); return d.price * o.qty; }
+function cookTime(o, skill) { const d = MENU.find((x) => x.id === o.dish); return Math.round((d.time + o.qty * 3) / speedFor(skill)); }
+function startCooking(o, who) {
+  const d = MENU.find((x) => x.id === o.dish);
+  const cost = Math.round(d.price * o.qty * FOOD_COST * (effect('supplier') ? 0.7 : 1));
+  spend(cost, 'food');
+  o.status = 'cooking'; o.by = who;
+}
+function finishCooking(o, skill) {
+  o.status = 'ready'; o.readyAt = abs(); o.by = null; o.quality = skill;
+}
+function deliverOrder(o) {
+  const g = guestById(o.guestId);
+  S.orders = S.orders.filter((x) => x !== o);
+  if (!g) return;
+  const d = MENU.find((x) => x.id === o.dish);
+  const wait = abs() - o.at, cold = abs() - o.readyAt > 30;
+  g.bill.push({ label: `${d.name}${o.qty > 1 ? ' × ' + o.qty : ''}`, amount: d.price * o.qty, kind: 'food' });
+  if (wait < 30) addNote(g, 'fastFood'); else if (wait > 60) nudge(g, -4);
+  if (cold) { addNote(g, 'coldFood'); if (chance(0.4)) addComplaint(g, 'cold'); }
+  else if ((o.quality || 3) >= 3 && chance(0.25 + 0.12 * (o.quality || 3))) addNote(g, 'greatFood');
+  nudge(g, 3);
+  if (o.critic) {
+    const good = wait < 45 && !cold && (o.quality || 3) >= 3;
+    if (good) { pushReview({ id: nid(), name: 'City Food Guide', em: '📝', day: S.day, stars: 5, title: 'A hidden gem!', text: `The ${d.name.toLowerCase()} was superb and service was quick. Highly recommended.`, kind: 'critic', critic: true }); toast('📝', 'The food critic loved their meal! A 5-star write-up is out.', 'good'); }
+    else { pushReview({ id: nid(), name: 'City Food Guide', em: '📝', day: S.day, stars: 2, title: 'Room for improvement', text: `Our ${d.name.toLowerCase()} was ${cold ? 'cold' : 'slow to arrive'}. Disappointing.`, kind: 'critic', critic: true }); toast('📝', 'The food critic was not impressed...', 'bad'); }
+  }
+  pop(roomEl(g.roomId), d.icon, '');
+}
+
+/* =====================================================================
+   STAFF
+   ===================================================================== */
+function speedFor(skill) { return 0.55 + 0.15 * skill; }
+function makeCandidate(role) {
+  const skill = clamp(ri(1, 3) + (chance(0.15 + S.stars * 0.05) ? ri(1, 2) : 0), 1, 5);
+  const wage = Math.round(ROLES[role].wage * (0.7 + 0.15 * skill) * rnd(0.92, 1.1));
+  const tr = pick(TRAITS);
+  return { id: nid(), role, name: `${pick(FIRST)} ${pick(LAST)}`, skill, wage, trait: tr[0], tk: tr[1], em: ROLES[role].icon };
+}
+function rollCandidates() {
+  const roles = ROLE_ORDER.filter((r) => ROLES[r].star <= S.stars);
+  S.candidates = [];
+  // always one of the basics, then a mix
+  ['receptionist', 'housekeeper', 'chef', 'waiter', 'maintenance'].forEach((r) => S.candidates.push(makeCandidate(r)));
+  for (let i = 0; i < 2; i++) S.candidates.push(makeCandidate(pick(roles)));
+}
+function hire(c) {
+  if (S.money < c.wage) { toast('💸', 'You need at least one day of wages to hire.', 'bad'); return; }
+  if (c.role === 'therapist' && !S.fac.spa) { toast('💆', 'Build a Spa before hiring therapists.', 'bad'); return; }
+  S.candidates = S.candidates.filter((x) => x !== c);
+  S.staff.push({ id: c.id, role: c.role, name: c.name, skill: c.skill, wage: c.wage, trait: c.trait, tk: c.tk, em: c.em, morale: 75, energy: 100, job: null, rest: false, sick: false, hired: S.day, tired: false });
+  beep('ding');
+  toast(c.em, `${c.name} joined as ${ROLES[c.role].name}!`, 'good');
+}
+function fire(s) {
+  cancelJob(s);
+  spend(s.wage, 'wages');
+  S.staff = S.staff.filter((x) => x !== s);
+  toast('📦', `${s.name} has left (paid one day's notice).`);
+}
+function train(s) {
+  if (s.skill >= 5) return;
+  const cost = 250 * s.skill + 150;
+  if (!pay(cost, 'other')) return;
+  s.skill++; s.wage = Math.round(s.wage * 1.12); s.morale = clamp(s.morale + 10, 0, 100);
+  beep('star');
+  toast('🎓', `${s.name} trained up to skill ${s.skill}!`, 'good');
+}
+function raise(s) { s.wage = Math.round(s.wage * 1.1); s.morale = clamp(s.morale + 22, 0, 100); toast('💵', `${s.name.split(' ')[0]} is thrilled with the pay rise!`, 'good'); }
+function cancelJob(s) {
+  const j = s.job; if (!j) return;
+  if (j.kind === 'clean') { const r = roomById(j.target); if (r && r.state === 'cleaning') { r.state = 'dirty'; r.job = null; } }
+  if (j.kind === 'repair' || j.kind === 'polish') { const r = roomById(j.target); if (r) r.job = null; }
+  if (j.kind === 'cook') { const o = S.orders.find((x) => x.id === j.target); if (o) { o.status = 'new'; o.by = null; } }
+  if (j.kind === 'deliver') { const o = S.orders.find((x) => x.id === j.target); if (o) { o.status = 'ready'; o.by = null; } }
+  if (j.kind === 'checkin' || j.kind === 'checkout') { const g = guestById(j.target); if (g) g.by = null; }
+  if (j.kind === 'complaint') { const c = S.complaints.find((x) => x.id === j.target); if (c) c.by = null; }
+  s.job = null;
+}
+function workSpeed(s) {
+  let sp = speedFor(s.skill) * (0.7 + 0.3 * s.morale / 100);
+  if (s.tk === 'speed') sp *= 1.15;
+  return sp;
+}
+function findJob(s) {
+  const tag = 's' + s.id;
+  switch (s.role) {
+    case 'receptionist': {
+      const out = S.guests.find((g) => g.status === 'checkout' && !g.by);
+      if (out) { out.by = tag; return { kind: 'checkout', target: out.id, t: 0, total: 12 }; }
+      const q = S.guests.filter((g) => g.status === 'queue' && !g.by).sort((a, b) => (b.inspector - a.inspector) || (b.vip - a.vip) || a.arrived - b.arrived);
+      if (q.length && freeRooms().length > S.guests.filter((g) => g.status === 'queue' && g.by).length) { q[0].by = tag; return { kind: 'checkin', target: q[0].id, t: 0, total: 14 }; }
+      return null;
+    }
+    case 'housekeeper': {
+      const r = S.rooms.find((x) => x.state === 'dirty' && !x.job);
+      if (r) { r.state = 'cleaning'; r.job = tag; return { kind: 'clean', target: r.id, t: 0, total: 45 }; }
+      return null;
+    }
+    case 'chef': {
+      const o = S.orders.filter((x) => x.status === 'new').sort((a, b) => (b.critic - a.critic) || a.at - b.at)[0];
+      if (o) { startCooking(o, tag); return { kind: 'cook', target: o.id, t: 0, total: cookTime(o, s.skill) * speedFor(s.skill) }; }
+      return null;
+    }
+    case 'waiter': {
+      const o = S.orders.filter((x) => x.status === 'ready').sort((a, b) => a.readyAt - b.readyAt)[0];
+      if (o) { o.status = 'delivering'; o.by = tag; return { kind: 'deliver', target: o.id, t: 0, total: 10 }; }
+      return null;
+    }
+    case 'maintenance': {
+      const r = S.rooms.filter((x) => x.issue && !x.job).sort((a, b) => (!!b.guestId - !!a.guestId))[0];
+      if (r) { r.job = tag; return { kind: 'repair', target: r.id, t: 0, total: 50 }; }
+      const p = S.rooms.filter((x) => !x.job && x.condition < 92 && x.state !== 'cleaning').sort((a, b) => a.condition - b.condition)[0];
+      if (p) { p.job = tag; return { kind: 'polish', target: p.id, t: 0, total: 40 }; }
+      return null;
+    }
+    case 'concierge': {
+      const c = S.complaints.find((x) => !x.by);
+      if (c) { c.by = tag; return { kind: 'complaint', target: c.id, t: 0, total: 18 }; }
+      return null;
+    }
+  }
+  return null;
+}
+function finishJob(s) {
+  const j = s.job; s.job = null;
+  if (j.kind === 'checkin') { const g = guestById(j.target); if (g && g.status === 'queue') { const r = bestRoomFor(g); if (r) checkIn(g, r, s); else g.by = null; } }
+  if (j.kind === 'checkout') { const g = guestById(j.target); if (g) checkOut(g, s); }
+  if (j.kind === 'clean') { const r = roomById(j.target); if (r) finishClean(r, s.skill + (s.tk === 'quality' ? 1 : 0)); }
+  if (j.kind === 'repair') { const r = roomById(j.target); if (r) { r.job = null; repairRoom(r); } }
+  if (j.kind === 'polish') { const r = roomById(j.target); if (r) { r.job = null; r.condition = clamp(r.condition + 4 + s.skill, 0, 100); } }
+  if (j.kind === 'cook') { const o = S.orders.find((x) => x.id === j.target); if (o) finishCooking(o, s.skill); }
+  if (j.kind === 'deliver') { const o = S.orders.find((x) => x.id === j.target); if (o) deliverOrder(o); }
+  if (j.kind === 'complaint') { const c = S.complaints.find((x) => x.id === j.target); if (c) { if (chance(0.5 + 0.1 * s.skill + (s.tk === 'charm' ? 0.1 : 0))) resolveComplaint(c, 'concierge', s); else { c.by = null; c.triedBy = true; const g = guestById(c.guestId); if (g) nudge(g, -2); } } }
+}
+function finishClean(r, quality) {
+  r.state = 'clean'; r.job = null;
+  if (quality >= 4) r.condition = clamp(r.condition + 2, 0, 100);
+  sparkle(r.id, '✨');
+  // a vacant room can turn out to be broken
+  if (!r.issue && chance(0.04 * (1 + (100 - r.condition) / 40) * (effect('heatwave') ? 1.6 : 1))) { r.issue = pick(['ac', 'shower', 'tv', 'leak']); toast('🔧', `Housekeeping found a ${ISSUES[r.issue].label.toLowerCase()} in room ${r.label}.`, 'bad'); }
+}
+function staffMinute() {
+  for (const s of S.staff) {
+    if (s.sick) continue;
+    if (s.role === 'therapist') { s.energy = clamp(s.energy + 0.05, 0, 100); continue; }
+    if (s.rest) { s.energy += 0.4; if (s.energy >= 70) { s.rest = false; } continue; }
+    if (!s.job) {
+      s.energy = clamp(s.energy + 0.12, 0, 100);
+      const h = hour();
+      if (h >= 6 || s.role !== 'maintenance') s.job = findJob(s);
+      continue;
+    }
+    s.job.t += workSpeed(s);
+    s.energy -= s.tk === 'energy' ? 0.05 : 0.08;
+    if (s.energy <= 8) { s.tired = true; }
+    if (s.job.t >= s.job.total) finishJob(s);
+    if (s.energy <= 8 && !s.job) { s.rest = true; }
+  }
+}
+
+/* =====================================================================
+   THE MANAGER (you!) can do one hands-on job at a time
+   ===================================================================== */
+const MGR_SPEED = 0.85;
+function mgrStart(kind, target) {
+  if (S.manager) { toast('👔', 'You are already busy. Finish or cancel your current job first.', 'bad'); return false; }
+  if (kind === 'clean') { const r = roomById(target); if (!r || r.state !== 'dirty') return false; r.state = 'cleaning'; r.job = 'm'; S.manager = { kind, target, t: 0, total: 55, label: `Cleaning room ${r.label}` }; }
+  if (kind === 'repair') { const r = roomById(target); if (!r || !r.issue || r.job) return false; r.job = 'm'; S.manager = { kind, target, t: 0, total: 70, label: `Fixing room ${r.label}` }; }
+  if (kind === 'cook') { const o = S.orders.find((x) => x.id === target); if (!o || o.status !== 'new') return false; startCooking(o, 'm'); S.manager = { kind, target, t: 0, total: cookTime(o, 3) * 1.1, label: `Cooking ${MENU.find((d) => d.id === o.dish).name}` }; }
+  if (kind === 'deliver') { const o = S.orders.find((x) => x.id === target); if (!o || o.status !== 'ready') return false; o.status = 'delivering'; o.by = 'm'; S.manager = { kind, target, t: 0, total: 12, label: `Delivering ${MENU.find((d) => d.id === o.dish).name}` }; }
+  beep('click');
+  return true;
+}
+function mgrCancel() {
+  const m = S.manager; if (!m) return;
+  if (m.kind === 'clean') { const r = roomById(m.target); if (r && r.state === 'cleaning') { r.state = 'dirty'; r.job = null; } }
+  if (m.kind === 'repair') { const r = roomById(m.target); if (r) r.job = null; }
+  if (m.kind === 'cook') { const o = S.orders.find((x) => x.id === m.target); if (o) { o.status = 'new'; o.by = null; } }
+  if (m.kind === 'deliver') { const o = S.orders.find((x) => x.id === m.target); if (o) { o.status = 'ready'; o.by = null; } }
+  S.manager = null;
+}
+function mgrMinute() {
+  const m = S.manager; if (!m) return;
+  m.t += MGR_SPEED;
+  if (m.t < m.total) return;
+  S.manager = null;
+  if (m.kind === 'clean') { const r = roomById(m.target); if (r) finishClean(r, 3); }
+  if (m.kind === 'repair') { const r = roomById(m.target); if (r) { r.job = null; repairRoom(r); } }
+  if (m.kind === 'cook') { const o = S.orders.find((x) => x.id === m.target); if (o) finishCooking(o, 3); }
+  if (m.kind === 'deliver') { const o = S.orders.find((x) => x.id === m.target); if (o) deliverOrder(o); }
+}
+function callContractor(room) {
+  if (!room.issue || room.job) return;
+  if (!pay(220, 'repairs')) return;
+  room.job = 'c';
+  S.effects.push({ key: 'contractor', room: room.id, at: abs() + 30, days: 99 });
+  toast('🚐', `A repair company is on the way to room ${room.label} (30 min).`);
+}
+
+/* =====================================================================
+   MONEY
+   ===================================================================== */
+function spend(n, kind) { S.money -= n; S.today.exp[kind] = (S.today.exp[kind] || 0) + n; }
+function pay(n, kind, capex) {
+  if (S.money < n) { toast('💸', `Not enough money. You need ${money(n)}.`, 'bad'); beep('bad'); return false; }
+  S.money -= n;
+  if (capex) S.today.capex += n; else S.today.exp[kind] = (S.today.exp[kind] || 0) + n;
+  beep('cash');
+  return true;
+}
+function payBill(b) {
+  if (b.paid) return;
+  if (S.money < b.amount) { toast('💸', `Not enough money to pay ${b.name}.`, 'bad'); return; }
+  S.money -= b.amount; S.today.exp.bills += b.amount; b.paid = true;
+  toast('🧾', `Paid ${b.name}: ${money(b.amount)}.`, 'good'); beep('cash');
+  S.bills = S.bills.filter((x) => !x.paid);
+}
+function issueBills() {
+  const d = S.day, n = S.rooms.length, facLv = FAC_ORDER.reduce((a, k) => a + S.fac[k], 0);
+  const add = (name, icon, amount) => S.bills.push({ id: nid(), name, icon, amount: Math.round(amount), issued: d, due: d + 3, paid: false, late: 0 });
+  if (d % 3 === 0) add('Electricity', '⚡', 120 + n * 13 + facLv * 45 + (effect('heatwave') ? 150 : 0));
+  if (d % 3 === 1) add('Water', '🚰', 60 + n * 8 + (S.fac.pool ? 120 * S.fac.pool : 0) + (S.fac.spa ? 90 : 0));
+  if (d % 2 === 0) add('Laundry service', '🧺', 40 + (S.today.guests + S.guests.filter((g) => g.status === 'staying').length) * 7);
+  if (d % 7 === 0) add('Property tax', '🏛️', 300 + n * 40 + facLv * 120);
+  if (S.autopay) for (const b of S.bills.slice()) if (S.money >= b.amount) payBill(b);
+}
+function hotelValue() { return S.rooms.reduce((a, r) => a + 2500 + ROOM_TYPES[r.type].cost + (r.decor - 1) * 800, 0) + FAC_ORDER.reduce((a, k) => a + FAC[k].cost.slice(0, S.fac[k]).reduce((x, y) => x + y, 0), 0); }
+function loanLimit() { return 10000 * S.stars + 5000; }
+
+/* =====================================================================
+   BUILDING & UPGRADES
+   ===================================================================== */
+function buildFloor() {
+  if (S.floors >= maxFloors()) { toast('🏗️', `Reach more stars to build higher (max ${maxFloors()} floors now).`, 'bad'); return; }
+  if (!pay(floorCost(), 'other', true)) return;
+  const f = S.floors++;
+  for (let i = 0; i < ROOMS_PER_FLOOR; i++) { const r = addRoom(f, i); r.condition = 100; }
+  toast('🏗️', `Floor ${f + 1} is open with 5 brand new rooms!`, 'good');
+  beep('star');
+  layoutChanged = true;
+}
+function upgradeRoom(r) {
+  const next = TYPE_ORDER[TYPE_ORDER.indexOf(r.type) + 1];
+  if (!next) return;
+  if (S.stars < ROOM_TYPES[next].star) { toast('⭐', `${ROOM_TYPES[next].name}s need a ${ROOM_TYPES[next].star}-star hotel.`, 'bad'); return; }
+  if (r.guestId || r.state === 'cleaning') { toast('🛏️', 'Wait until the room is empty and not being cleaned.', 'bad'); return; }
+  if (!pay(ROOM_TYPES[next].cost, 'other', true)) return;
+  r.type = next; r.condition = 100; r.decor = 1; r.state = 'clean';
+  sparkle(r.id, '🌟');
+  toast(ROOM_TYPES[next].icon, `Room ${r.label} is now a ${ROOM_TYPES[next].name}!`, 'good');
+}
+function refurbCost(r) { return Math.round(ROOM_TYPES[r.type].base * 6 * r.decor / 10) * 10; }
+function refurbish(r) {
+  if (r.decor >= 3) return;
+  if (r.guestId || r.state === 'cleaning') { toast('🛏️', 'Wait until the room is empty and not being cleaned.', 'bad'); return; }
+  if (!pay(refurbCost(r), 'other', true)) return;
+  r.decor++; r.condition = 100;
+  sparkle(r.id, '🎨');
+  toast('🎨', `Room ${r.label} has new decor (level ${r.decor}).`, 'good');
+}
+function facNextCost(k) { return FAC[k].cost[S.fac[k]]; }
+function buildFac(k) {
+  const lv = S.fac[k]; if (lv >= 3) return;
+  const need = FAC[k].star[lv];
+  if (S.stars < need) { toast('⭐', `Needs a ${need}-star hotel.`, 'bad'); return; }
+  if (!pay(FAC[k].cost[lv], 'other', true)) return;
+  S.fac[k]++;
+  beep('star');
+  toast(FAC[k].icon, lv === 0 ? `Your ${FAC[k].name} is open!` : `${FAC[k].name} upgraded to level ${S.fac[k]}!`, 'good');
+  layoutChanged = true;
+}
+function startMarketing(m) {
+  if (S.marketing.some((x) => x.id === m.id)) return;
+  if (S.stars < m.star) { toast('⭐', `Needs a ${m.star}-star hotel.`, 'bad'); return; }
+  if (S.money < m.cost) { toast('💸', `Not enough money. You need ${money(m.cost)}.`, 'bad'); return; }
+  spend(m.cost, 'marketing');
+  S.marketing.push({ id: m.id, days: m.days });
+  beep('cash');
+  toast(m.icon, `${m.name} running for ${plural(m.days, 'day')}. More guests are coming!`, 'good');
+}
+
+/* =====================================================================
+   STARS & INSPECTION
+   ===================================================================== */
+function reqStatus(star) {
+  const q = STAR_REQ[star]; if (!q) return null;
+  const count = (t) => S.rooms.filter((r) => TYPE_ORDER.indexOf(r.type) >= TYPE_ORDER.indexOf(t)).length;
+  const list = [
+    [`Guest rating ${q.rating.toFixed(1)}+`, S.rating >= q.rating, S.rating.toFixed(2)],
+    [`${q.guests} guests served`, S.guestsServed >= q.guests, S.guestsServed],
+    [`${q.rooms}+ rooms`, S.rooms.length >= q.rooms, S.rooms.length],
+    [`${q.staff}+ staff`, S.staff.length >= q.staff, S.staff.length],
+  ];
+  if (q.deluxe) list.push([`${q.deluxe} Deluxe or better rooms`, count('deluxe') >= q.deluxe, count('deluxe')]);
+  if (q.suite) list.push([`${q.suite} Suites`, count('suite') >= q.suite, count('suite')]);
+  for (const [k, lv] of Object.entries(q.fac)) list.push([`${FAC[k].name}${lv > 1 ? ' level ' + lv : ''}`, S.fac[k] >= lv, 'Lv ' + S.fac[k]]);
+  return { list, ok: list.every((x) => x[1]) };
+}
+function requestInspection() {
+  const st = reqStatus(S.stars + 1);
+  if (!st || !st.ok || S.inspection) return;
+  if (!pay(INSPECTION_FEE, 'other')) return;
+  S.inspection = { day: S.day, star: S.stars + 1 };
+  const g = makeGuest('business', { inspector: true, name: `Inspector ${pick(LAST)}`, em: '🧐', nights: 1 });
+  g.want = typesInHotel().slice(-1)[0];
+  arrive(g);
+  setTab('desk');
+}
+function finishInspection(g, rv) {
+  const target = S.inspection ? S.inspection.star : S.stars + 1;
+  S.inspection = null;
+  if (rv.stars >= 4) {
+    S.stars = Math.max(S.stars, target);
+    beep('star'); confetti();
+    const unlocks = [];
+    for (const k of FAC_ORDER) FAC[k].star.forEach((s, i) => { if (s === S.stars) unlocks.push(`${FAC[k].icon} ${FAC[k].name}${i ? ' level ' + (i + 1) : ''}`); });
+    for (const t of TYPE_ORDER) if (ROOM_TYPES[t].star === S.stars) unlocks.push(`${ROOM_TYPES[t].icon} ${ROOM_TYPES[t].name} rooms`);
+    for (const r of ROLE_ORDER) if (ROLES[r].star === S.stars) unlocks.push(`${ROLES[r].icon} ${ROLES[r].name}s`);
+    for (const m of MARKETING) if (m.star === S.stars) unlocks.push(`${m.icon} ${m.name}`);
+    unlocks.push(`🏗️ Build up to ${maxFloors()} floors`);
+    const win = S.stars >= 5 && !S.won;
+    if (win) S.won = true;
+    showModal({ icon: '⭐', title: win ? 'FIVE STARS! You did it!' : `${S.name} is now a ${S.stars}-star hotel!`, body: `<p>The inspector gave you <b>${'★'.repeat(rv.stars)}</b>. “${esc(rv.text)}”</p>${win ? '<p><b>Your hotel is one of the finest in the world.</b> Keep running it as long as you like!</p>' : ''}<p><b>Unlocked:</b></p><ul class="help">${unlocks.map((u) => `<li>${u}</li>`).join('')}</ul><p class="note">Guests now pay more, but they also expect more.</p>`, acts: [['Fantastic!', 'gold', closeModal]] });
+  } else {
+    showModal({ icon: '🧐', title: 'Inspection failed', body: `<p>The inspector only gave you <b>${'★'.repeat(rv.stars)}</b>. “${esc(rv.text)}”</p><p>Tips: give them your best clean room, check them in fast, fix broken things and keep the restaurant quick. You can try again any time.</p>`, acts: [['OK', 'gold', closeModal]] });
+  }
+}
+
+/* =====================================================================
+   RANDOM EVENTS
+   ===================================================================== */
+const EVENTS = [
+  { key: 'heatwave', w: 8, run() { addEffect('heatwave', 2); info('🌡️', 'Heatwave!', 'It is scorching for the next two days. Pool visits soar and air conditioners break more often.'); } },
+  { key: 'festival', w: 8, run() { addEffect('festival', 2); info('🎪', 'Music festival in town!', 'Expect lots more guests for the next two days. Make sure rooms are clean and ready.'); } },
+  { key: 'storm', w: 6, run() { addEffect('storm', 1); info('⛈️', 'Storm warning', 'A big storm keeps travellers at home. Fewer guests will arrive today.'); } },
+  { key: 'celebrity', w: 5, ok: () => S.stars >= 2, run() { const g = makeGuest('vip', { celebrity: true, name: pick(['Ziggy Starlight', 'Bella Monroe', 'DJ Thunder', 'Coco Vance', 'Rex Maverick', 'Luna Skye']), em: '🌟', nights: 2, patience: 100 }); g.want = typesInHotel().slice(-1)[0]; g.budget = 3; info('🌟', 'A celebrity is coming!', `<b>${g.name}</b> is on the way. Give them your best room and keep them happy. Their review counts double!`); arrive(g); } },
+  { key: 'outage', w: 6, run() { choice('⚡', 'Power cut!', 'The power just went out across the block. Rent an emergency generator?', [['Rent generator ($600)', 'gold', () => { if (pay(600, 'other')) toast('⚡', 'The generator is humming. Guests barely noticed.', 'good'); else hit(); }], ['Wait it out', 'ghost', hit]]); function hit() { S.guests.filter((g) => g.status === 'staying').forEach((g) => addNote(g, 'power')); toast('🕯️', 'Guests are grumbling in the dark...', 'bad'); } } },
+  { key: 'leak', w: 6, run() { const r = pick(S.rooms.filter((x) => !x.issue)); if (!r) return; breakRoom(r, 'leak'); info('💧', 'Burst pipe!', `Water is pouring through the ceiling of room ${r.label}. Get it fixed fast!`); } },
+  { key: 'viral', w: 5, ok: () => S.rating >= 3.4, run() { addEffect('viral', 2); pushReview({ id: nid(), name: '@travelwithtia', em: '🤳', day: S.day, stars: 5, title: 'Obsessed with this place!', text: 'My video of this hotel got a million views. Go!', kind: 'influencer' }); info('🤳', 'You went viral!', 'An influencer posted a video of your hotel and everyone wants to stay. Bookings are up!'); } },
+  { key: 'sick', w: 6, ok: () => S.staff.length > 0, run() { const s = pick(S.staff); cancelJob(s); s.sick = true; info('🤒', 'Staff sick day', `${s.name} (${ROLES[s.role].name}) called in sick today.`); } },
+  { key: 'conference', w: 6, run() { const n = Math.min(4, freeRooms().length); if (n < 2) return; const each = Math.round(S.prices.standard * 1.3); choice('💼', 'Group booking', `A company wants ${n} rooms tonight for their team, paying ${money(each)} per room. They will arrive within the hour.`, [['Accept', 'gold', () => { for (let i = 0; i < n; i++) { const g = makeGuest('business', { want: 'standard', nights: 1, patience: 130 }); g.groupRate = each; arrive(g); } toast('💼', 'The team is heading over!', 'good'); }], ['Decline', 'ghost', () => {}]]); } },
+  { key: 'health', w: 5, run() { const chefs = staffOf('chef'); const sk = chefs.length ? chefs.reduce((a, c) => a + c.skill, 0) / chefs.length : 1; const pass = sk + S.fac.restaurant * 0.5 >= 3; if (pass) { S.money += 300; S.today.rev.other += 300; info('🧑‍⚕️', 'Health inspection: passed!', 'The kitchen was spotless. The city gave you a $300 hygiene award.'); } else { spend(400, 'other'); info('🧑‍⚕️', 'Health inspection: fined', 'The inspector was not impressed by the kitchen. You were fined $400. Skilled chefs and a better restaurant help.'); } } },
+  { key: 'payrise', w: 5, ok: () => S.staff.length >= 3, run() { const total = S.staff.reduce((a, s) => a + s.wage, 0); choice('✊', 'Staff want a pay rise', `Your team is asking for 10% more pay (+${money(total * 0.1)} a day).`, [['Give the rise', 'gold', () => S.staff.forEach((s) => { s.wage = Math.round(s.wage * 1.1); s.morale = clamp(s.morale + 25, 0, 100); })], ['Say no', 'ghost', () => S.staff.forEach((s) => { s.morale = clamp(s.morale - 20, 0, 100); })]]); } },
+  { key: 'bus', w: 6, run() { info('🚌', 'Tour bus!', 'A tour bus just pulled up outside. Get ready for a crowd!'); const n = ri(4, 6); for (let i = 0; i < n; i++) arrive(makeGuest('tourist', { patience: 110 })); } },
+  { key: 'award', w: 3, ok: () => S.rating >= 4, run() { S.money += 1500; S.today.rev.other += 1500; info('🏆', 'Tourism award!', 'The city tourism board named you Hotel of the Month. Here is $1,500 in prize money!'); } },
+  { key: 'supplier', w: 5, run() { addEffect('supplier', 3); info('🚚', 'Supplier deal', 'Your food supplier is giving you 30% off ingredients for three days.'); } },
+  { key: 'critic', w: 5, run() { const g = makeGuest('couple', { critic: true, nights: 1 }); g.name = `${pick(FIRST)} ${pick(LAST)}`; info('📝', 'A food critic is in town', 'Word is a famous food critic is checking in today, disguised as a normal guest. When they order, cook it fast!'); arrive(g); } },
+  { key: 'wedding', w: 4, ok: () => S.stars >= 2, run() { const fee = 1200 + S.stars * 600; choice('💒', 'Wedding party', `A couple wants to hold their wedding dinner in your restaurant tomorrow for ${money(fee)}. It costs ${money(fee * 0.35)} to prepare.`, [['Book it', 'gold', () => { if (pay(Math.round(fee * 0.35), 'food')) { addEffect('wedding', 1, { fee }); toast('💒', 'Wedding booked for tomorrow!', 'good'); } }], ['No thanks', 'ghost', () => {}]]); } },
+];
+function addEffect(key, days, extra) { S.effects = S.effects.filter((e) => e.key !== key); S.effects.push(Object.assign({ key, days }, extra || {})); }
+function planEvent() { S.eventAt = chance(0.75) ? ri(9 * 60, 18 * 60) : -1; }
+function fireEvent() {
+  const pool = EVENTS.filter((e) => !e.ok || e.ok());
+  let tot = pool.reduce((a, e) => a + e.w, 0), r = Math.random() * tot;
+  for (const e of pool) { r -= e.w; if (r <= 0) { e.run(); return; } }
+}
+
+/* =====================================================================
+   SIMULATION: one game minute
+   ===================================================================== */
+let layoutChanged = true;
+function stepMinute() {
+  S.minute++;
+  if (S.minute >= 1440) { endOfDay(); return; }
+  const m = S.minute, h = hour(), now = abs();
+  spawnArrivals();
+
+  // guests
+  for (const g of S.guests.slice()) {
+    if (g.status === 'queue') {
+      if (now - g.arrived > g.patience && !g.by) guestLeaves(g, 'gave up waiting and left.');
+      else if ((now - g.arrived) % 15 === 0 && now - g.arrived > 30) nudge(g, -1);
+    } else if (g.status === 'staying') {
+      if (S.day === g.checkoutDay && m >= g.leaveMin) { g.status = 'checkout'; g.checkoutAt = now; }
+      else if (S.day > g.checkoutDay) { g.status = 'checkout'; g.checkoutAt = now; }
+    } else if (g.status === 'checkout') {
+      const w = now - g.checkoutAt;
+      if (w > 0 && w % 20 === 0 && w > 30) nudge(g, -2);
+      if (w > 150 && !g.by) { addNote(g, 'lateOut'); checkOut(g); }
+    }
+  }
+  // orders go stale
+  for (const o of S.orders.slice()) {
+    const age = now - o.at;
+    if ((o.status === 'new' && age > 80) || (o.status === 'ready' && now - o.readyAt > 60)) {
+      S.orders = S.orders.filter((x) => x !== o);
+      const g = guestById(o.guestId);
+      if (g) { addNote(g, 'slowFood'); if (chance(0.35)) addComplaint(g, 'cold'); }
+      if (o.critic) pushReview({ id: nid(), name: 'City Food Guide', em: '📝', day: S.day, stars: 1, title: 'Still waiting...', text: 'Our order never arrived. Avoid the restaurant.', kind: 'critic', critic: true });
+      toast('🍽️', 'An order was cancelled because it took too long.', 'bad');
+    }
+  }
+  // complaints time out
+  for (const c of S.complaints.slice()) {
+    if (now - c.at > c.limit && !c.by) {
+      S.complaints = S.complaints.filter((x) => x !== c);
+      const g = guestById(c.guestId);
+      if (g) { addNote(g, 'ignored'); nudge(g, -6); }
+      toast('😡', `Nobody answered the "${c.label}" complaint.`, 'bad');
+    }
+  }
+  // contractor repairs
+  for (const e of S.effects.filter((x) => x.key === 'contractor')) {
+    if (now >= e.at) { const r = roomById(e.room); if (r) { r.job = null; repairRoom(r); } S.effects = S.effects.filter((x) => x !== e); }
+  }
+  staffMinute();
+  mgrMinute();
+
+  if (m === S.eventAt) { S.eventAt = -1; fireEvent(); }
+  if (m % 60 === 0) hourly(h);
+}
+function hourly(h) {
+  const staying = S.guests.filter((g) => g.status === 'staying');
+  const meal = (h >= 7 && h < 10) || (h >= 12 && h < 14) || (h >= 18 && h < 21);
+  const concierges = staffOf('concierge').length;
+  const therapists = staffOf('therapist').length;
+  let spaUsed = 0;
+  for (const g of staying) {
+    const k = KINDS[g.kind], room = roomById(g.roomId);
+    // food
+    let p = meal ? 0.2 : (h >= 22 || h < 7 ? 0.01 : 0.035);
+    if (k.likes.includes('restaurant')) p *= 1.3;
+    if (S.orders.filter((o) => o.guestId === g.id).length === 0 && chance(p * k.spend)) addOrder(g);
+    // facilities
+    if (h >= 7 && h < 23) {
+      for (const f of ['gym', 'pool', 'bar', 'spa']) {
+        const lv = S.fac[f]; if (!lv) continue;
+        if (f === 'bar' && h < 16) continue;
+        if (f === 'spa' && spaUsed >= therapists * 2) continue;
+        let q = 0.035 * (k.likes.includes(f) ? 2.2 : 1) * (1 + 0.25 * (lv - 1));
+        if (f === 'pool' && effect('heatwave')) q *= 2;
+        if (f === 'pool' && (h < 9 || h > 20)) q *= 0.3;
+        if (g.used[f] >= 2) q *= 0.3;
+        if (chance(q)) {
+          if (f === 'spa') spaUsed++;
+          const fee = Math.round(FAC[f].fee * (1 + 0.3 * (lv - 1)) * clamp(g.budget, 0.6, 2.5));
+          g.bill.push({ label: `${FAC[f].name} visit`, amount: fee, kind: 'facilities' });
+          g.used[f] = (g.used[f] || 0) + 1;
+          nudge(g, FAC[f].mood * (0.8 + 0.2 * lv));
+          if (k.likes.includes(f)) addNote(g, f);
+          activity[f] = (activity[f] || 0) + 1;
+        }
+      }
+    }
+    // breakdowns and other gripes
+    if (room) {
+      const heat = effect('heatwave') ? 1.8 : 1;
+      if (!room.issue && chance(0.005 * (1 + (100 - room.condition) / 35) * heat)) breakRoom(room, pick(heat > 1 ? ['ac', 'ac', 'shower', 'tv'] : ['ac', 'shower', 'tv', 'tv']));
+      if (room.issue) nudge(g, -3);
+      if (room.condition < 45 && chance(0.03)) addComplaint(g, 'dusty');
+    }
+    if (h >= 21 || h < 2) { if (chance(0.012 * (staying.length / Math.max(1, S.rooms.length)) * 3)) { addNote(g, 'noise'); addComplaint(g, 'noise'); } }
+    if (chance(0.004)) addComplaint(g, 'wifi');
+    if (concierges) nudge(g, Math.min(2, concierges * 0.7));
+  }
+  // conference bookings
+  if (h === 9 && S.fac.conference) {
+    if (chance(0.35 + 0.15 * S.fac.conference)) { const fee = 700 * S.fac.conference + 150 * S.stars; S.money += fee; S.today.rev.facilities += fee; toast('🎤', `A company booked the conference hall today: +${money(fee)}`, 'good'); beep('cash'); activity.conference = 4; }
+  }
+  if (h === 19) { const w = effect('wedding'); if (w && w.ready) { S.money += w.fee; S.today.rev.food += w.fee; S.effects = S.effects.filter((x) => x !== w); toast('💒', `The wedding dinner was a hit! +${money(w.fee)}`, 'good'); beep('cash'); } }
+  if (h % 2 === 0) for (const f in activity) activity[f] = Math.max(0, activity[f] - 1);
+}
+const activity = {};
+
+/* =====================================================================
+   END OF DAY
+   ===================================================================== */
+function endOfDay() {
+  const t = S.today;
+  // wages
+  const wages = S.staff.reduce((a, s) => a + s.wage, 0);
+  spend(wages, 'wages');
+  // upkeep for facilities
+  const upkeep = FAC_ORDER.reduce((a, k) => a + (S.fac[k] ? FAC[k].upkeep * S.fac[k] : 0), 0) + S.rooms.length * 6;
+  spend(upkeep, 'upkeep');
+  // loan interest
+  if (S.loan > 0) { const i = Math.round(S.loan * 0.01); spend(i, 'interest'); }
+  // bills: overdue fees
+  for (const b of S.bills) if (S.day > b.due) { b.late++; const fee = Math.round(b.amount * 0.1); b.amount += fee; }
+  const overdue = S.bills.filter((b) => S.day > b.due + 2);
+  if (overdue.length) S.guests.filter((g) => g.status === 'staying').forEach((g) => nudge(g, -6));
+  // staff morale
+  const quits = [];
+  for (const s of S.staff) {
+    s.sick = false; s.rest = false;
+    if (s.tired) s.morale -= 8; s.tired = false;
+    s.morale += (72 - s.morale) * 0.1 + (s.tk === 'morale' ? 3 : 0);
+    if (S.money < 0) s.morale -= 12;
+    s.morale = clamp(s.morale, 0, 100);
+    s.energy = 100;
+    if (s.morale < 25 && chance(0.35)) quits.push(s);
+  }
+  quits.forEach((s) => { cancelJob(s); S.staff = S.staff.filter((x) => x !== s); });
+  // effects tick
+  S.effects.forEach((e) => { if (e.key !== 'contractor') e.days--; });
+  const wed = S.effects.find((e) => e.key === 'wedding'); if (wed) wed.ready = true;
+  S.effects = S.effects.filter((e) => e.key === 'contractor' || e.days > 0 || e.key === 'wedding' && e.ready && e.days >= 0);
+  S.marketing.forEach((m) => m.days--); S.marketing = S.marketing.filter((m) => m.days > 0);
+  // the day's numbers
+  const rev = Object.values(t.rev).reduce((a, b) => a + b, 0), exp = Object.values(t.exp).reduce((a, b) => a + b, 0);
+  const occ = S.guests.filter((g) => g.status !== 'queue').length;
+  S.history.push({ day: S.day, rev: Math.round(rev), exp: Math.round(exp), profit: Math.round(rev - exp), rating: S.rating, occ: Math.round(occ / S.rooms.length * 100) });
+  if (S.history.length > 30) S.history.shift();
+  if (S.money < 0) S.debtDays++; else S.debtDays = 0;
+  const report = { day: S.day, t, rev, exp, wages, upkeep, quits, occ, money: S.money, rating: S.rating };
+  // next day
+  S.day++; S.minute = DAY_START; S.today = blankDay();
+  S.guests.filter((g) => g.status === 'queue').forEach((g) => { g.arrived = abs(); }); // waiting overnight resets the clock
+  rollCandidates();
+  planEvent();
+  issueBills();
+  S.manager && mgrCancel();
+  autosave();
+  showReport(report);
+}
+function showReport(r) {
+  const t = r.t, line = (k, v, cls = '') => `<span>${k}</span><span class="v ${cls}">${v}</span>`;
+  const avg = t.reviews.length ? (t.reviews.reduce((a, b) => a + b, 0) / t.reviews.length).toFixed(1) : '–';
+  const profit = r.rev - r.exp;
+  const over = S.debtDays >= 3;
+  let warn = '';
+  if (S.debtDays > 0 && !over) warn = `<p class="neg"><b>⚠️ You are in debt.</b> Get back above $0 within ${plural(3 - S.debtDays, 'day')} or the bank takes the hotel! You can borrow from the Money tab.</p>`;
+  if (r.quits.length) warn += `<p class="neg">😞 ${r.quits.map((s) => esc(s.name)).join(', ')} quit because they were unhappy.</p>`;
+  const bills = S.bills.filter((b) => !b.paid);
+  if (bills.length) warn += `<p>🧾 You have ${plural(bills.length, 'unpaid bill')} (${money(bills.reduce((a, b) => a + b.amount, 0))}). Pay them in the Money tab before they are overdue.</p>`;
+  if (over) {
+    store.del('hh-auto');
+    showModal({ icon: '🏦', title: 'The bank took your hotel', body: `<p>After three days in debt, the bank has repossessed <b>${esc(S.name)}</b>.</p><p>You served <b>${S.guestsServed}</b> guests and reached <b>${S.stars}★</b>. Have another go!</p>`, acts: [['Back to title', 'gold', () => { closeModal(); toTitle(); }]] });
+    return;
+  }
+  showModal({
+    icon: profit >= 0 ? '📈' : '📉', title: `Day ${r.day} report`,
+    body: `<div class="grid2"><div class="card"><div class="t2">Profit</div><div class="big ${profit >= 0 ? 'pos' : 'neg'}">${money(profit)}</div></div><div class="card"><div class="t2">Bank balance</div><div class="big">${money(r.money)}</div></div></div>
+      <div class="kv">${line('🛏️ Rooms', money(t.rev.rooms), 'pos')}${line('🍽️ Restaurant', money(t.rev.food), 'pos')}${line('🏊 Facilities', money(t.rev.facilities), 'pos')}${t.rev.other ? line('🎁 Other income', money(t.rev.other), 'pos') : ''}
+      ${line('👥 Staff wages', '-' + money(t.exp.wages), 'neg')}${line('🥕 Food costs', '-' + money(t.exp.food), 'neg')}${line('🛠️ Upkeep', '-' + money(t.exp.upkeep), 'neg')}${t.exp.bills ? line('🧾 Bills paid', '-' + money(t.exp.bills), 'neg') : ''}${t.exp.marketing ? line('📣 Marketing', '-' + money(t.exp.marketing), 'neg') : ''}${t.exp.repairs ? line('🔧 Repairs', '-' + money(t.exp.repairs), 'neg') : ''}${t.exp.interest ? line('🏦 Loan interest', '-' + money(t.exp.interest), 'neg') : ''}${t.exp.other ? line('📋 Other costs', '-' + money(t.exp.other), 'neg') : ''}
+      ${line('<b>Total</b>', `<b>${money(profit)}</b>`, 'tot ' + (profit >= 0 ? 'pos' : 'neg'))}</div>
+      ${t.capex ? `<p class="note">You also invested ${money(t.capex)} in building and upgrades.</p>` : ''}
+      <div class="kv" style="margin-top:10px">${line('Guests checked out', t.guests)}${line('Walked out from the lobby', t.left, t.left ? 'neg' : '')}${line('Reviews today (avg)', `${t.reviews.length} (${avg}★)`)}${line('Hotel rating', S.rating.toFixed(2) + ' ★')}</div>${warn}`,
+    acts: [[`Start day ${S.day} ☀️`, 'gold', closeModal]],
+  });
+}
+
+/* =====================================================================
+   SAVE / LOAD
+   ===================================================================== */
+const SLOTS = ['hh-slot-1', 'hh-slot-2', 'hh-slot-3'];
+function saveTo(key) {
+  const data = JSON.stringify({ meta: { name: S.name, day: S.day, stars: S.stars, money: Math.round(S.money), at: Date.now() }, state: S });
+  const ok = store.set(key, data);
+  if (key !== 'hh-auto') toast(ok ? '💾' : '⚠️', ok ? 'Game saved.' : 'Could not save on this device.', ok ? 'good' : 'bad');
+  return ok;
+}
+function autosave() { if (S) saveTo('hh-auto'); }
+function readSlot(key) { try { const d = JSON.parse(store.get(key) || 'null'); return d && d.state && d.meta ? d : null; } catch (e) { return null; } }
+function loadFrom(key) {
+  const d = readSlot(key); if (!d) { toast('⚠️', 'That save is empty.', 'bad'); return false; }
+  S = d.state;
+  // fill in anything missing from an older save
+  const base = { effects: [], marketing: [], bills: [], menuOff: [], history: [], tips: {}, today: blankDay() };
+  for (const k in base) if (S[k] == null) S[k] = base[k];
+  S.paused = false;
+  layoutChanged = true; ui.selRoom = null;
+  hideTitle();
+  toast('📂', `Welcome back to ${S.name}!`, 'good');
+  return true;
+}
+function slotLabel(d) {
+  if (!d) return '<span class="t2">Empty</span>';
+  const when = new Date(d.meta.at);
+  return `<div class="t1">${esc(d.meta.name)}</div><div class="t2">Day ${d.meta.day} · ${'★'.repeat(d.meta.stars)} · ${money(d.meta.money)} · ${when.toLocaleDateString()} ${when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>`;
+}
+
+/* =====================================================================
+   UI: toasts, modals, popups
+   ===================================================================== */
+function toast(icon, text, kind = '') {
+  const box = $('#toasts');
+  while (box.children.length >= 4) box.firstChild.remove();
+  const t = document.createElement('div');
+  t.className = 'toast ' + kind;
+  t.innerHTML = `<span class="em">${icon}</span><span>${text}</span>`;
+  box.appendChild(t);
+  setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 320); }, kind === 'bad' ? 4200 : 3200);
+}
+let modalActs = [];
+function showModal({ icon, title, body, acts, onClose }) {
+  ui.modal = { onClose };
+  modalActs = acts || [['OK', 'gold', closeModal]];
+  $('#modal').innerHTML = `${icon ? `<div class="mi">${icon}</div>` : ''}<h2>${title}</h2><div>${body || ''}</div><div class="acts">${modalActs.map(([l, c], i) => `<button class="b ${c}" data-mact="${i}">${l}</button>`).join('')}</div>`;
+  $('#modalBg').hidden = false;
+  const first = $('#modal [data-mact]'); if (first) first.focus({ preventScroll: true });
+}
+function closeModal() { const m = ui.modal; ui.modal = null; $('#modalBg').hidden = true; if (m && m.onClose) m.onClose(); }
+function info(icon, title, text) { showModal({ icon, title, body: `<p>${text}</p>`, acts: [['Got it', 'gold', closeModal]] }); }
+function choice(icon, title, text, opts) { showModal({ icon, title, body: `<p>${text}</p>`, acts: opts.map(([l, c, fn]) => [l, c, () => { closeModal(); fn(); }]) }); }
+$('#modal').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-mact]');
+  if (b) { const a = modalActs[+b.dataset.mact]; if (a) a[2](); return; }
+  handleAction(e);
+});
+$('#modalBg').addEventListener('click', (e) => { if (e.target.id === 'modalBg' && ui.modal && ui.modal.dismiss) closeModal(); });
+
+function roomEl(id) { return document.querySelector(`.rm[data-room="${id}"]`); }
+function pop(el, text, cls) {
+  if (!el) return;
+  const w = $('#world'), wr = w.getBoundingClientRect(), r = el.getBoundingClientRect();
+  const k = wr.width / 760 || 1;
+  const p = document.createElement('div');
+  p.className = 'pop ' + (cls || '');
+  p.textContent = text;
+  p.style.left = (r.left - wr.left + r.width / 2) / k + 'px';
+  p.style.top = (r.top - wr.top) / k - 6 + 'px';
+  w.appendChild(p);
+  setTimeout(() => p.remove(), 1500);
+}
+function sparkle(id, em) {
+  const el = roomEl(id); if (!el) return;
+  const w = $('#world'), wr = w.getBoundingClientRect(), r = el.getBoundingClientRect(), k = wr.width / 760 || 1;
+  for (let i = 0; i < 3; i++) {
+    const s = document.createElement('div');
+    s.className = 'sparkle'; s.textContent = em;
+    s.style.left = (r.left - wr.left) / k + 6 + i * 16 + 'px';
+    s.style.top = (r.top - wr.top) / k + ri(0, 18) + 'px';
+    s.style.animationDelay = i * 0.12 + 's';
+    w.appendChild(s);
+    setTimeout(() => s.remove(), 1300);
+  }
+}
+function confetti() {
+  const cols = ['#c9a227', '#e6c76a', '#14213d', '#faf5e9', '#2b416e'];
+  for (let i = 0; i < 70; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = pick(cols);
+    c.style.animationDuration = rnd(2, 3.6) + 's';
+    c.style.animationDelay = rnd(0, 0.6) + 's';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4400);
+  }
+}
+
+/* =====================================================================
+   SCENE (the hotel picture)
+   ===================================================================== */
+const FLOOR_H = 61, ROOF_H = 48, GROUND_H = 96, STREET_H = 44;
+let worldH = 0, sceneHTMLCache = '';
+function buildStatic() {
+  const w = $('#world');
+  const floorsH = S.floors * FLOOR_H;
+  worldH = STREET_H + GROUND_H + floorsH + ROOF_H + (S.fac.bar ? 56 : 14) + 30;
+  w.style.height = worldH + 'px';
+  w.innerHTML = `
+    <div class="skyline" style="left:-160px;width:120px;height:${worldH * 0.42}px"></div>
+    <div class="skyline" style="left:-30px;width:70px;height:${worldH * 0.6}px"></div>
+    <div class="skyline" style="left:30px;width:90px;height:${worldH * 0.32}px"></div>
+    <div class="skyline" style="left:610px;width:80px;height:${worldH * 0.55}px"></div>
+    <div class="skyline" style="left:700px;width:110px;height:${worldH * 0.38}px"></div>
+    <div class="skyline" style="left:820px;width:90px;height:${worldH * 0.5}px"></div>
+    <div class="street"></div>
+    <span class="car" style="animation-duration:14s">🚕</span><span class="car l" style="animation-duration:19s;animation-delay:-6s">🚙</span><span class="car" style="animation-duration:23s;animation-delay:-12s">🚌</span><span class="car l" style="animation-duration:11s;animation-delay:-3s">🚗</span>
+    <span class="tree" style="left:6px">🌳</span><span class="lamp" style="left:196px"></span><span class="lamp" style="left:560px"></span><span class="tree" style="left:740px">🌴</span>
+    <div class="annex left" id="annexL"></div>
+    <div class="annex right" id="annexR"></div>
+    <div id="building"></div>`;
+  layoutChanged = false;
+  sceneHTMLCache = '';
+}
+function facBlock(k, h) {
+  const lv = S.fac[k], f = FAC[k];
+  if (!lv) {
+    const locked = S.stars < f.star[0];
+    return `<button class="fac build" data-act="facinfo" data-k="${k}" style="height:${h}px" title="Build a ${f.name}"><span class="fn">${f.name.toUpperCase()}</span><span class="fi">${locked ? '🔒' : '🏗️'}</span></button>`;
+  }
+  const busy = Math.min(4, activity[k] || 0);
+  const people = { gym: '🏋️', spa: '💆', conference: '👔', parking: '🚗' }[k];
+  const icons = k === 'parking' ? '🅿️ ' + '🚗'.repeat(Math.min(3, 1 + Math.floor(S.guests.filter((g) => g.car && g.status === 'staying').length / 2))) : (busy ? people.repeat(busy) : f.icon);
+  return `<button class="fac" data-act="facinfo" data-k="${k}" style="height:${h}px"><span class="fn">${f.name.toUpperCase()}</span><span class="fl2">${'★'.repeat(lv)}</span><span class="fi">${icons}</span></button>`;
+}
+function renderScene() {
+  if (layoutChanged || !$('#building')) buildStatic();
+  const isNight = S.minute < 6.5 * 60 || S.minute > 19.5 * 60;
+  // building
+  let h = '';
+  if (S.fac.bar) {
+    const n = Math.min(5, (activity.bar || 0) + 1);
+    h += `<div class="rooftop"><div class="lights"></div><div class="things">${'⛱️🍸🧑💃🍹'.slice(0, 0)}${['⛱️', '🍸', '🧑', '💃', '🍹'].slice(0, n).join('')}</div><div class="deck"></div></div>`;
+  }
+  h += `<div class="roof"><div class="sign">${esc(S.name.toUpperCase())}<small>${'★'.repeat(S.stars)}${'☆'.repeat(5 - S.stars)}</small></div></div><div class="floors">`;
+  for (let f = S.floors - 1; f >= 0; f--) {
+    h += '<div class="floor">';
+    for (const r of S.rooms.filter((x) => x.floor === f).sort((a, b) => a.idx - b.idx)) {
+      const g = r.guestId && guestById(r.guestId);
+      let ico = '';
+      if (r.state === 'cleaning') ico = '🧹';
+      else if (r.issue) ico = ISSUES[r.issue].icon;
+      else if (r.state === 'dirty') ico = '🧺';
+      else if (g) ico = S.orders.some((o) => o.guestId === g.id && o.status === 'delivering') ? '🛎️' : (isNight && S.minute > 22 * 60 ? '💤' : g.em);
+      const busyBar = r.state === 'cleaning' || (r.issue && r.job);
+      h += `<button class="rm st-${r.state} ${r.type}${r.issue ? ' issue' : ''}${ui.selRoom === r.id ? ' sel' : ''}" data-act="room" data-id="${r.id}" data-room="${r.id}" aria-label="Room ${r.label}">
+        <span class="glass"></span><span class="cur l"></span><span class="cur r"></span>${ico ? `<span class="ico">${ico}</span>` : ''}<span class="num">${r.label}</span>${r.type !== 'standard' ? `<span class="tp">${r.type === 'suite' ? '♛' : '◆'}</span>` : ''}${busyBar ? `<span class="pb"><i data-bar="room:${r.id}"></i></span>` : ''}</button>`;
+    }
+    h += '</div>';
+  }
+  h += '</div><div class="ground"><div class="lobby"><span class="chand">💡</span><div class="awning"></div><div class="door"></div>';
+  const recep = staffOf('receptionist');
+  h += `<div class="desk"><span class="clerk">${recep.length ? '💁' : (S.manager ? '' : '🧑‍💼')}</span><span class="bell">🛎️</span></div>`;
+  const q = S.guests.filter((g) => g.status === 'queue').sort((a, b) => a.arrived - b.arrived);
+  h += '<div class="queue">';
+  q.slice(0, 5).forEach((g) => { const wait = abs() - g.arrived; h += `<button class="qg${wait > g.patience * 0.7 ? ' angry' : ''}" data-act="guest" data-id="${g.id}" title="${esc(g.name)}">${g.em}<span class="mood"><i data-bar="pat:${g.id}"></i></span></button>`; });
+  if (q.length > 5) h += `<span class="qmore">+${q.length - 5}</span>`;
+  h += '</div>';
+  const outs = S.guests.filter((g) => g.status === 'checkout');
+  if (outs.length) h += `<div class="depart">${outs.slice(0, 3).map((g) => `<button data-act="checkout" data-id="${g.id}" title="Check out ${esc(g.name)}">🧳</button>`).join('')}</div>`;
+  h += '</div>';
+  const cooking = S.orders.filter((o) => o.status === 'cooking').length, diners = S.orders.filter((o) => o.where === 'table').length;
+  h += `<button class="resto" data-act="tab" data-tab="dining" style="border:0;padding:0;text-align:left"><span class="rsign">RESTAURANT ${'★'.repeat(S.fac.restaurant)}</span><span class="chef${cooking ? ' busy' : ''}">${cooking ? '🍳' : '🍴'}</span><span class="diners">${['🧑', '👩', '👨', '👧', '👴', '👱'].slice(0, Math.min(6, diners)).join('')}</span><span class="tables"><span>🍽️</span><span>🍷</span><span>🍽️</span></span></button></div>`;
+  // annexes
+  let L = facBlock('gym', 62) + facBlock('spa', 62) + facBlock('conference', 62);
+  let R = `<button class="pool${S.fac.pool ? '' : ' build'}" data-act="facinfo" data-k="pool"><span class="umb" style="left:4px">⛱️</span><span class="water"></span>${S.fac.pool ? `<span class="swim">${['🏊', '🤽', '🏊', '🧜'].slice(0, Math.min(4, activity.pool || 0)).map((x) => `<span>${x}</span>`).join('')}</span>` : ''}<span class="fn">${S.fac.pool ? 'SWIMMING POOL ' + '★'.repeat(S.fac.pool) : (S.stars < 2 ? '🔒 POOL' : '🏗️ BUILD A POOL')}</span></button>` + facBlock('parking', 58);
+  const html = h + '|' + L + '|' + R;
+  if (html !== sceneHTMLCache && !ui.pointer) {
+    sceneHTMLCache = html;
+    $('#building').innerHTML = h;
+    $('#annexL').innerHTML = L;
+    $('#annexR').innerHTML = R;
+  }
+  // fit to screen
+  const sc = $('#scene'), sw = sc.clientWidth, sh = sc.clientHeight;
+  const k = Math.min(sw / 700, (sh - 8) / worldH);
+  $('#world').style.transform = `translateX(-50%) scale(${k})`;
+  // sky
+  sky(isNight);
+}
+function sky(isNight) {
+  const m = S.minute / 60;
+  const stops = [[0, '#0b1430', '#1b2752'], [5, '#16204a', '#3c3f73'], [6.5, '#f7a76c', '#f6d7a7'], [8, '#7fb2e0', '#cfe6f5'], [16, '#78ace0', '#d4e9f7'], [18.5, '#f08a5d', '#f8c98f'], [20, '#2a2f66', '#6b4a7a'], [21.5, '#0f1838', '#1f2a58'], [24, '#0b1430', '#1b2752']];
+  let a = stops[0], b = stops[1];
+  for (let i = 0; i < stops.length - 1; i++) if (m >= stops[i][0] && m <= stops[i + 1][0]) { a = stops[i]; b = stops[i + 1]; break; }
+  const t = (m - a[0]) / Math.max(0.01, b[0] - a[0]);
+  const mix = (c1, c2) => { const p = (c) => [1, 3, 5].map((i) => parseInt(c.substr(i, 2), 16)); const x = p(c1), y = p(c2); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+  $('#scene').style.background = `linear-gradient(180deg, ${mix(a[1], b[1])}, ${mix(a[2], b[2])})`;
+  $('#starfield').style.opacity = isNight ? 1 : 0;
+  $('#scene').classList.toggle('night', isNight);
+  const sm = $('#sunmoon'), sc = $('#scene');
+  const day = m >= 6 && m <= 20;
+  const f = day ? (m - 6) / 14 : ((m < 6 ? m + 24 : m) - 20) / 10;
+  sm.style.left = (8 + f * 84) + '%';
+  sm.style.top = (40 - Math.sin(f * Math.PI) * 30) + '%';
+  sm.style.background = day ? 'radial-gradient(circle at 40% 40%, #fff7c2, #ffd23f 60%, #f6a62b)' : 'radial-gradient(circle at 35% 35%, #fffef0, #e6e2c8 70%)';
+  sm.style.boxShadow = day ? '0 0 40px 10px rgba(255,210,63,.45)' : '0 0 24px 4px rgba(255,255,240,.35)';
+  const skyline = isNight ? '#1b2547' : '#5d7ea3';
+  document.querySelectorAll('.skyline').forEach((e) => { e.style.background = skyline; });
+  $('#hudSun').textContent = day ? '☀️' : '🌙';
+  if (!sc.dataset.clouds) { sc.dataset.clouds = 1; for (let i = 0; i < 4; i++) { const c = document.createElement('div'); c.className = 'cloud'; c.style.top = (6 + i * 9) + '%'; c.style.animationDuration = (60 + i * 25) + 's'; c.style.animationDelay = (-i * 22) + 's'; c.style.transform = 'scale(' + (0.6 + i * 0.15) + ')'; $('#sky').appendChild(c); } }
+  document.querySelectorAll('.cloud').forEach((c) => { c.style.opacity = isNight ? 0.15 : 0.85; });
+}
+
+/* =====================================================================
+   PANEL (tabs)
+   ===================================================================== */
+const TABS = [['desk', '🛎️', 'Desk'], ['rooms', '🛏️', 'Rooms'], ['staff', '👥', 'Staff'], ['dining', '🍽️', 'Dining'], ['build', '🏗️', 'Build'], ['money', '💰', 'Money'], ['stars', '⭐', 'Reviews']];
+function setTab(t) { ui.tab = t; panelCache = ''; $('#panelBody').scrollTop = 0; }
+let panelCache = '', tabsCache = '';
+function renderTabs() {
+  const cnt = {
+    desk: S.guests.filter((g) => g.status === 'queue' || g.status === 'checkout').length + S.complaints.length,
+    rooms: S.rooms.filter((r) => r.state === 'dirty' || r.issue).length,
+    dining: S.orders.filter((o) => o.status === 'new' || o.status === 'ready').length,
+    money: S.bills.filter((b) => S.day >= b.due).length,
+    stars: S.inspection ? 0 : (reqStatus(S.stars + 1) && reqStatus(S.stars + 1).ok ? 1 : 0),
+  };
+  const html = TABS.map(([k, ic, l]) => `<button class="tab${ui.tab === k ? ' on' : ''}" data-act="tab" data-tab="${k}" role="tab" aria-selected="${ui.tab === k}"><span class="em">${ic}</span>${l}${cnt[k] ? `<span class="cnt">${cnt[k] > 99 ? '99+' : cnt[k]}</span>` : ''}</button>`).join('');
+  if (html !== tabsCache && !ui.pointer) { tabsCache = html; $('#tabs').innerHTML = html; }
+}
+function renderPanel() {
+  const fn = { desk: pDesk, rooms: pRooms, staff: pStaff, dining: pDining, build: pBuild, money: pMoney, stars: pStars }[ui.tab];
+  const html = fn();
+  if (html !== panelCache && !ui.pointer) { panelCache = html; $('#panelBody').innerHTML = html; if (ui.tab === 'money') drawChart(); }
+}
+const moodFace = (m) => m >= 80 ? '😄' : m >= 62 ? '🙂' : m >= 45 ? '😐' : m >= 28 ? '🙁' : '😡';
+const bdis = (cond) => cond ? '' : ' disabled';
+
+function guestCard(g) {
+  const k = KINDS[g.kind];
+  const best = bestRoomFor(g);
+  const wantName = ROOM_TYPES[g.want].name;
+  let fit = '';
+  if (best) { const d = TYPE_ORDER.indexOf(best.type) - TYPE_ORDER.indexOf(g.want); fit = d === 0 ? `<span class="tag green">Room ${best.label} ready</span>` : d > 0 ? `<span class="tag gold">Free upgrade to ${ROOM_TYPES[best.type].name}</span>` : `<span class="tag red">Only ${ROOM_TYPES[best.type].name} free</span>`; }
+  else fit = '<span class="tag red">No clean room free</span>';
+  const busy = g.by ? '<span class="tag blue">Receptionist on it</span>' : '';
+  return `<div class="card${g.inspector || g.celebrity ? ' gold' : ''}"><div class="row"><div class="av${g.vip || g.inspector ? ' vip' : ''}">${g.em}</div><div class="grow"><div class="t1">${esc(g.name)} ${g.inspector ? '<span class="tag gold">INSPECTOR</span>' : g.celebrity ? '<span class="tag gold">CELEBRITY</span>' : g.vip ? '<span class="tag gold">VIP</span>' : ''}</div><div class="t2">${g.inspector ? 'Hotel star inspector' : k.label} · wants ${wantName} · ${plural(g.nights, 'night')}${g.car ? ' · 🚗' : ''}</div></div></div>
+    <div class="bar r"><i data-bar="patw:${g.id}"></i></div><div class="t2" style="margin-top:4px">${fit} ${busy}</div>
+    <div class="btns"><button class="b gold" data-act="checkin" data-id="${g.id}"${bdis(best && !g.by)}>Check in</button><button class="b ghost" data-act="choose" data-id="${g.id}"${bdis(freeRooms().length && !g.by)}>Choose room</button><button class="b red sm" data-act="turnaway" data-id="${g.id}"${bdis(!g.by)}>Turn away</button></div></div>`;
+}
+function pDesk() {
+  const q = S.guests.filter((g) => g.status === 'queue').sort((a, b) => (b.inspector - a.inspector) || (b.celebrity - a.celebrity) || a.arrived - b.arrived);
+  const outs = S.guests.filter((g) => g.status === 'checkout');
+  const staying = S.guests.filter((g) => g.status === 'staying');
+  let h = '';
+  if (S.tips.first) h += `<div class="card gold"><div class="row top"><div class="av">👋</div><div class="grow"><div class="t1">Welcome, manager!</div><div class="t2">Guests appear here when they arrive. Check them in, check them out when they leave, clean the rooms and keep everyone happy. Hire staff in the <b>Staff</b> tab to automate the work.</div><div class="btns"><button class="b sm ghost" data-act="tipoff">Got it</button><button class="b sm ghost" data-act="help">How to play</button></div></div></div></div>`;
+  h += `<h3 class="sh">Arrivals · ${q.length}</h3>`;
+  h += q.length ? q.map(guestCard).join('') : `<div class="empty">No one waiting. ${hour() < 9 ? 'Guests start arriving around 9am.' : 'New guests will arrive soon.'}</div>`;
+  h += `<h3 class="sh">Departures · ${outs.length}</h3>`;
+  h += outs.length ? outs.map((g) => { const total = g.bill.reduce((a, b) => a + b.amount, 0); const r = roomById(g.roomId); return `<div class="card"><div class="row"><div class="av">${g.em}</div><div class="grow"><div class="t1">${esc(g.name)} ${moodFace(g.mood)}</div><div class="t2">Room ${r ? r.label : '?'} · bill ${money(total)} · ${plural(g.bill.length, 'item')}</div></div>${g.by ? '<span class="tag blue">Receptionist on it</span>' : `<button class="b gold" data-act="checkout" data-id="${g.id}">Check out</button>`}</div><div class="bar r"><i data-bar="outw:${g.id}"></i></div></div>`; }).join('') : '<div class="empty">No one is checking out right now.</div>';
+  h += `<h3 class="sh">Complaints · ${S.complaints.length}</h3>`;
+  h += S.complaints.length ? S.complaints.map(complaintCard).join('') : '<div class="empty">No complaints. Your guests are happy!</div>';
+  h += `<h3 class="sh">Staying guests · ${staying.length}</h3>`;
+  h += staying.length ? staying.map((g) => { const r = roomById(g.roomId); const left = g.checkoutDay - S.day; return `<div class="card"><div class="row"><div class="av">${g.em}</div><div class="grow"><div class="t1">${esc(g.name)}</div><div class="t2">Room ${r ? r.label : '?'} · ${left <= 0 ? 'leaving today' : 'leaving in ' + plural(left, 'day')} · bill ${money(g.bill.reduce((a, b) => a + b.amount, 0))}</div></div><span class="em" style="font-size:22px" title="Mood">${moodFace(g.mood)}</span></div></div>`; }).join('') : '<div class="empty">No guests staying yet.</div>';
+  return h;
+}
+function complaintCard(c) {
+  const g = guestById(c.guestId), r = roomById(c.roomId);
+  if (!g) return '';
+  const fixing = r && r.issue && r.job;
+  return `<div class="card hot"><div class="row top"><div class="av">${c.icon}</div><div class="grow"><div class="t1">${c.label} · room ${r ? r.label : '?'}</div><div class="t2">${esc(g.name)}: “${c.text}”</div></div></div><div class="bar r"><i data-bar="comp:${c.id}"></i></div>
+  ${c.by ? '<div class="t2" style="margin-top:6px"><span class="tag blue">Concierge is talking to them</span></div>' : `<div class="btns">${c.repair && r && r.issue ? (fixing ? '<span class="tag blue">Repair in progress</span>' : `<button class="b sm gold" data-act="mrepair" data-id="${r.id}">🔧 Fix it myself</button><button class="b sm" data-act="contractor" data-id="${r.id}">🚐 Repair firm $220</button>`) : ''}<button class="b sm ghost" data-act="comp" data-how="apologise" data-id="${c.id}">🙏 Apologise</button><button class="b sm ghost" data-act="comp" data-how="meal" data-id="${c.id}">🍰 Free treat $30</button><button class="b sm ghost" data-act="comp" data-how="discount" data-id="${c.id}">💸 20% off</button></div>`}</div>`;
+}
+function pRooms() {
+  const types = typesInHotel();
+  const st = (s) => S.rooms.filter((r) => r.state === s).length;
+  let h = `<div class="grid2"><div class="card"><div class="t2">Occupied</div><div class="big">${st('occupied')}<span class="t2"> / ${S.rooms.length}</span></div></div><div class="card"><div class="t2">Ready · Dirty · Broken</div><div class="big" style="font-size:22px">${S.rooms.filter((r) => r.state === 'clean' && !r.issue && !r.guestId).length} · ${st('dirty') + st('cleaning')} · ${S.rooms.filter((r) => r.issue).length}</div></div></div>`;
+  h += '<h3 class="sh">Nightly prices</h3>';
+  h += types.map((t) => { const fp = fairPrice(t), p = S.prices[t], ratio = p / fp; const tag = ratio > 1.25 ? '<span class="tag red">Too pricey</span>' : ratio > 1.05 ? '<span class="tag gold">Premium</span>' : ratio < 0.85 ? '<span class="tag green">Bargain</span>' : '<span class="tag blue">Fair</span>'; return `<div class="card"><div class="row"><div class="grow"><div class="t1">${ROOM_TYPES[t].icon} ${ROOM_TYPES[t].name}</div><div class="t2">Fair price about ${money(fp)} ${tag}</div></div><div class="price"><button class="b sm ghost" data-act="price" data-t="${t}" data-d="-10" aria-label="Lower price">−</button><b>${money(p)}</b><button class="b sm ghost" data-act="price" data-t="${t}" data-d="10" aria-label="Raise price">+</button></div></div></div>`; }).join('');
+  h += '<p class="note">Cheaper rooms bring more guests. Pricier rooms earn more but guests expect more for their money.</p>';
+  h += '<h3 class="sh">All rooms</h3>';
+  for (let f = S.floors - 1; f >= 0; f--) for (const r of S.rooms.filter((x) => x.floor === f).sort((a, b) => a.idx - b.idx)) h += roomCard(r, false);
+  h += '<h3 class="sh">Expand</h3>';
+  const canFloor = S.floors < maxFloors();
+  h += `<div class="card gold"><div class="row"><div class="av">🏗️</div><div class="grow"><div class="t1">Build floor ${S.floors + 1}</div><div class="t2">${canFloor ? `Adds 5 new Standard rooms · ${money(floorCost())}` : `Max ${maxFloors()} floors at ${S.stars}★. Earn more stars to build higher.`}</div></div><button class="b gold" data-act="floor"${bdis(canFloor && S.money >= floorCost())}>Build</button></div></div>`;
+  return h;
+}
+function roomCard(r, detail) {
+  const g = r.guestId && guestById(r.guestId);
+  const stLabel = r.issue ? `<span class="tag red">${ISSUES[r.issue].icon} ${ISSUES[r.issue].label}</span>` : '';
+  const state = { clean: '<span class="tag green">Ready</span>', occupied: '<span class="tag blue">Occupied</span>', dirty: '<span class="tag red">Needs cleaning</span>', cleaning: '<span class="tag gold">Being cleaned</span>' }[r.state];
+  const next = TYPE_ORDER[TYPE_ORDER.indexOf(r.type) + 1];
+  const empty = !r.guestId && r.state !== 'cleaning';
+  let acts = '';
+  if (r.state === 'dirty') acts += `<button class="b sm gold" data-act="mclean" data-id="${r.id}"${bdis(!S.manager)}>🧹 Clean it myself</button>`;
+  if (r.issue && !r.job) acts += `<button class="b sm gold" data-act="mrepair" data-id="${r.id}"${bdis(!S.manager)}>🔧 Fix it</button><button class="b sm" data-act="contractor" data-id="${r.id}"${bdis(S.money >= 220)}>🚐 Repair firm $220</button>`;
+  if (r.issue && r.job) acts += '<span class="tag blue">Repair in progress</span>';
+  if (next) acts += `<button class="b sm ghost" data-act="uproom" data-id="${r.id}"${bdis(empty && S.stars >= ROOM_TYPES[next].star && S.money >= ROOM_TYPES[next].cost)}>⬆️ ${ROOM_TYPES[next].name} ${money(ROOM_TYPES[next].cost)}${S.stars < ROOM_TYPES[next].star ? ' 🔒' + ROOM_TYPES[next].star + '★' : ''}</button>`;
+  if (r.decor < 3) acts += `<button class="b sm ghost" data-act="refurb" data-id="${r.id}"${bdis(empty && S.money >= refurbCost(r))}>🎨 Decor ${r.decor + 1} ${money(refurbCost(r))}</button>`;
+  return `<div class="card${ui.selRoom === r.id ? ' gold' : ''}" data-roomcard="${r.id}"><div class="row"><div class="av">${ROOM_TYPES[r.type].icon}</div><div class="grow"><div class="t1">Room ${r.label} · ${ROOM_TYPES[r.type].name} <span class="lvl">${starStr(r.decor, 3)}</span></div><div class="t2">${state} ${stLabel} ${g ? `· ${g.em} ${esc(g.name)} ${moodFace(g.mood)}` : ''}</div></div></div>
+    <div class="t2" style="margin-top:6px">Condition ${Math.round(r.condition)}%</div><div class="bar ${r.condition < 45 ? 'r' : r.condition < 70 ? '' : 'g'}"><i style="width:${Math.round(r.condition)}%"></i></div>
+    ${r.state === 'cleaning' || (r.issue && r.job) ? `<div class="bar g"><i data-bar="room:${r.id}"></i></div>` : ''}
+    ${acts ? `<div class="btns">${acts}</div>` : ''}${detail && g ? `<div class="kv" style="margin-top:8px">${g.bill.map((b) => `<span>${esc(b.label)}</span><span class="v">${money(b.amount)}</span>`).join('')}<span class="tot">Bill so far</span><span class="v tot">${money(g.bill.reduce((a, b) => a + b.amount, 0))}</span></div>` : ''}</div>`;
+}
+function staffStatus(s) {
+  if (s.sick) return '🤒 Off sick';
+  if (s.rest) return '☕ On a break';
+  if (s.role === 'therapist') return S.fac.spa ? '💆 Running spa treatments' : '⚠️ No spa to work in';
+  const j = s.job; if (!j) return '💤 Waiting for work';
+  const r = j.target && roomById(j.target), g = guestById(j.target), o = S.orders.find((x) => x.id === j.target);
+  return { checkin: `Checking in ${g ? g.name.split(' ')[0] : ''}`, checkout: `Checking out ${g ? g.name.split(' ')[0] : ''}`, clean: `Cleaning room ${r ? r.label : ''}`, repair: `Repairing room ${r ? r.label : ''}`, polish: `Sprucing up room ${r ? r.label : ''}`, cook: `Cooking ${o ? MENU.find((d) => d.id === o.dish).name : ''}`, deliver: `Serving ${o ? MENU.find((d) => d.id === o.dish).name : ''}`, complaint: 'Handling a complaint' }[j.kind] || 'Working';
+}
+function pStaff() {
+  let h = `<div class="card"><div class="row"><div class="av">👔</div><div class="grow"><div class="t1">You (the manager)</div><div class="t2">${S.manager ? S.manager.label : 'Free. Tap a dirty room, broken room or food order to help out.'}</div>${S.manager ? '<div class="bar"><i data-bar="mgr"></i></div>' : ''}</div>${S.manager ? '<button class="b sm red" data-act="mcancel">Stop</button>' : ''}</div></div>`;
+  const wages = S.staff.reduce((a, s) => a + s.wage, 0);
+  h += `<h3 class="sh">Your team · ${S.staff.length} · ${money(wages)}/day</h3>`;
+  h += S.staff.length ? S.staff.map((s) => `<div class="card"><div class="row"><div class="av">${s.em}</div><div class="grow"><div class="t1">${esc(s.name)} <span class="lvl">${starStr(s.skill)}</span></div><div class="t2">${ROLES[s.role].name} · ${s.trait} · ${money(s.wage)}/day</div><div class="t2">${staffStatus(s)}</div></div></div>
+    <div class="grid2" style="margin-top:6px"><div><div class="t2">Mood ${Math.round(s.morale)}%</div><div class="bar ${s.morale < 35 ? 'r' : 'g'}"><i style="width:${Math.round(s.morale)}%"></i></div></div><div><div class="t2">Energy</div><div class="bar n"><i data-bar="energy:${s.id}"></i></div></div></div>
+    <div class="btns">${s.skill < 5 ? `<button class="b sm ghost" data-act="train" data-id="${s.id}"${bdis(S.money >= 250 * s.skill + 150)}>🎓 Train ${money(250 * s.skill + 150)}</button>` : '<span class="tag gold">Master</span>'}<button class="b sm ghost" data-act="raise" data-id="${s.id}">💵 Pay rise +10%</button><button class="b sm red" data-act="fire" data-id="${s.id}">Let go</button></div></div>`).join('') : '<div class="empty">No staff yet. Hire a receptionist and a housekeeper first!</div>';
+  h += '<h3 class="sh">Job applicants (new ones every morning)</h3>';
+  h += S.candidates.map((c) => `<div class="card"><div class="row"><div class="av">${c.em}</div><div class="grow"><div class="t1">${esc(c.name)} <span class="lvl">${starStr(c.skill)}</span></div><div class="t2">${ROLES[c.role].name} · ${c.trait} · ${money(c.wage)}/day</div><div class="t2">${ROLES[c.role].desc}</div></div><button class="b gold" data-act="hire" data-id="${c.id}"${bdis(S.money >= c.wage && (c.role !== 'therapist' || S.fac.spa))}>Hire</button></div></div>`).join('') || '<div class="empty">No applicants left today.</div>';
+  h += `<div class="btns"><button class="b ghost wide" data-act="reroll"${bdis(S.money >= 150)}>📢 Advertise for new applicants ($150)</button></div>`;
+  return h;
+}
+function pDining() {
+  const ord = S.orders.slice().sort((a, b) => a.at - b.at);
+  let h = `<div class="grid2"><div class="card"><div class="t2">Restaurant</div><div class="big" style="font-size:22px">Level ${S.fac.restaurant} <span class="lvl">${starStr(S.fac.restaurant, 3)}</span></div></div><div class="card"><div class="t2">Food sales today</div><div class="big" style="font-size:22px">${money(S.guests.reduce((a, g) => a + g.bill.filter((b) => b.kind === 'food').reduce((x, y) => x + y.amount, 0), 0) + S.today.rev.food)}</div></div></div>`;
+  h += `<h3 class="sh">Orders · ${ord.length}</h3>`;
+  h += ord.length ? ord.map((o) => {
+    const d = MENU.find((x) => x.id === o.dish), g = guestById(o.guestId), r = g && roomById(g.roomId);
+    const st = { new: '<span class="tag red">Waiting for a cook</span>', cooking: '<span class="tag gold">Cooking</span>', ready: '<span class="tag green">Ready to serve</span>', delivering: '<span class="tag blue">On the way</span>' }[o.status];
+    let b = '';
+    if (o.status === 'new') b = `<button class="b sm gold" data-act="mcook" data-id="${o.id}"${bdis(!S.manager)}>🍳 Cook it</button>`;
+    if (o.status === 'ready') b = `<button class="b sm gold" data-act="mdeliver" data-id="${o.id}"${bdis(!S.manager)}>🛎️ Serve it</button>`;
+    return `<div class="card${o.critic ? ' gold' : ''}"><div class="row"><div class="av">${d.icon}</div><div class="grow"><div class="t1">${d.name}${o.qty > 1 ? ' × ' + o.qty : ''} · ${money(d.price * o.qty)}</div><div class="t2">${g ? esc(g.name) : 'Guest'} · ${o.where === 'room' ? 'room service to ' + (r ? r.label : '?') : 'table in restaurant'} ${st}</div></div>${b}</div>${o.status === 'cooking' ? `<div class="bar g"><i data-bar="ord:${o.id}"></i></div>` : `<div class="bar r"><i data-bar="ordw:${o.id}"></i></div>`}</div>`;
+  }).join('') : '<div class="empty">No orders right now. Guests get hungry at breakfast, lunch and dinner time.</div>';
+  if (!staffOf('chef').length || !staffOf('waiter').length) h += `<p class="note">Tip: hire a ${!staffOf('chef').length ? 'Chef' : 'Waiter'} so orders are handled without you.</p>`;
+  h += '<h3 class="sh">Menu</h3>';
+  h += MENU.map((d) => { const on = d.lvl <= S.fac.restaurant, off = S.menuOff.includes(d.id); return `<div class="card" style="${on ? '' : 'opacity:.55'}"><div class="row"><div class="av">${d.icon}</div><div class="grow"><div class="t1">${d.name} · ${money(d.price)}</div><div class="t2">${on ? `Takes ~${d.time} min · costs ${money(d.price * FOOD_COST)} to make` : `🔒 Restaurant level ${d.lvl}`}</div></div>${on ? `<label class="toggle"><input type="checkbox" data-act="menu" data-id="${d.id}"${off ? '' : ' checked'}> On menu</label>` : ''}</div></div>`; }).join('');
+  if (S.fac.restaurant < 3) { const need = FAC.restaurant.star[S.fac.restaurant]; h += `<div class="btns"><button class="b gold wide" data-act="buildfac" data-k="restaurant"${bdis(S.stars >= need && S.money >= facNextCost('restaurant'))}>⬆️ Upgrade restaurant to level ${S.fac.restaurant + 1} · ${money(facNextCost('restaurant'))}${S.stars < need ? ` (needs ${need}★)` : ''}</button></div>`; }
+  return h;
+}
+function pBuild() {
+  let h = '<h3 class="sh">Facilities</h3>';
+  for (const k of FAC_ORDER) {
+    const f = FAC[k], lv = S.fac[k], need = f.star[lv];
+    const btn = lv >= 3 ? '<span class="tag gold">Max level</span>' : `<button class="b ${lv ? 'ghost' : 'gold'}" data-act="buildfac" data-k="${k}"${bdis(S.stars >= need && S.money >= f.cost[lv])}>${lv ? 'Upgrade' : 'Build'} ${money(f.cost[lv])}${S.stars < need ? ` 🔒${need}★` : ''}</button>`;
+    h += `<div class="card${lv ? '' : ''}"><div class="row top"><div class="av">${f.icon}</div><div class="grow"><div class="t1">${f.name} <span class="lvl">${starStr(lv, 3)}</span></div><div class="t2">${f.desc}</div><div class="t2">${lv ? `Upkeep ${money(f.upkeep * lv)}/day${f.fee ? ` · about ${money(f.fee * (1 + 0.3 * (lv - 1)))} a visit` : ''}` : `Upkeep ${money(f.upkeep)}/day once built`}${k === 'spa' && lv && !staffOf('therapist').length ? ' · <b class="neg">hire a Spa Therapist!</b>' : ''}</div></div></div><div class="btns">${btn}</div></div>`;
+  }
+  h += '<h3 class="sh">Hotel</h3>';
+  const canFloor = S.floors < maxFloors();
+  h += `<div class="card gold"><div class="row"><div class="av">🏗️</div><div class="grow"><div class="t1">Build floor ${S.floors + 1}</div><div class="t2">${canFloor ? `5 new Standard rooms · ${money(floorCost())}` : `Max ${maxFloors()} floors at ${S.stars}★.`}</div></div><button class="b gold" data-act="floor"${bdis(canFloor && S.money >= floorCost())}>Build</button></div></div>`;
+  h += '<p class="note">Upgrade single rooms to Deluxe or Suites and add new decor in the Rooms tab.</p>';
+  return h;
+}
+function pMoney() {
+  const t = S.today;
+  const rev = Object.values(t.rev).reduce((a, b) => a + b, 0), exp = Object.values(t.exp).reduce((a, b) => a + b, 0);
+  const pending = S.guests.reduce((a, g) => a + g.bill.reduce((x, y) => x + y.amount, 0), 0);
+  const wages = S.staff.reduce((a, s) => a + s.wage, 0), upkeep = FAC_ORDER.reduce((a, k) => a + (S.fac[k] ? FAC[k].upkeep * S.fac[k] : 0), 0) + S.rooms.length * 6;
+  let h = `<div class="grid2"><div class="card"><div class="t2">Bank balance</div><div class="big ${S.money < 0 ? 'neg' : ''}">${money(S.money)}</div></div><div class="card"><div class="t2">Today so far</div><div class="big ${rev - exp >= 0 ? 'pos' : 'neg'}" style="font-size:24px">${money(rev - exp)}</div></div></div>`;
+  h += `<div class="card"><div class="kv"><span>Money in today</span><span class="v pos">${money(rev)}</span><span>Money out today</span><span class="v neg">-${money(exp)}</span><span>Guests' open bills (paid at check-out)</span><span class="v">${money(pending)}</span><span>Tonight: wages + upkeep${S.loan ? ' + interest' : ''}</span><span class="v neg">-${money(wages + upkeep + (S.loan ? S.loan * 0.01 : 0))}</span></div></div>`;
+  h += `<h3 class="sh">Bills · ${S.bills.length}</h3>`;
+  h += `<label class="toggle" style="margin-bottom:8px"><input type="checkbox" data-act="autopay"${S.autopay ? ' checked' : ''}> Pay new bills automatically</label>`;
+  h += S.bills.length ? S.bills.map((b) => { const left = b.due - S.day; return `<div class="card${left < 0 ? ' hot' : ''}"><div class="row"><div class="av">${b.icon}</div><div class="grow"><div class="t1">${b.name} · ${money(b.amount)}</div><div class="t2">${left < 0 ? `<b class="neg">Overdue! +10% late fee every night</b>` : left === 0 ? '<b class="neg">Due today</b>' : `Due in ${plural(left, 'day')}`}</div></div><button class="b gold" data-act="paybill" data-id="${b.id}"${bdis(S.money >= b.amount)}>Pay</button></div></div>`; }).join('') : '<div class="empty">No bills to pay. 🎉</div>';
+  h += '<h3 class="sh">Profit, last 14 days</h3><canvas class="chart" id="chart" width="760" height="300"></canvas>';
+  h += '<h3 class="sh">Bank loan</h3>';
+  const lim = loanLimit();
+  h += `<div class="card"><div class="row"><div class="av">🏦</div><div class="grow"><div class="t1">Owed: ${money(S.loan)}</div><div class="t2">Borrow up to ${money(lim)} · 1% interest every night</div></div></div><div class="btns"><button class="b sm gold" data-act="borrow" data-n="5000"${bdis(S.loan + 5000 <= lim)}>Borrow $5,000</button><button class="b sm ghost" data-act="repay" data-n="1000"${bdis(S.loan > 0 && S.money >= Math.min(1000, S.loan))}>Repay $1,000</button><button class="b sm ghost" data-act="repay" data-n="all"${bdis(S.loan > 0 && S.money >= S.loan)}>Repay all</button></div></div>`;
+  h += '<h3 class="sh">Marketing</h3>';
+  h += MARKETING.map((m) => { const on = S.marketing.find((x) => x.id === m.id); return `<div class="card"><div class="row"><div class="av">${m.icon}</div><div class="grow"><div class="t1">${m.name}</div><div class="t2">+${Math.round(m.boost * 100)}% guests for ${plural(m.days, 'day')}</div></div>${on ? `<span class="tag green">${plural(on.days, 'day')} left</span>` : `<button class="b ${S.stars >= m.star ? 'gold' : 'ghost'}" data-act="market" data-id="${m.id}"${bdis(S.stars >= m.star && S.money >= m.cost)}>${money(m.cost)}${S.stars < m.star ? ` 🔒${m.star}★` : ''}</button>`}</div></div>`; }).join('');
+  return h;
+}
+function drawChart() {
+  const c = $('#chart'); if (!c) return;
+  const x = c.getContext('2d'), W = c.width, H = c.height;
+  x.clearRect(0, 0, W, H);
+  const d = S.history.slice(-14);
+  x.font = '22px DM Sans, sans-serif'; x.fillStyle = '#6f6b5e'; x.textAlign = 'center';
+  if (!d.length) { x.fillText('Your daily profit shows up here after day 1.', W / 2, H / 2); return; }
+  const max = Math.max(500, ...d.map((p) => Math.abs(p.profit)));
+  const mid = H / 2, bw = (W - 40) / 14;
+  x.strokeStyle = '#e7dbc0'; x.lineWidth = 2; x.beginPath(); x.moveTo(20, mid); x.lineTo(W - 20, mid); x.stroke();
+  d.forEach((p, i) => {
+    const hgt = (Math.abs(p.profit) / max) * (mid - 34);
+    x.fillStyle = p.profit >= 0 ? '#c9a227' : '#c0392b';
+    const X = 20 + i * bw + bw * 0.15, w = bw * 0.7;
+    if (p.profit >= 0) x.fillRect(X, mid - hgt, w, hgt); else x.fillRect(X, mid, w, hgt);
+    x.fillStyle = '#6f6b5e'; x.font = '18px DM Sans, sans-serif';
+    x.fillText('D' + p.day, X + w / 2, H - 6);
+  });
+  x.fillStyle = '#14213d'; x.textAlign = 'left'; x.font = 'bold 20px DM Sans, sans-serif';
+  x.fillText('Best: ' + money(Math.max(...d.map((p) => p.profit))), 24, 26);
+}
+function pStars() {
+  const next = S.stars + 1, st = reqStatus(next);
+  let h = `<div class="grid2"><div class="card"><div class="t2">Guest rating</div><div class="big">${S.rating.toFixed(2)}</div><div class="rv-stars">${starStr(Math.round(S.rating))}</div></div><div class="card"><div class="t2">Hotel class</div><div class="big stars" style="color:var(--gold)">${starStr(S.stars)}</div><div class="t2">${S.guestsServed} guests served</div></div></div>`;
+  if (st) {
+    h += `<h3 class="sh">Road to ${next}★</h3><div class="card">${st.list.map(([l, ok, v]) => `<div class="req"><span class="${ok ? 'ok' : 'no'}">${ok ? '✓' : '✗'}</span><span class="grow">${l}</span><span class="t2">${v}</span></div>`).join('')}
+      <div class="btns">${S.inspection ? '<span class="tag gold">🧐 The inspector is on their way or staying now</span>' : `<button class="b gold wide" data-act="inspect"${bdis(st.ok && S.money >= INSPECTION_FEE)}>🧐 Request inspection (${money(INSPECTION_FEE)})</button>`}</div>
+      <p class="note">When everything is ticked, request an inspection. The inspector stays one night. Score 4★ or more in their review to earn your next star!</p></div>`;
+  } else h += '<div class="card gold"><div class="t1">🏆 You run a five-star hotel!</div><div class="t2">Keep your rating high and your profits growing.</div></div>';
+  h += `<h3 class="sh">Latest reviews · ${S.reviews.length}</h3>`;
+  h += S.reviews.length ? S.reviews.slice(0, 30).map((r) => `<div class="card${r.inspector || r.critic || r.celeb ? ' gold' : ''}"><div class="row top"><div class="av">${r.em}</div><div class="grow"><div class="t1">${esc(r.title)}</div><div class="t2"><span class="rv-stars">${starStr(r.stars)}</span> · ${esc(r.name)} · day ${r.day}</div><div style="margin-top:4px">${esc(r.text)}</div></div></div></div>`).join('') : '<div class="empty">No reviews yet. Guests write one when they check out.</div>';
+  return h;
+}
+
+/* =====================================================================
+   PROGRESS BARS (updated every frame without rebuilding the panel)
+   ===================================================================== */
+function barValue(key) {
+  const [k, id] = key.split(':'); const n = +id;
+  const now = abs();
+  if (k === 'room') { const r = roomById(n); if (!r) return 0; const s = r.job && r.job !== 'm' && r.job !== 'c' ? staffById(+String(r.job).slice(1)) : null; const j = r.job === 'm' ? S.manager : s ? s.job : null; if (r.job === 'c') { const e = S.effects.find((x) => x.key === 'contractor' && x.room === r.id); return e ? 1 - (e.at - now) / 30 : 0; } return j && j.target === r.id ? j.t / j.total : 0; }
+  if (k === 'pat' || k === 'patw') { const g = guestById(n); return g ? clamp(1 - (now - g.arrived) / g.patience, 0, 1) : 0; }
+  if (k === 'outw') { const g = guestById(n); return g ? clamp(1 - (now - g.checkoutAt) / 150, 0, 1) : 0; }
+  if (k === 'comp') { const c = S.complaints.find((x) => x.id === n); return c ? clamp(1 - (now - c.at) / c.limit, 0, 1) : 0; }
+  if (k === 'ord') { const o = S.orders.find((x) => x.id === n); if (!o) return 0; const j = o.by === 'm' ? S.manager : (S.staff.find((s) => s.job && s.job.kind === 'cook' && s.job.target === o.id) || {}).job; return j ? j.t / j.total : 0; }
+  if (k === 'ordw') { const o = S.orders.find((x) => x.id === n); if (!o) return 0; return o.status === 'ready' ? clamp(1 - (now - o.readyAt) / 60, 0, 1) : clamp(1 - (now - o.at) / 80, 0, 1); }
+  if (k === 'energy') { const s = staffById(n); return s ? s.energy / 100 : 0; }
+  if (k === 'mgr') return S.manager ? S.manager.t / S.manager.total : 0;
+  return 0;
+}
+function updateBars() {
+  document.querySelectorAll('[data-bar]').forEach((el) => {
+    const v = clamp(barValue(el.dataset.bar), 0, 1);
+    el.style.width = Math.round(v * 100) + '%';
+    if (el.dataset.bar.startsWith('pat:')) el.style.background = v > 0.5 ? '#2f8f5b' : v > 0.25 ? '#d98c1f' : '#c0392b';
+  });
+}
+
+/* =====================================================================
+   HUD
+   ===================================================================== */
+function renderHUD() {
+  $('#hudName').textContent = S.name;
+  $('#hudDay').textContent = 'Day ' + S.day;
+  $('#hudClock').textContent = clock(S.minute);
+  const m = $('#hudMoney'); m.textContent = money(S.money); m.classList.toggle('neg', S.money < 0);
+  $('#hudRating').textContent = S.rating.toFixed(1) + '★';
+  $('#hudStars').innerHTML = starStr(S.stars);
+  $('#pauseBtn').textContent = S.paused ? '▶' : '❚❚';
+  $('#pauseBtn').classList.toggle('on', S.paused);
+  document.querySelectorAll('[data-speed]').forEach((b) => b.classList.toggle('on', +b.dataset.speed === S.speed));
+  $('#pausedTag').hidden = !S.paused || !!ui.modal;
+  const mb = $('#mgrBar');
+  const mh = S.manager ? `<span class="em">👔</span><span>${S.manager.label}</span><span class="bar"><i data-bar="mgr"></i></span><button data-act="mcancel">Stop</button>` : `<span class="em">👔</span><span>You're free to help</span>`;
+  if (mb.dataset.h !== mh) { mb.dataset.h = mh; mb.innerHTML = mh; }
+  const tags = [];
+  const lab = { heatwave: '🌡️ Heatwave', festival: '🎪 Festival', storm: '⛈️ Storm', viral: '🤳 Viral', supplier: '🚚 Food deal', wedding: '💒 Wedding tomorrow' };
+  S.effects.forEach((e) => { if (lab[e.key]) tags.push(e.key === 'wedding' && e.ready ? '💒 Wedding tonight' : lab[e.key]); });
+  S.marketing.forEach((x) => tags.push(MARKETING.find((m) => m.id === x.id).icon + ' Ad running'));
+  if (S.inspection) tags.push('🧐 Inspection');
+  const th = tags.map((t) => `<span>${t}</span>`).join('');
+  if ($('#eventTag').dataset.h !== th) { $('#eventTag').dataset.h = th; $('#eventTag').innerHTML = th; }
+}
+
+/* =====================================================================
+   ACTIONS (all buttons go through here)
+   ===================================================================== */
+function handleAction(e) {
+  const el = e.target.closest('[data-act]');
+  if (!el || el.disabled || !S) return;
+  const act = el.dataset.act, id = +el.dataset.id;
+  const g = guestById(id), r = roomById(id);
+  switch (act) {
+    case 'tab': setTab(el.dataset.tab); beep('click'); break;
+    case 'tipoff': S.tips.first = false; break;
+    case 'help': showHelp(); break;
+    case 'checkin': if (g) { const best = bestRoomFor(g); if (best) checkIn(g, best); else toast('🛏️', 'No clean room is free. Clean a room first!', 'bad'); } break;
+    case 'choose': if (g) chooseRoom(g); break;
+    case 'assign': { const gg = guestById(+el.dataset.g), rr = roomById(+el.dataset.r); if (gg && rr && checkIn(gg, rr)) closeModal(); break; }
+    case 'turnaway': if (g) { S.guests = S.guests.filter((x) => x !== g); if (g.inspector) S.inspection = null; toast('🚪', `You turned ${g.name} away.`); } break;
+    case 'guest': if (g) chooseRoom(g); break;
+    case 'checkout': if (g && !g.by) checkOut(g); break;
+    case 'room': ui.selRoom = id; roomDialog(r); break;
+    case 'mclean': if (r && mgrStart('clean', id) && ui.modal) closeModal(); break;
+    case 'mrepair': if (r && mgrStart('repair', id) && ui.modal) closeModal(); break;
+    case 'contractor': if (r) { callContractor(r); if (ui.modal) closeModal(); } break;
+    case 'mcook': mgrStart('cook', id); break;
+    case 'mdeliver': mgrStart('deliver', id); break;
+    case 'mcancel': mgrCancel(); break;
+    case 'comp': { const c = S.complaints.find((x) => x.id === id); if (c) resolveComplaint(c, el.dataset.how); break; }
+    case 'price': { const t = el.dataset.t; S.prices[t] = clamp(S.prices[t] + +el.dataset.d, 20, 5000); beep('click'); break; }
+    case 'uproom': if (r) { upgradeRoom(r); if (ui.modal) roomDialog(r); } break;
+    case 'refurb': if (r) { refurbish(r); if (ui.modal) roomDialog(r); } break;
+    case 'floor': buildFloor(); break;
+    case 'hire': { const c = S.candidates.find((x) => x.id === id); if (c) hire(c); break; }
+    case 'fire': { const s = staffById(id); if (s) choice('📦', `Let ${esc(s.name)} go?`, `They will get one day's pay (${money(s.wage)}) as notice.`, [['Let them go', 'red', () => fire(s)], ['Keep them', 'gold', () => {}]]); break; }
+    case 'train': { const s = staffById(id); if (s) train(s); break; }
+    case 'raise': { const s = staffById(id); if (s) raise(s); break; }
+    case 'reroll': if (pay(150, 'other')) { rollCandidates(); toast('📢', 'New applicants are waiting!', 'good'); } break;
+    case 'menu': { const d = el.dataset.id; if (el.checked) S.menuOff = S.menuOff.filter((x) => x !== d); else if (menuNow().length > 1) S.menuOff.push(d); else { el.checked = true; toast('🍽️', 'Keep at least one dish on the menu.', 'bad'); } panelCache = ''; break; }
+    case 'buildfac': buildFac(el.dataset.k); if (ui.modal && ui.modal.fac) facDialog(el.dataset.k); break;
+    case 'facinfo': facDialog(el.dataset.k); break;
+    case 'autopay': S.autopay = el.checked; if (S.autopay) for (const b of S.bills.slice()) if (S.money >= b.amount) payBill(b); break;
+    case 'paybill': { const b = S.bills.find((x) => x.id === id); if (b) payBill(b); break; }
+    case 'borrow': { const n = +el.dataset.n; if (S.loan + n <= loanLimit()) { S.loan += n; S.money += n; beep('cash'); toast('🏦', `The bank lent you ${money(n)}.`, 'good'); } break; }
+    case 'repay': { const n = el.dataset.n === 'all' ? S.loan : Math.min(1000, S.loan); if (S.money >= n && n > 0) { S.money -= n; S.loan -= n; beep('cash'); toast('🏦', `Repaid ${money(n)}.`, 'good'); } break; }
+    case 'market': { const m = MARKETING.find((x) => x.id === el.dataset.id); if (m) startMarketing(m); break; }
+    case 'inspect': requestInspection(); break;
+  }
+  panelCache = ''; sceneHTMLCache = ''; tabsCache = '';
+}
+document.addEventListener('click', (e) => { if (e.target.closest('#modal')) return; handleAction(e); });
+document.addEventListener('change', (e) => { if (e.target.matches('input[type=checkbox][data-act]')) { /* handled by click */ } });
+document.addEventListener('pointerdown', (e) => { if (e.target.closest('#panelBody, #world, #tabs, #modal')) ui.pointer = true; }, true);
+document.addEventListener('pointerup', () => { setTimeout(() => { ui.pointer = false; }, 0); }, true);
+document.addEventListener('pointercancel', () => { ui.pointer = false; }, true);
+
+function chooseRoom(g) {
+  const free = freeRooms().sort((a, b) => TYPE_ORDER.indexOf(a.type) - TYPE_ORDER.indexOf(b.type) || b.condition - a.condition);
+  const wi = TYPE_ORDER.indexOf(g.want);
+  const body = `<div class="row" style="margin-bottom:10px"><div class="av${g.vip || g.inspector ? ' vip' : ''}">${g.em}</div><div class="grow"><div class="t1">${esc(g.name)}</div><div class="t2">${g.inspector ? 'Hotel star inspector' : KINDS[g.kind].label} · wants <b>${ROOM_TYPES[g.want].name}</b> · ${plural(g.nights, 'night')} · likes ${KINDS[g.kind].likes.map((f) => FAC[f].icon).join(' ')}</div></div></div>
+    ${free.length ? free.map((r) => { const ti = TYPE_ORDER.indexOf(r.type); const tag = ti === wi ? '<span class="tag green">Perfect match</span>' : ti > wi ? '<span class="tag gold">Free upgrade: happier guest</span>' : '<span class="tag red">Downgrade: unhappy, pays less</span>'; return `<div class="slot"><div class="av">${ROOM_TYPES[r.type].icon}</div><div class="grow"><div class="t1">Room ${r.label} · ${ROOM_TYPES[r.type].name} <span class="lvl">${starStr(r.decor, 3)}</span></div><div class="t2">Condition ${Math.round(r.condition)}% ${tag}</div></div><button class="b gold" data-act="assign" data-g="${g.id}" data-r="${r.id}">Give room</button></div>`; }).join('') : '<div class="empty">No clean rooms are free. Clean a dirty room or wait for a guest to leave.</div>'}`;
+  showModal({ title: 'Choose a room', body, acts: [['Close', 'ghost', closeModal]] });
+  ui.modal.dismiss = true;
+}
+function roomDialog(r) {
+  if (!r) return;
+  showModal({ title: `Room ${r.label}`, body: roomCard(r, true), acts: [['Close', 'ghost', () => { ui.selRoom = null; closeModal(); }]], onClose: () => { ui.selRoom = null; } });
+  ui.modal.dismiss = true; ui.modal.room = r.id;
+}
+function facDialog(k) {
+  const f = FAC[k], lv = S.fac[k], need = f.star[lv];
+  const body = `<p>${f.desc}</p><div class="kv"><span>Level</span><span class="v lvl">${starStr(lv, 3)}</span><span>Upkeep</span><span class="v">${money(f.upkeep * Math.max(1, lv))}/day</span>${f.fee ? `<span>Guest pays per visit</span><span class="v">about ${money(f.fee * (1 + 0.3 * Math.max(0, lv - 1)))}</span>` : ''}<span>Guests who love it</span><span class="v em">${Object.values(KINDS).filter((x) => x.likes.includes(k)).map((x) => x.em[0]).join(' ') || '–'}</span></div>
+    ${lv >= 3 ? '<p><b>Max level reached.</b></p>' : `<p>${lv ? 'Upgrade' : 'Build'} cost: <b>${money(f.cost[lv])}</b>${S.stars < need ? ` · <b class="neg">needs a ${need}★ hotel</b>` : ''}</p>`}`;
+  const acts = [];
+  if (lv < 3) acts.push([`${lv ? 'Upgrade' : 'Build'} ${money(f.cost[lv])}`, 'gold', () => { buildFac(k); closeModal(); }]);
+  acts.push(['Close', 'ghost', closeModal]);
+  showModal({ icon: f.icon, title: f.name, body, acts });
+  ui.modal.dismiss = true; ui.modal.fac = k;
+  if (lv < 3 && (S.stars < need || S.money < f.cost[lv])) { const b = $('#modal [data-mact="0"]'); if (b) b.disabled = true; }
+}
+function showHelp() {
+  showModal({ icon: '🛎️', title: 'How to play', body: `<ul class="help">
+    <li><b>Check in guests</b> at the Desk. Give them the room type they want (or a free upgrade!). They pay their whole bill when they check out.</li>
+    <li><b>Clean rooms</b> after guests leave. Tap a dirty room 🧺 to clean it yourself, or hire Housekeepers.</li>
+    <li><b>You can do one job at a time</b> (cleaning, fixing, cooking or serving). Hire staff so the hotel runs itself.</li>
+    <li><b>Restaurant orders</b> come in at meal times. Cook and serve them quickly. Chefs and Waiters do it for you.</li>
+    <li><b>Complaints</b>: fix broken things fast, apologise, send a treat or give a discount. Concierges help.</li>
+    <li><b>Reviews</b> come from happy (or grumpy) guests and set your rating. A higher rating brings more guests.</li>
+    <li><b>Money</b>: wages and upkeep are paid each night. Pay your bills before they are overdue. Take a loan if you need it, but don't stay in debt for 3 days!</li>
+    <li><b>Grow</b>: upgrade rooms, build floors and add a gym, pool, bar, spa and more.</li>
+    <li><b>Stars</b>: meet the goals in the Reviews tab, then request an inspection. Impress the inspector to earn your next star. Can you reach ★★★★★?</li>
+    <li><b>Controls</b>: Space pauses, 1 / 2 / 3 change speed. Your game autosaves every night.</li></ul>`, acts: [["Let's go!", 'gold', closeModal]] });
+  ui.modal.dismiss = true;
+}
+function showMenu(sub) {
+  if (!sub) ui.resumeTo = S.paused;
+  S.paused = true;
+  showModal({ icon: '🏨', title: esc(S.name), body: `<p class="t2">Day ${S.day} · ${clock(S.minute)} · ${starStr(S.stars)} · ${money(S.money)}</p>`, acts: [
+    ['▶ Resume', 'gold', () => { closeModal(); }],
+    ['💾 Save game', 'ghost', () => slotsDialog('save')],
+    ['📂 Load game', 'ghost', () => slotsDialog('load')],
+    ['❓ How to play', 'ghost', showHelp],
+    [ui.sound ? '🔊 Sound: on' : '🔇 Sound: off', 'ghost', () => { ui.sound = !ui.sound; store.set('hh-sound', ui.sound ? '1' : '0'); showMenu(true); }],
+    ['🚪 Quit to title', 'red', () => { autosave(); closeModal(); toTitle(); }],
+  ], onClose: () => { if (S) S.paused = !!ui.resumeTo; } });
+  ui.modal.dismiss = true;
+}
+function slotsDialog(mode) {
+  const keys = mode === 'save' ? SLOTS : ['hh-auto', ...SLOTS];
+  const body = keys.map((k, i) => { const d = readSlot(k); const name = k === 'hh-auto' ? 'Autosave' : 'Slot ' + (SLOTS.indexOf(k) + 1); return `<div class="slot"><div class="grow"><div class="t2"><b>${name}</b></div>${slotLabel(d)}</div><button class="b ${mode === 'save' ? 'gold' : d ? 'gold' : 'ghost'}" data-mact="${i}"${mode === 'load' && !d ? ' disabled' : ''}>${mode === 'save' ? (d ? 'Overwrite' : 'Save') : 'Load'}</button></div>`; }).join('');
+  const back = () => { if (S && !$('#title').hidden) closeModal(); else if (S && $('#title').hidden) showMenu(true); else closeModal(); };
+  const acts = keys.map((k) => ['', '', () => { if (mode === 'save') { saveTo(k); slotsDialog('save'); } else if (loadFrom(k)) closeModal(); }]);
+  acts.push(['Back', 'ghost', back]);
+  ui.modal = null;
+  modalActs = acts;
+  $('#modal').innerHTML = `<div class="mi">${mode === 'save' ? '💾' : '📂'}</div><h2>${mode === 'save' ? 'Save game' : 'Load game'}</h2>${body}<div class="acts"><button class="b ghost" data-mact="${acts.length - 1}">Back</button></div>`;
+  $('#modalBg').hidden = false;
+  ui.modal = { dismiss: true, onClose: null };
+}
+
+/* =====================================================================
+   TITLE SCREEN
+   ===================================================================== */
+function renderTitle() {
+  const auto = readSlot('hh-auto'), anySave = auto || SLOTS.some((k) => readSlot(k));
+  $('#tmenu').innerHTML = `${auto ? `<button class="b gold" id="tContinue">▶ Continue: ${esc(auto.meta.name)} (day ${auto.meta.day})</button>` : ''}
+    <button class="b ${auto ? 'ghost' : 'gold'}" id="tNew">🏨 New hotel</button>
+    ${anySave ? '<button class="b ghost" id="tLoad">📂 Load game</button>' : ''}
+    <button class="b ghost" id="tHelp">❓ How to play</button>`;
+  const c = $('#tContinue'); if (c) c.onclick = () => { loadFrom('hh-auto'); };
+  $('#tNew').onclick = newDialog;
+  const l = $('#tLoad'); if (l) l.onclick = () => slotsDialog('load');
+  $('#tHelp').onclick = showHelp;
+}
+function newDialog() {
+  showModal({ icon: '🏨', title: 'Name your hotel', body: `<p>You start with a small 10-room hotel, a little restaurant and ${money(6000)}. Make it legendary!</p><input class="input" id="hotelName" maxlength="28" value="The Grand Isla" aria-label="Hotel name">`, acts: [['Open the doors!', 'gold', () => { const n = ($('#hotelName').value || '').trim() || 'The Grand Isla'; closeModal(); newGame(n); hideTitle(); layoutChanged = true; setTimeout(showHelp, 300); }], ['Back', 'ghost', closeModal]] });
+  ui.modal.dismiss = true;
+  const inp = $('#hotelName'); inp.focus(); inp.select();
+  inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') modalActs[0][2](); });
+}
+function hideTitle() { $('#title').hidden = true; ui.title = false; layoutChanged = true; panelCache = ''; tabsCache = ''; sceneHTMLCache = ''; }
+function toTitle() { $('#title').hidden = false; ui.title = true; S && autosave(); renderTitle(); }
+
+/* =====================================================================
+   INPUT & MAIN LOOP
+   ===================================================================== */
+$('#pauseBtn').addEventListener('click', () => { if (S) { S.paused = !S.paused; beep('click'); } });
+document.querySelectorAll('[data-speed]').forEach((b) => b.addEventListener('click', () => { if (S) { S.speed = +b.dataset.speed; S.paused = false; beep('click'); } }));
+$('#menuBtn').addEventListener('click', () => { if (S && !ui.modal) showMenu(); });
+document.addEventListener('keydown', (e) => {
+  if (!S || ui.title || e.target.matches('input')) return;
+  if (e.key === 'Escape') { if (ui.modal && ui.modal.dismiss) closeModal(); else if (!ui.modal) showMenu(); return; }
+  if (ui.modal) return;
+  if (e.code === 'Space') { e.preventDefault(); S.paused = !S.paused; }
+  if (e.key === '1') S.speed = 1;
+  if (e.key === '2') S.speed = 2;
+  if (e.key === '3') S.speed = 4;
+});
+document.addEventListener('visibilitychange', () => { if (document.hidden && S && !ui.title) { S.paused = true; autosave(); } });
+window.addEventListener('pagehide', () => { if (S && !ui.title) autosave(); });
+
+let last = performance.now(), acc = 0, lastUI = 0;
+function running() { return S && !ui.title && !S.paused && !ui.modal; }
+function frame(now) {
+  const dt = Math.min(0.25, (now - last) / 1000); last = now;
+  if (running()) {
+    const night = S.minute >= 22 * 60 || S.minute < 6 * 60;
+    acc += dt * MIN_PER_SEC * S.speed * (night ? 3 : 1);
+    let steps = 0;
+    while (acc >= 1 && steps < 60) { acc -= 1; steps++; stepMinute(); if (!running()) { acc = 0; break; } }
+  } else acc = 0;
+  if (S && !ui.title && now - lastUI > 120) {
+    lastUI = now;
+    try { renderHUD(); renderScene(); renderTabs(); renderPanel(); } catch (err) { console.error(err); }
+    if (ui.modal && ui.modal.room && !ui.pointer) { const r = roomById(ui.modal.room); const card = $('#modal [data-roomcard]'); if (r && card) { const tmp = roomCard(r, true); if (card.outerHTML !== tmp && card.dataset.h !== tmp) { card.outerHTML = tmp; const nc = $('#modal [data-roomcard]'); if (nc) nc.dataset.h = tmp; } } }
+  }
+  if (S && !ui.title) updateBars();
+  requestAnimationFrame(frame);
+}
+window.addEventListener('resize', () => { sceneHTMLCache = ''; });
+
+renderTitle();
+requestAnimationFrame(frame);
+// for testing in the console
+window.__hh = { get S() { return S; }, step: (n) => { for (let i = 0; i < n; i++) stepMinute(); }, newGame: (n) => { newGame(n); hideTitle(); }, checkIn, checkOut, bestRoomFor, mgrStart, hire, buildFac, upgradeRoom, buildFloor, requestInspection, reqStatus, closeModal, saveTo, loadFrom };
+})();
+</script>
+</body>
+</html>
