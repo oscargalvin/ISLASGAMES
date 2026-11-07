@@ -26,3 +26,13 @@ flutter:
     - assets/audio/
     - assets/puzzles/
     - assets/icons/
+  fonts:
+    - family: LilitaOne
+      fonts:
+        - asset: assets/fonts/LilitaOne.ttf
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Nunito-Black.ttf
+          weight: 900

@@ -7,9 +7,9 @@ import 'package:islas_games/main.dart';
 void main() {
   testWidgets('Perfect Puzzles lists the puzzles', (tester) async {
     await tester.pumpWidget(const IslasGamesApp());
-    expect(find.text('Space Adventure'), findsOneWidget);
+    expect(find.text('SPACE ADVENTURE'), findsOneWidget);
     expect(find.text('Tap Counter'), findsNothing);
-    await tester.tap(find.text('Perfect Puzzles'));
+    await tester.tap(find.text('PERFECT PUZZLES'));
     await tester.pumpAndSettle();
     expect(find.text('Tutorial'), findsOneWidget);
     expect(find.text('300 pieces'), findsOneWidget);
@@ -20,7 +20,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const IslasGamesApp());
     await tester.pumpAndSettle();
-    expect(find.text('Walk to Australia'), findsNothing);
+    expect(find.text('WALK TO AUSTRALIA'), findsNothing);
     expect(find.text('Archived games'), findsNothing);
 
     await tester.longPress(find.text('Islas Games'));
@@ -31,7 +31,7 @@ void main() {
     }
     await tester.tap(find.byIcon(Icons.check));
     await tester.pumpAndSettle();
-    expect(find.text('Walk to Australia'), findsNothing);
+    expect(find.text('WALK TO AUSTRALIA'), findsNothing);
 
     await tester.longPress(find.text('Islas Games'));
     await tester.pumpAndSettle();
@@ -41,8 +41,8 @@ void main() {
     }
     await tester.tap(find.byIcon(Icons.check));
     await tester.pumpAndSettle();
-    expect(find.text('Walk to Australia'), findsOneWidget);
-    expect(find.text('Islas Chat'), findsOneWidget);
+    expect(find.text('WALK TO AUSTRALIA'), findsOneWidget);
+    expect(find.text('ISLAS CHAT'), findsOneWidget);
   });
 
   testWidgets('Tapping the title 5 times opens the creator code pad',
@@ -61,6 +61,6 @@ void main() {
     }
     await tester.tap(find.byIcon(Icons.check));
     await tester.pumpAndSettle();
-    expect(find.text('Walk to Australia'), findsOneWidget);
+    expect(find.text('WALK TO AUSTRALIA'), findsOneWidget);
   });
 }

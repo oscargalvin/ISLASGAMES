@@ -26,7 +26,7 @@ void main() {
 
   testWidgets('home has the family games', (tester) async {
     await tester.pumpWidget(const IslasGamesApp());
-    for (final name in ['Sand Drawing', 'Tic-Tac-Toe', 'Memory Match']) {
+    for (final name in ['SAND DRAWING', 'TIC-TAC-TOE', 'MEMORY MATCH']) {
       expect(find.text(name), findsOneWidget);
     }
   });
@@ -34,7 +34,9 @@ void main() {
   testWidgets('tapping a square in Tic-Tac-Toe puts an X there',
       (tester) async {
     await tester.pumpWidget(const IslasGamesApp());
-    await tester.tap(find.text('Tic-Tac-Toe'));
+    await tester.ensureVisible(find.text('TIC-TAC-TOE'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('TIC-TAC-TOE'));
     await tester.pumpAndSettle();
     await tester.tap(find
         .descendant(of: find.byType(GridView), matching: find.byType(InkWell))
